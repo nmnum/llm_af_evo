@@ -55,6 +55,23 @@ the strategy code that builds context (one-line change, does not alter what
 is evolved — score_pool still only ranks a fixed pool).
 """
 
+import pathlib
+import sys
+
+_LLM_AF_EVO = pathlib.Path(__file__).resolve().parent
+while _LLM_AF_EVO.name != "llm_af_evo":
+    _LLM_AF_EVO = _LLM_AF_EVO.parent
+_ROOT = _LLM_AF_EVO.parent
+for _p in (
+    _ROOT,
+    _LLM_AF_EVO / "shared",
+    _LLM_AF_EVO / "v1_pre_v2" / "src",
+    _LLM_AF_EVO / "v1_pre_v2" / "experiments",
+    _LLM_AF_EVO / "v2" / "src",
+    _LLM_AF_EVO / "v2" / "experiments",
+):
+    sys.path.insert(0, str(_p))
+
 from af_interface import (  # noqa: F401 — re-exported for evolve_af_v2.py
     AF_FUNCTION_NAME, ALLOWED_GLOBALS, OBJECTIVE_NAMES,
     select_batch, count_loc, extract_af_docstring,
