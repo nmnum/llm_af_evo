@@ -31,7 +31,7 @@ this effort — its README already documents its structure.
 
 ## Decisions so far
 
-(none yet)
+- [Directory structure](.scratch/llm-af-evo-cleanup/issues/01-directory-structure.md) — era-first split (`v1_pre_v2/`, `v2/`, each with `src/`+`experiments/`), plus shared top-level `data/` and `docs/`; no separate `archive/` bucket
 
 ## Not yet specified
 
