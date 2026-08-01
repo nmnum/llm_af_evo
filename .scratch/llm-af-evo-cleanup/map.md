@@ -32,6 +32,7 @@ this effort — its README already documents its structure.
 ## Decisions so far
 
 - [Directory structure](.scratch/llm-af-evo-cleanup/issues/01-directory-structure.md) — era-first split (`v1_pre_v2/`, `v2/`, each with `src/`+`experiments/`), plus shared top-level `data/` and `docs/`; no separate `archive/` bucket
+- [Classify scripts](.scratch/llm-af-evo-cleanup/issues/02-classify-scripts.md) — all 49 top-level `.py` files sorted into `shared/`, `v1_pre_v2/{src,experiments}`, `v2/{src,experiments}` per the buckets above, derived from `SESSION_LOG.md`
 
 ## Not yet specified
 
