@@ -22,7 +22,19 @@ import sys
 
 import numpy as np
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
+_LLM_AF_EVO = pathlib.Path(__file__).resolve().parent
+while _LLM_AF_EVO.name != "llm_af_evo":
+    _LLM_AF_EVO = _LLM_AF_EVO.parent
+_ROOT = _LLM_AF_EVO.parent
+for _p in (
+    _ROOT,
+    _LLM_AF_EVO / "shared",
+    _LLM_AF_EVO / "v1_pre_v2" / "src",
+    _LLM_AF_EVO / "v1_pre_v2" / "experiments",
+    _LLM_AF_EVO / "v2" / "src",
+    _LLM_AF_EVO / "v2" / "experiments",
+):
+    sys.path.insert(0, str(_p))
 from sandbox import run_af_in_sandbox
 from af_interface import SEED_PROGRAMS
 from fitness_common import to_allmax

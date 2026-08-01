@@ -66,7 +66,19 @@ from sklearn.preprocessing import StandardScaler
 # setting, not something that can be scoped per-call.
 torch.set_num_threads(1)
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
+_LLM_AF_EVO = pathlib.Path(__file__).resolve().parent
+while _LLM_AF_EVO.name != "llm_af_evo":
+    _LLM_AF_EVO = _LLM_AF_EVO.parent
+_ROOT = _LLM_AF_EVO.parent
+for _p in (
+    _ROOT,
+    _LLM_AF_EVO / "shared",
+    _LLM_AF_EVO / "v1_pre_v2" / "src",
+    _LLM_AF_EVO / "v1_pre_v2" / "experiments",
+    _LLM_AF_EVO / "v2" / "src",
+    _LLM_AF_EVO / "v2" / "experiments",
+):
+    sys.path.insert(0, str(_p))
 
 from excipient_oracle_mo import DiscreteMOExcipientOracle
 from excipient_campaign_mo import (
@@ -74,7 +86,6 @@ from excipient_campaign_mo import (
 )
 from strategy_ls_na_egbo import strategy_mo_egbo, strategy_mo_egbo_novelty
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from sandbox import run_af_in_sandbox, SandboxError
 from af_interface import select_batch, SEED_PROGRAMS
 from gen_sandbox import run_generator_in_sandbox, GenSandboxError

@@ -43,9 +43,19 @@ import time
 import numpy as np
 from scipy.stats import wilcoxon
 
-_ROOT = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_ROOT))
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
+_LLM_AF_EVO = pathlib.Path(__file__).resolve().parent
+while _LLM_AF_EVO.name != "llm_af_evo":
+    _LLM_AF_EVO = _LLM_AF_EVO.parent
+_ROOT = _LLM_AF_EVO.parent
+for _p in (
+    _ROOT,
+    _LLM_AF_EVO / "shared",
+    _LLM_AF_EVO / "v1_pre_v2" / "src",
+    _LLM_AF_EVO / "v1_pre_v2" / "experiments",
+    _LLM_AF_EVO / "v2" / "src",
+    _LLM_AF_EVO / "v2" / "experiments",
+):
+    sys.path.insert(0, str(_p))
 
 import torch
 from excipient_campaign_mo import run_mo_campaign, make_shared_inits

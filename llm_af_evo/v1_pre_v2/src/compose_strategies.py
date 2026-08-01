@@ -35,8 +35,19 @@ import torch
 # don't rely on the importing script having already inserted these paths
 # (run_synthetic_compose_pilot.py and debug_compose.py both do, but this
 # module shouldn't silently depend on import order elsewhere doing so too).
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+_LLM_AF_EVO = pathlib.Path(__file__).resolve().parent
+while _LLM_AF_EVO.name != "llm_af_evo":
+    _LLM_AF_EVO = _LLM_AF_EVO.parent
+_ROOT = _LLM_AF_EVO.parent
+for _p in (
+    _ROOT,
+    _LLM_AF_EVO / "shared",
+    _LLM_AF_EVO / "v1_pre_v2" / "src",
+    _LLM_AF_EVO / "v1_pre_v2" / "experiments",
+    _LLM_AF_EVO / "v2" / "src",
+    _LLM_AF_EVO / "v2" / "experiments",
+):
+    sys.path.insert(0, str(_p))
 
 from excipient_campaign_mo import pareto_front_of
 from novelty_selection import novelty_aware_select_vectorised
