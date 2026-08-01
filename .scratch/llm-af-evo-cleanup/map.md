@@ -33,15 +33,24 @@ this effort — its README already documents its structure.
 
 - [Directory structure](.scratch/llm-af-evo-cleanup/issues/01-directory-structure.md) — era-first split (`v1_pre_v2/`, `v2/`, each with `src/`+`experiments/`), plus shared top-level `data/` and `docs/`; no separate `archive/` bucket
 - [Classify scripts](.scratch/llm-af-evo-cleanup/issues/02-classify-scripts.md) — all 49 top-level `.py` files sorted into `shared/`, `v1_pre_v2/{src,experiments}`, `v2/{src,experiments}` per the buckets above, derived from `SESSION_LOG.md`
+- [Data retention](.scratch/llm-af-evo-cleanup/issues/03-data-retention.md) — keep all ~65MB of run data (evolution_runs/, logs/, training_logs*/) and all result JSONs in git, in shared `data/`; no pruning
+- [Docs consolidation](.scratch/llm-af-evo-cleanup/issues/04-docs-consolidation.md) — all 5 findings/history docs stay separate in `docs/`, plus a new `docs/README.md` index; two known analysis gaps (run_v2_mAb_gamma001_fixed, Jul 31 diagnostics) noted but deferred, not resolved here
 
 ## Not yet specified
 
-- How the reorganization actually gets executed (file moves/renames) once
-  the structural decisions below are made — this map produces the plan,
-  not the migration itself; whether that migration becomes its own
-  follow-up pass or a "task" ticket appended here is still open.
+- How the reorganization actually gets executed (file moves/renames) now
+  that the structural decisions (tickets 01-04) are all made — this map
+  produced the plan, not the migration itself; whether that migration
+  becomes its own follow-up pass or a "task" ticket appended here is still
+  open. All four decision tickets are now resolved, so this is the last
+  thing standing between the map and the destination.
 - Whether/how the root-level `ls_na_egbo/` benchmark eventually gets a
   matching pass — explicitly deferred, not decided against.
+- Writing up the two documented analysis gaps flagged in ticket 04
+  (`run_v2_mAb_gamma001_fixed` has no analysis; the Jul 31 mu/sigma-dominance
+  and win-overlap diagnostics never reached a conclusion) — explicitly ruled
+  out of *this* map's scope (it's research work, not structure), but noted
+  here as a known follow-up.
 
 ## Out of scope
 
