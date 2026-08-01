@@ -1,0 +1,88 @@
+[
+  {
+    "id": "trust_only",
+    "code": "def score_pool(context):\n    \"\"\"Pure exploitation: rank by predicted objective sum only.\"\"\"\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        scores.append(gp[\"Tm\"][\"mean\"] + gp[\"kD\"][\"mean\"] + gp[\"viscosity\"][\"mean\"])\n    return scores",
+    "win_rate": 0.75,
+    "loc": 5,
+    "fitness": 0.725,
+    "mean_hv": 6708.920318763734,
+    "n_campaigns": 8,
+    "selection_signature": "1f34dbc622208c2cc8251daac7032321"
+  },
+  {
+    "id": "ehvi_approx",
+    "code": "def score_pool(context):\n    \"\"\"\n    Approximate hypervolume-improvement: NOT exact EHVI (that needs Monte\n    Carlo integration over the posterior, which the sandbox's numpy-only\n    import whitelist doesn't support) \u2014 a cheap proxy using only the\n    posterior mean. Candidates dominated by the current Pareto front get\n    a heavily discounted score (they can still improve HV by filling in\n    volume between front points, just less reliably than a non-dominated\n    point does); non-dominated candidates score by their dominated volume\n    relative to the reference point. This gives evolution a starting point\n    that actually uses context[\"pareto_front\"]/context[\"ref_point\"],\n    unlike the other seeds here.\n    \"\"\"\n    front = context[\"pareto_front\"]\n    ref = context[\"ref_point_by_name\"]\n    ref_arr = np.array([ref[\"Tm\"], ref[\"kD\"], ref[\"viscosity\"]])\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        y = np.array([gp[\"Tm\"][\"mean\"], gp[\"kD\"][\"mean\"], gp[\"viscosity\"][\"mean\"]])\n        dominated = bool(np.any(np.all(front >= y, axis=1) & np.any(front > y, axis=1)))\n        vol = float(np.prod(np.maximum(y - ref_arr, 0.0)))\n        scores.append(vol if not dominated else 0.1 * vol)\n    return scores",
+    "win_rate": 0.75,
+    "loc": 11,
+    "fitness": 0.695,
+    "mean_hv": 6953.204743020966,
+    "n_campaigns": 8,
+    "selection_signature": "017a73c1061594ff6ef65d6b4c0b4fec"
+  },
+  {
+    "id": "gen14_child0",
+    "code": "def score_pool(context):\n    front = context[\"pareto_front\"]\n    ref = context[\"ref_point_by_name\"]\n    ref_arr = np.array([ref[\"Tm\"], ref[\"kD\"], ref[\"viscosity\"]])\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        y = np.array([gp[\"Tm\"][\"mean\"], gp[\"kD\"][\"mean\"], gp[\"viscosity\"][\"mean\"]])\n        dominated = bool(np.any(np.all(front >= y, axis=1) & np.any(front > y, axis=1)))\n        vol = float(np.prod(np.maximum(y - ref_arr, 0.0)))\n        if not dominated:\n            scores.append(vol)\n        else:\n            scores.append(0.1 * vol)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.75,
+    "loc": 14,
+    "fitness": 0.6799999999999999,
+    "mean_hv": 7010.62572817611,
+    "n_campaigns": 8,
+    "selection_signature": "a9ea9f861ec0a0571b4d378ff29b7c10"
+  },
+  {
+    "id": "gen19_child1",
+    "code": "def score_pool(context):\n    front = context[\"pareto_front\"]\n    ref = context[\"ref_point_by_name\"]\n    ref_arr = np.array([ref[\"Tm\"], ref[\"kD\"], ref[\"viscosity\"]])\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        y = np.array([gp[\"Tm\"][\"mean\"], gp[\"kD\"][\"mean\"], gp[\"viscosity\"][\"mean\"]])\n        dominated = bool(np.any(np.all(front >= y, axis=1) & np.any(front > y, axis=1)))\n        vol = float(np.prod(np.maximum(y - ref_arr, 0.0)))\n        if not dominated:\n            scores.append(vol)\n        else:\n            # For dominated candidates, use exploitation score with penalty\n            exploit_score = gp[\"Tm\"][\"mean\"] + gp[\"kD\"][\"mean\"] + gp[\"viscosity\"][\"mean\"]\n            scores.append(0.5 * exploit_score)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.75,
+    "loc": 15,
+    "fitness": 0.675,
+    "mean_hv": 6763.277114533673,
+    "n_campaigns": 8,
+    "selection_signature": "f27a57a63f46bf46a331bc90733b756d"
+  },
+  {
+    "id": "gen13_child0",
+    "code": "def score_pool(context):\n    front = context[\"pareto_front\"]\n    ref = context[\"ref_point_by_name\"]\n    ref_arr = np.array([ref[\"Tm\"], ref[\"kD\"], ref[\"viscosity\"]])\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        y = np.array([gp[\"Tm\"][\"mean\"], gp[\"kD\"][\"mean\"], gp[\"viscosity\"][\"mean\"]])\n        dominated = bool(np.any(np.all(front >= y, axis=1) & np.any(front > y, axis=1)))\n        vol = float(np.prod(np.maximum(y - ref_arr, 0.0)))\n        mu_sum = gp[\"Tm\"][\"mean\"] + gp[\"kD\"][\"mean\"] + gp[\"viscosity\"][\"mean\"]\n        scores.append(mu_sum + (0.1 if dominated else 1.0) * vol)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "loc": 12,
+    "fitness": 0.565,
+    "mean_hv": 6665.379406229486,
+    "n_campaigns": 8,
+    "selection_signature": "c9be96e2762984bf4b311cbdd3f24788"
+  },
+  {
+    "id": "gen14_child1",
+    "code": "def score_pool(context):\n    front = context[\"pareto_front\"]\n    ref = context[\"ref_point_by_name\"]\n    ref_arr = np.array([ref[\"Tm\"], ref[\"kD\"], ref[\"viscosity\"]])\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        y = np.array([gp[\"Tm\"][\"mean\"], gp[\"kD\"][\"mean\"], gp[\"viscosity\"][\"mean\"]])\n        dominated = np.any(np.all(front >= y, axis=1) & np.any(front > y, axis=1))\n        vol = np.prod(np.maximum(y - ref_arr, 0.0))\n        mu_sum = gp[\"Tm\"][\"mean\"] + gp[\"kD\"][\"mean\"] + gp[\"viscosity\"][\"mean\"]\n        scores.append(mu_sum + (0.1 if dominated else 1.0) * vol)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "loc": 12,
+    "fitness": 0.565,
+    "mean_hv": 6210.784827253115,
+    "n_campaigns": 8,
+    "selection_signature": "e4d07da19a490e336584afa8afd5f300"
+  },
+  {
+    "id": "gen16_child0",
+    "code": "def score_pool(context):\n    front = context[\"pareto_front\"]\n    ref = context[\"ref_point_by_name\"]\n    ref_arr = np.array([ref[\"Tm\"], ref[\"kD\"], ref[\"viscosity\"]])\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        y = np.array([gp[\"Tm\"][\"mean\"], gp[\"kD\"][\"mean\"], gp[\"viscosity\"][\"mean\"]])\n        dominated = np.any(np.all(front >= y, axis=1) & np.any(front > y, axis=1))\n        vol = np.prod(np.maximum(y - ref_arr, 0.0))\n        mu_sum = gp[\"Tm\"][\"mean\"] + gp[\"kD\"][\"mean\"] + gp[\"viscosity\"][\"mean\"]\n        scores.append(mu_sum + (0.1 if dominated else 1.0) * vol)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "loc": 12,
+    "fitness": 0.565,
+    "mean_hv": 6777.210673787024,
+    "n_campaigns": 8,
+    "selection_signature": "047cc215847563b0a6bcacf062c6bfe1"
+  },
+  {
+    "id": "gen17_child0",
+    "code": "def score_pool(context):\n    front = context[\"pareto_front\"]\n    ref = context[\"ref_point_by_name\"]\n    ref_arr = np.array([ref[\"Tm\"], ref[\"kD\"], ref[\"viscosity\"]])\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        y = np.array([gp[\"Tm\"][\"mean\"], gp[\"kD\"][\"mean\"], gp[\"viscosity\"][\"mean\"]])\n        dominated = np.any(np.all(front >= y, axis=1) & np.any(front > y, axis=1))\n        vol = np.prod(np.maximum(y - ref_arr, 0.0))\n        mu_sum = gp[\"Tm\"][\"mean\"] + gp[\"kD\"][\"mean\"] + gp[\"viscosity\"][\"mean\"]\n        scores.append(mu_sum + (0.1 if dominated else 1.0) * vol)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "loc": 12,
+    "fitness": 0.565,
+    "mean_hv": 6627.831891092241,
+    "n_campaigns": 8,
+    "selection_signature": "a7b6dcb20bb76b007ceafa41923d9877"
+  }
+]

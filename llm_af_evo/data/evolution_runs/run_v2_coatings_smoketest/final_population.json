@@ -1,0 +1,38 @@
+[
+  {
+    "id": "trust_only",
+    "code": "def score_pool(context):\n    \"\"\"\n    Pure exploitation: rank by predicted objective sum only. Iterates over\n    context[\"objective_names\"] rather than hardcoding Tm/kD/viscosity, so\n    this works on any oracle's objective set. No sign-flipping is applied\n    here \u2014 gp[name][\"mean\"] is ALREADY in all-maximise convention by the\n    time score_pool sees it (upstream strategy code does that conversion\n    before building context), so re-applying objective_directions here\n    would double-flip and invert behaviour on any min-objective.\n    \"\"\"\n    names = context[\"objective_names\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        scores.append(sum(gp[name][\"mean\"] for name in names))\n    return scores",
+    "win_rate": 0.5,
+    "mean_margin": 0.14730895322797508,
+    "loc": 6,
+    "fitness": 0.11730895322797508,
+    "mean_hv": 479.854194481426,
+    "n_campaigns": 2,
+    "selection_signature": "ec7b997e759e961482053b3d5b6d9ac2",
+    "docstring": "Pure exploitation: rank by predicted objective sum only. Iterates over"
+  },
+  {
+    "id": "hint_fixed_ucb",
+    "code": "def score_pool(context):\n    \"\"\"Sum of predicted GP means plus a fixed-weight uncertainty bonus (UCB-style).\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_norm = sum(gp[name][\"std\"] / front_range[name] for name in names)\n        scores.append(mu_sum + 2.0 * sigma_norm)\n    return scores",
+    "win_rate": 0.5,
+    "mean_margin": 0.14730895322797508,
+    "loc": 9,
+    "fitness": 0.10230895322797508,
+    "mean_hv": 479.854194481426,
+    "n_campaigns": 2,
+    "selection_signature": "ec7b997e759e961482053b3d5b6d9ac2",
+    "docstring": "Sum of predicted GP means plus a fixed-weight uncertainty bonus (UCB-style)."
+  },
+  {
+    "id": "hint_phase_decaying_ucb",
+    "code": "def score_pool(context):\n    \"\"\"Weight uncertainty heavily early, decay as budget spends, exploit more later, with novelty boost during stagnation.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    campaign = context[\"campaign\"]\n    progress = campaign[\"progress\"]\n    stagnant_batches = campaign[\"stagnant_batches\"]\n    \n    # Decay factor for uncertainty term: higher early, lower later\n    uncertainty_weight = 1.0 - progress\n    \n    # Novelty boost when stagnant\n    novelty_boost = 1.0 + min(stagnant_batches, 5) * 0.2\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_norm = sum(gp[name][\"std\"] / front_range[name] for name in names)\n        \n        # Combine exploitation and uncertainty with decay and novelty\n        score = mu_sum + uncertainty_weight * sigma_norm * novelty_boost\n        scores.append(score)\n    \n    return scores",
+    "win_rate": 0.5,
+    "mean_margin": 0.14730895322797508,
+    "loc": 15,
+    "fitness": 0.07230895322797508,
+    "mean_hv": 479.854194481426,
+    "n_campaigns": 2,
+    "selection_signature": "ec7b997e759e961482053b3d5b6d9ac2",
+    "docstring": "Weight uncertainty heavily early, decay as budget spends, exploit more later, with novelty boost during stagnation."
+  }
+]

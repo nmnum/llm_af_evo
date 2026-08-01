@@ -1,0 +1,204 @@
+{
+  "history": [
+    {
+      "generation": 0,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184
+    },
+    {
+      "generation": 1,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 2,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 3,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 4,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 5,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 6,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 7,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 8,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 9,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 10,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 1
+    },
+    {
+      "generation": 11,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 12,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 13,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 14,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 15,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 16,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 17,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 18,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 19,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    },
+    {
+      "generation": 20,
+      "best_fitness": -0.0013942698584915834,
+      "best_mean_margin": 0.028605730141508415,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 433.81517024111184,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 2
+    }
+  ],
+  "mock": true,
+  "n_llm_calls": 0,
+  "n_llm_failures": 0,
+  "baseline_hvs": [
+    443.81366649236435,
+    433.8888382759322,
+    443.70101097174006,
+    352.4797822248046,
+    399.24763651281876,
+    400.09274570321315,
+    406.1253886820245,
+    525.0508971390432
+  ]
+}

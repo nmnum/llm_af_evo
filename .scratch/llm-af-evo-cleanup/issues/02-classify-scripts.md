@@ -41,7 +41,7 @@ cross-era mentions, not guessed).
 - `synthetic_mo_oracle.py` — ZDT1/DTLZ2 synthetic positive-control oracle used by the compose/DA-COREG gates
 
 ### `v1_pre_v2/experiments/`
-- `run_mock_subset.py`, `diagnostic_true_oracle_hv.py`, `sweep_lambda.py` — Jul 20-21 bootstrap
+- `run_mock_subset.py`, `diagnostic_true_oracle_hv.py`, `sweep_lambda.py` — Jul 20-21 bootstrap (note: `diagnostic_true_oracle_hv.py` was accidentally omitted from the file count in an earlier draft of this answer — confirmed present in the actual directory listing and classified here, bringing the true total to 50 files, not 49)
 - `validate_2b_seed.py`, `validate_l1.py`, `run_2b_diagnostic.py` — Jul 22-24 rank-collapse-bug diagnosis
 - `run_composition_pilot.py`, `run_composition_pilot_coatings.py`, `run_generation_pilot.py`, `run_batch_size_ablation.py`, `run_mc_hvi_pilot.py`, `run_baseline_decomposition_pilot.py`, `run_unsga3_pool_pilot.py` — the mAb pilot gauntlet (Part 3-6 gates)
 - `check_objective_correlation.py` — diagnosed the fake-3-objective coatings bug (Part 2)

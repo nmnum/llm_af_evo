@@ -1,0 +1,19 @@
+{
+  "n_steps": 180,
+  "n_win": 109,
+  "win_rate": 0.6055555555555555,
+  "mean_actual_true_hv_gain": 891.1675321817555,
+  "mean_exploit_true_hv_gain": 601.7477146146929,
+  "by_condition": {
+    "mo_egbo_novelty": {
+      "n_win": 57,
+      "n": 90,
+      "win_rate": 0.6333333333333333
+    },
+    "mo_ls_na_egbo": {
+      "n_win": 52,
+      "n": 90,
+      "win_rate": 0.5777777777777777
+    }
+  }
+}

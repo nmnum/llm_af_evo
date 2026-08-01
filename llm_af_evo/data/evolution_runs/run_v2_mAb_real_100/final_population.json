@@ -1,0 +1,103 @@
+[
+  {
+    "id": "trust_only",
+    "code": "def score_pool(context):\n    \"\"\"\n    Pure exploitation: rank by predicted objective sum only. Iterates over\n    context[\"objective_names\"] rather than hardcoding Tm/kD/viscosity, so\n    this works on any oracle's objective set. No sign-flipping is applied\n    here \u2014 gp[name][\"mean\"] is ALREADY in all-maximise convention by the\n    time score_pool sees it (upstream strategy code does that conversion\n    before building context), so re-applying objective_directions here\n    would double-flip and invert behaviour on any min-objective.\n    \"\"\"\n    names = context[\"objective_names\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        scores.append(sum(gp[name][\"mean\"] for name in names))\n    return scores",
+    "win_rate": 0.5866666666666667,
+    "mean_margin": 0.042427088970124434,
+    "loc": 6,
+    "fitness": 0.012427088970124435,
+    "mean_hv": 8154.189525126087,
+    "n_campaigns": 75,
+    "selection_signature": "2cf591d0438935570874b4363f14bd24",
+    "docstring": "Pure exploitation: rank by predicted objective sum only. Iterates over"
+  },
+  {
+    "id": "gen15_child1",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with dynamic uncertainty weighting: use higher uncertainty bonus early, reduce it later based on campaign progress.\"\"\"\n    names = context[\"objective_names\"]\n    progress = context[\"campaign\"][\"progress\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_sum = sum(gp[name][\"std\"] for name in names)\n        # Dynamic weight: start with 2.0, decay to 0.5 as progress increases\n        w = 2.0 - (1.5 * progress)\n        scores.append(mu_sum + w * sigma_sum)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.6266666666666667,
+    "mean_margin": 0.05371114981635673,
+    "loc": 10,
+    "fitness": 0.003711149816356729,
+    "mean_hv": 8302.24535461612,
+    "n_campaigns": 75,
+    "selection_signature": "251a151711a994976e6b0eb2284fda7f",
+    "docstring": "Exploitation with dynamic uncertainty weighting: use higher uncertainty bonus early, reduce it later based on campaign progress."
+  },
+  {
+    "id": "gen6_child1",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with progressive uncertainty weighting: higher predicted means, scaled by progress-driven UCB weight.\"\"\"\n    names = context[\"objective_names\"]\n    progress = context[\"campaign\"][\"progress\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        # Scale uncertainty contribution based on progress: less early, more later\n        ucb_weight = 0.5 + 0.5 * progress  # 0.5 to 1.0\n        sigma_sum = sum(gp[name][\"std\"] for name in names)\n        scores.append(mu_sum + ucb_weight * sigma_sum)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.5066666666666667,
+    "mean_margin": 0.034733107523033276,
+    "loc": 10,
+    "fitness": -0.015266892476966727,
+    "mean_hv": 8155.91324990532,
+    "n_campaigns": 75,
+    "selection_signature": "747c3be74c4ca5d0ec5a0f919a115c2e",
+    "docstring": "Exploitation with progressive uncertainty weighting: higher predicted means, scaled by progress-driven UCB weight."
+  },
+  {
+    "id": "random_init_0",
+    "code": "def score_pool(context):\n    \"\"\"weighted sum of: mu_sum(4.09)\"\"\"\n    X_obs = context[\"X_obs\"]\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (4.0850) * (sum(gp[name]['mean'] for name in names))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.5866666666666667,
+    "mean_margin": 0.042427088970124434,
+    "loc": 12,
+    "fitness": -0.017572911029875564,
+    "mean_hv": 8154.189525126087,
+    "n_campaigns": 75,
+    "selection_signature": "2cf591d0438935570874b4363f14bd24",
+    "docstring": "weighted sum of: mu_sum(4.09)"
+  },
+  {
+    "id": "hint_fixed_ucb",
+    "code": "def score_pool(context):\n    \"\"\"Score by predicted objective sum plus a fixed-weight uncertainty bonus, UCB-style.\"\"\"\n    names = context[\"objective_names\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_sum = sum(gp[name][\"std\"] for name in names)\n        scores.append(mu_sum + 2.0 * sigma_sum)\n    return scores",
+    "win_rate": 0.49333333333333335,
+    "mean_margin": 0.02174263217785364,
+    "loc": 8,
+    "fitness": -0.01825736782214636,
+    "mean_hv": 8242.939894782521,
+    "n_campaigns": 75,
+    "selection_signature": "292fd19695ec8502fa19eb3cebe5f5b0",
+    "docstring": "Score by predicted objective sum plus a fixed-weight uncertainty bonus, UCB-style."
+  },
+  {
+    "id": "gen3_child1",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with progress-aware uncertainty bonus: use UCB-style tradeoff, but shift weight towards exploitation as campaign progresses.\"\"\"\n    names = context[\"objective_names\"]\n    progress = context[\"campaign\"][\"progress\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_sum = sum(gp[name][\"std\"] for name in names)\n        # Early on, favour uncertainty; later, exploit more\n        w_exploit = 0.3 + 0.7 * progress\n        scores.append(w_exploit * mu_sum + (1 - w_exploit) * sigma_sum)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.5066666666666667,
+    "mean_margin": 0.03142102853650271,
+    "loc": 10,
+    "fitness": -0.018578971463497296,
+    "mean_hv": 8113.450555023683,
+    "n_campaigns": 75,
+    "selection_signature": "2cc69b10ce3347ce9fca21fa209c7f52",
+    "docstring": "Exploitation with progress-aware uncertainty bonus: use UCB-style tradeoff, but shift weight towards exploitation as campaign progresses."
+  },
+  {
+    "id": "gen18_child0",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with early uncertainty bonus: higher predicted means, boosted by uncertainty in early stages.\"\"\"\n    names = context[\"objective_names\"]\n    progress = context[\"campaign\"][\"progress\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        # Early exploration bonus: add uncertainty scaled by remaining budget\n        uncertainty_bonus = sum(gp[name][\"std\"] for name in names) * (1 - progress)\n        scores.append(mu_sum + uncertainty_bonus)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.48,
+    "mean_margin": 0.024194910217079653,
+    "loc": 9,
+    "fitness": -0.020805089782920345,
+    "mean_hv": 8099.80819511087,
+    "n_campaigns": 75,
+    "selection_signature": "c4927439c97b61bfb1c5d0aa9ec3cc75",
+    "docstring": "Exploitation with early uncertainty bonus: higher predicted means, boosted by uncertainty in early stages."
+  },
+  {
+    "id": "gen11_child1",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with adaptive uncertainty weighting: balance mean prediction and uncertainty based on campaign progress.\"\"\"\n    names = context[\"objective_names\"]\n    progress = context[\"campaign\"][\"progress\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_sum = sum(gp[name][\"std\"] for name in names)\n        # Adaptive weight: start with more exploitation, shift towards uncertainty as progress increases\n        weight = 0.7 + 0.3 * progress  # 0.7 to 1.0\n        scores.append(weight * mu_sum + (1 - weight) * sigma_sum)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.5066666666666667,
+    "mean_margin": 0.028891000930708288,
+    "loc": 10,
+    "fitness": -0.021108999069291715,
+    "mean_hv": 8133.181992047422,
+    "n_campaigns": 75,
+    "selection_signature": "509d279079a201cd7dd034600961595d",
+    "docstring": "Exploitation with adaptive uncertainty weighting: balance mean prediction and uncertainty based on campaign progress."
+  }
+]

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "trust_only",
+    "code": "def score_pool(context):\n    \"\"\"\n    Pure exploitation: rank by predicted objective sum only. Iterates over\n    context[\"objective_names\"] rather than hardcoding Tm/kD/viscosity, so\n    this works on any oracle's objective set. No sign-flipping is applied\n    here \u2014 gp[name][\"mean\"] is ALREADY in all-maximise convention by the\n    time score_pool sees it (upstream strategy code does that conversion\n    before building context), so re-applying objective_directions here\n    would double-flip and invert behaviour on any min-objective.\n    \"\"\"\n    names = context[\"objective_names\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        scores.append(sum(gp[name][\"mean\"] for name in names))\n    return scores",
+    "win_rate": 0.5,
+    "mean_margin": 0.028605730141508415,
+    "loc": 6,
+    "fitness": -0.0013942698584915834,
+    "mean_hv": 433.81517024111184,
+    "n_campaigns": 8,
+    "selection_signature": "7c143aed3468290ad6c32dd30d6935b8",
+    "docstring": "Pure exploitation: rank by predicted objective sum only. Iterates over"
+  },
+  {
+    "id": "random_init_1",
+    "code": "def score_pool(context):\n    \"\"\"weighted sum of: novelty_min(2.76), novelty_stagnation(4.68)\"\"\"\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (2.7638) * (float(np.linalg.norm(X_obs - cand['x'], axis=1).min()))\n        s = s + (4.6819) * (float(np.linalg.norm(X_obs - cand['x'], axis=1).min()) * min(stagnant, 5))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.5,
+    "mean_margin": 0.0329175852463977,
+    "loc": 12,
+    "fitness": -0.027082414753602298,
+    "mean_hv": 435.9549443494795,
+    "n_campaigns": 8,
+    "selection_signature": "500537fdf2531ef88f682699e6ccad8c",
+    "docstring": "weighted sum of: novelty_min(2.76), novelty_stagnation(4.68)"
+  },
+  {
+    "id": "random_init_2",
+    "code": "def score_pool(context):\n    \"\"\"weighted sum of: sigma_sum_norm_early(0.11)\"\"\"\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (0.1134) * ((gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity']) * max(0.0, 1.0 - progress))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.375,
+    "mean_margin": -0.012315995417625052,
+    "loc": 11,
+    "fitness": -0.06731599541762505,
+    "mean_hv": 414.52122299773714,
+    "n_campaigns": 8,
+    "selection_signature": "2f5cd160bbc0ea79f1c8fdc3d7ea986c",
+    "docstring": "weighted sum of: sigma_sum_norm_early(0.11)"
+  },
+  {
+    "id": "random_init_4",
+    "code": "def score_pool(context):\n    \"\"\"weighted sum of: sigma_sum_norm_early(2.75)\"\"\"\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (2.7532) * ((gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity']) * max(0.0, 1.0 - progress))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.375,
+    "mean_margin": -0.012315995417625052,
+    "loc": 11,
+    "fitness": -0.06731599541762505,
+    "mean_hv": 414.52122299773714,
+    "n_campaigns": 8,
+    "selection_signature": "2f5cd160bbc0ea79f1c8fdc3d7ea986c",
+    "docstring": "weighted sum of: sigma_sum_norm_early(2.75)"
+  },
+  {
+    "id": "random_init_5",
+    "code": "def score_pool(context):\n    \"\"\"weighted sum of: sigma_sum_norm(2.17)\"\"\"\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (2.1712) * (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.375,
+    "mean_margin": -0.012315995417625052,
+    "loc": 11,
+    "fitness": -0.06731599541762505,
+    "mean_hv": 414.52122299773714,
+    "n_campaigns": 8,
+    "selection_signature": "2f5cd160bbc0ea79f1c8fdc3d7ea986c",
+    "docstring": "weighted sum of: sigma_sum_norm(2.17)"
+  },
+  {
+    "id": "random_init_3",
+    "code": "def score_pool(context):\n    \"\"\"weighted sum of: novelty_min(3.68), sigma_sum_norm_early(0.96)\"\"\"\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (3.6753) * (float(np.linalg.norm(X_obs - cand['x'], axis=1).min()))\n        s = s + (0.9607) * ((gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity']) * max(0.0, 1.0 - progress))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.375,
+    "mean_margin": -0.012315995417625052,
+    "loc": 12,
+    "fitness": -0.07231599541762505,
+    "mean_hv": 414.52122299773714,
+    "n_campaigns": 8,
+    "selection_signature": "2f5cd160bbc0ea79f1c8fdc3d7ea986c",
+    "docstring": "weighted sum of: novelty_min(3.68), sigma_sum_norm_early(0.96)"
+  },
+  {
+    "id": "random_init_6",
+    "code": "def score_pool(context):\n    \"\"\"weighted sum of: novelty_stagnation(3.39), mu_sum(3.27)\"\"\"\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (3.3861) * (float(np.linalg.norm(X_obs - cand['x'], axis=1).min()) * min(stagnant, 5))\n        s = s + (3.2712) * (gp['Tm']['mean'] + gp['kD']['mean'] + gp['viscosity']['mean'])\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.375,
+    "mean_margin": -0.012315995417625052,
+    "loc": 12,
+    "fitness": -0.07231599541762505,
+    "mean_hv": 414.52122299773714,
+    "n_campaigns": 8,
+    "selection_signature": "2f5cd160bbc0ea79f1c8fdc3d7ea986c",
+    "docstring": "weighted sum of: novelty_stagnation(3.39), mu_sum(3.27)"
+  },
+  {
+    "id": "random_init_0",
+    "code": "def score_pool(context):\n    \"\"\"weighted sum of: sigma_sum_norm_early(0.18), sigma_sum_norm(4.09), sigma_max_norm(4.57)\"\"\"\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (0.1810) * ((gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity']) * max(0.0, 1.0 - progress))\n        s = s + (4.0850) * (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        s = s + (4.5725) * (max(gp['Tm']['std']/front_range['Tm'], gp['kD']['std']/front_range['kD'], gp['viscosity']['std']/front_range['viscosity']))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.375,
+    "mean_margin": -0.012315995417625052,
+    "loc": 13,
+    "fitness": -0.07731599541762506,
+    "mean_hv": 414.52122299773714,
+    "n_campaigns": 8,
+    "selection_signature": "2f5cd160bbc0ea79f1c8fdc3d7ea986c",
+    "docstring": "weighted sum of: sigma_sum_norm_early(0.18), sigma_sum_norm(4.09), sigma_max_norm(4.57)"
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "n_campaigns": 3,
+  "budget": 40,
+  "n_init": 10,
+  "batch_size": 5,
+  "seed": 42,
+  "objective_names": [
+    "conductivity",
+    "conductance_std"
+  ],
+  "objective_directions": [
+    "max",
+    "min"
+  ],
+  "per_campaign_final_hv": {
+    "mo_egbo_novelty": [
+      410.8758814023146,
+      395.1328068388218,
+      395.1672203761484
+    ],
+    "trust_only": [
+      434.675964770451,
+      353.09664832077283,
+      443.9767341779613
+    ],
+    "ehvi_approx": [
+      434.7127203767398,
+      405.4330649067263,
+      395.3977364590699
+    ]
+  }
+}

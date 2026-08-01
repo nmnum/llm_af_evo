@@ -1,0 +1,27 @@
+{
+  "history": [
+    {
+      "generation": 0,
+      "best_fitness": 0.11730895322797508,
+      "best_mean_margin": 0.14730895322797508,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 479.854194481426
+    },
+    {
+      "generation": 1,
+      "best_fitness": 0.11730895322797508,
+      "best_mean_margin": 0.14730895322797508,
+      "best_win_rate": 0.5,
+      "best_mean_hv": 479.854194481426,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0
+    }
+  ],
+  "mock": false,
+  "n_llm_calls": 1,
+  "n_llm_failures": 0,
+  "baseline_hvs": [
+    399.43166381711274,
+    443.514290231241
+  ]
+}

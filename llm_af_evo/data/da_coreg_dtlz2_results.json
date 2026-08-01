@@ -1,0 +1,305 @@
+[
+  {
+    "replicate": 2,
+    "per_campaign_final_hv": {
+      "mo_egbo_novelty": [
+        4.69533790608878,
+        4.9188456699057035,
+        4.575369464753437,
+        4.918397132116303,
+        4.8151275298944745,
+        4.8566878499965265,
+        4.7422318968758645,
+        4.8185195693704435,
+        4.599730512647781,
+        5.002560076134134,
+        4.641849626220782,
+        4.972421541114719,
+        4.8239505630057415,
+        4.758271486920859,
+        4.780374836392334,
+        4.615762059613854,
+        4.753758910165611,
+        4.7073090620262645,
+        4.686596861912774,
+        4.744434042051437
+      ],
+      "baseline_da_coreg": [
+        4.526802768599815,
+        4.66766424503444,
+        4.41776099023232,
+        4.763834366940072,
+        4.703399838268316,
+        4.677325358929198,
+        4.547793749466618,
+        4.694288987155719,
+        4.524353388827614,
+        4.983509866844767,
+        4.4831016895795575,
+        4.595734311690049,
+        4.753717423662512,
+        4.454398576317548,
+        4.54021695929899,
+        4.576017940997152,
+        4.520084512802661,
+        4.6403001494813845,
+        4.165113862206826,
+        4.553156628930371
+      ]
+    },
+    "summary": {
+      "baseline_da_coreg": {
+        "pct_diff": -3.813323817947517,
+        "n_wins": 0,
+        "n_campaigns": 20,
+        "p": 1.9073486328125e-06
+      }
+    },
+    "fallback_info": {
+      "mo_egbo_novelty": [
+        {
+          "campaign": 0,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 1,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 2,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 3,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 4,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 5,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 6,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 7,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 8,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 9,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 10,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 11,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 12,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 13,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 14,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 15,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 16,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 17,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 18,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 19,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        }
+      ],
+      "baseline_da_coreg": [
+        {
+          "campaign": 0,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 1,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 2,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 3,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 4,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 5,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 6,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 7,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 8,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 9,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 10,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 11,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 12,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 13,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 14,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 15,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 16,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 17,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 18,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        },
+        {
+          "campaign": 19,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": []
+        }
+      ]
+    }
+  }
+]

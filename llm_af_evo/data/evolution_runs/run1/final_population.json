@@ -1,0 +1,172 @@
+[
+  {
+    "id": "gen19_child1",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        uncertainty = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        novelty = np.linalg.norm(X_obs - cand['x'], axis=1).min()\n        exploitation = (gp['Tm']['mean'] + gp['kD']['mean'] + gp['viscosity']['mean']) / 3.0\n        scores.append(uncertainty * (2.0 + progress) + novelty * 0.1 + exploitation * (1.0 - progress))\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.30833333333333335,
+    "loc": 11,
+    "fitness": 0.25333333333333335,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "9f04e951eafe9ad91aa763c473eab48e"
+  },
+  {
+    "id": "gen18_child0",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        uncertainty = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        novelty = float(np.linalg.norm(X_obs - cand['x'], axis=1).min()) * min(stagnant, 5)\n        exploitation = (gp['Tm']['mean'] + gp['kD']['mean'] + gp['viscosity']['mean']) / 3.0\n        scores.append(uncertainty * (2.5 + 1.5 * progress) + novelty * 0.1 + exploitation * (1.0 - progress))\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.30833333333333335,
+    "loc": 12,
+    "fitness": 0.24833333333333335,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "ee27e2d7cb34b7c2a16987697c798cfa"
+  },
+  {
+    "id": "gen18_child7",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        ucb = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        dists = np.linalg.norm(X_obs - cand[\"x\"], axis=1)\n        novelty = float(dists.min())\n        w = 0.5 + 0.5 * progress  # weight uncertainty more early, novelty more late\n        scores.append(w * ucb - (1 - w) * novelty)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.30833333333333335,
+    "loc": 12,
+    "fitness": 0.24833333333333335,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "d01f2e0110caa2947d8dc04cc217a2d4"
+  },
+  {
+    "id": "gen20_child0",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        uncertainty = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        novelty = np.linalg.norm(X_obs - cand['x'], axis=1).min()\n        exploitation = (gp['Tm']['mean'] + gp['kD']['mean'] + gp['viscosity']['mean']) / 3.0\n        scores.append(uncertainty * (1.0 + progress) + novelty * 0.1 + exploitation * (1.0 - progress))\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.2861111111111111,
+    "loc": 11,
+    "fitness": 0.2311111111111111,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "41bed2ef88a6010b33c20fa150e7b4be"
+  },
+  {
+    "id": "random_init_2",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (0.1134) * ((gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity']) * max(0.0, 1.0 - progress))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.28055555555555556,
+    "loc": 11,
+    "fitness": 0.22555555555555556,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "a4fe03a5971dde12aa7c1e636b6e1bfd"
+  },
+  {
+    "id": "random_init_4",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (2.7532) * ((gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity']) * max(0.0, 1.0 - progress))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.28055555555555556,
+    "loc": 11,
+    "fitness": 0.22555555555555556,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "a4fe03a5971dde12aa7c1e636b6e1bfd"
+  },
+  {
+    "id": "random_init_5",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (2.1712) * (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.28055555555555556,
+    "loc": 11,
+    "fitness": 0.22555555555555556,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "a4fe03a5971dde12aa7c1e636b6e1bfd"
+  },
+  {
+    "id": "novelty_only",
+    "code": "def score_pool(context):\n    \"\"\"Pure novelty: rank by distance to the nearest observed point.\"\"\"\n    X_obs = context[\"X_obs\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        dists = np.linalg.norm(X_obs - cand[\"x\"], axis=1)\n        scores.append(float(dists.min()))\n    return scores",
+    "win_rate": 0.25555555555555554,
+    "loc": 6,
+    "fitness": 0.22555555555555554,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "ec139935a2e48d4adb052d0676b2ca99"
+  },
+  {
+    "id": "trust_only",
+    "code": "def score_pool(context):\n    \"\"\"Pure exploitation: rank by predicted objective sum only.\"\"\"\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        scores.append(gp[\"Tm\"][\"mean\"] + gp[\"kD\"][\"mean\"] + gp[\"viscosity\"][\"mean\"])\n    return scores",
+    "win_rate": 0.24722222222222223,
+    "loc": 5,
+    "fitness": 0.22222222222222224,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "0da749f930b69e35c8a6dda2395edad1"
+  },
+  {
+    "id": "random_init_8",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        s = s + (3.4592) * ((gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity']) * max(0.0, 1.0 - progress))\n        s = s + (3.2873) * (float(np.linalg.norm(X_obs - cand['x'], axis=1).min()) * min(stagnant, 5))\n        scores.append(s)\n    return scores\n",
+    "win_rate": 0.28055555555555556,
+    "loc": 12,
+    "fitness": 0.22055555555555556,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "f25eddfa51156996523bc91d8de7d549"
+  },
+  {
+    "id": "gen11_child3",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        ucb = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        novelty = np.linalg.norm(X_obs - cand['x'], axis=1).min()\n        s = 3.0 * ucb * max(0.0, 1.0 - progress) + 3.0 * novelty * min(stagnant, 5) * (1.0 - progress)\n        scores.append(s)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.28055555555555556,
+    "loc": 12,
+    "fitness": 0.22055555555555556,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "f56c3dd490b1e2a704f866ebe49eb09a"
+  },
+  {
+    "id": "gen14_child7",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        uncertainty = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        novelty = float(np.linalg.norm(X_obs - cand['x'], axis=1).min())\n        s = 2.0 * uncertainty + 3.0 * novelty * min(stagnant, 5) * max(0.0, 1.0 - progress)\n        scores.append(s)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.28055555555555556,
+    "loc": 12,
+    "fitness": 0.22055555555555556,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "a14986347805e4b120e68e1c70665b58"
+  },
+  {
+    "id": "gen5_child7",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        s = 0.0\n        ucb_term = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        s = s + 2.7532 * ucb_term * max(0.0, 1.0 - progress)\n        s = s + 0.5 * float(np.linalg.norm(X_obs - cand['x'], axis=1).min()) * min(stagnant, 5)\n        scores.append(s)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.2833333333333333,
+    "loc": 13,
+    "fitness": 0.21833333333333332,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "0bf3070f57a9892d83a9687688a18bd4"
+  },
+  {
+    "id": "gen10_child0",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        ucb = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        novelty = np.linalg.norm(X_obs - cand['x'], axis=1).min()\n        s = 2.0 * ucb + 0.5 * novelty * min(stagnant, 3) * (1.0 - progress)\n        scores.append(s)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.2777777777777778,
+    "loc": 12,
+    "fitness": 0.2177777777777778,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "2eb8f7c8b6b4a1154778668fda1d6a2b"
+  },
+  {
+    "id": "gen16_child6",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        ucb = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        novelty = np.linalg.norm(X_obs - cand['x'], axis=1).min()\n        s = ucb * max(0.0, 1.0 - progress) + 0.1 * novelty * min(stagnant, 5) * (1.0 - progress)\n        scores.append(s)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.2777777777777778,
+    "loc": 12,
+    "fitness": 0.2177777777777778,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "29c89ff9b518e0011cd45683e1ff01ca"
+  },
+  {
+    "id": "gen19_child2",
+    "code": "def score_pool(context):\n    X_obs = context[\"X_obs\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    stagnant = context[\"campaign\"][\"stagnant_batches\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        ucb_term = (gp['Tm']['std']/front_range['Tm'] + gp['kD']['std']/front_range['kD'] + gp['viscosity']['std']/front_range['viscosity'])\n        novelty = float(np.linalg.norm(X_obs - cand['x'], axis=1).min())\n        s = 2.1712 * ucb_term + 0.5 * novelty * min(stagnant, 5) * max(0.0, 1.0 - progress)\n        scores.append(s)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.2777777777777778,
+    "loc": 12,
+    "fitness": 0.2177777777777778,
+    "n_steps": 360,
+    "n_sandbox_failures": 0,
+    "selection_signature": "7aa750a671999ad3976ac780fde247de"
+  }
+]
