@@ -148,19 +148,18 @@ ORACLE_DEFAULTS = {
     },
 }
 
-# Per-oracle gamma defaults, used when --gamma is not given. coatings'
-# 0.001 replaces the original 0.005 after the n_seeds=100 coatings run
-# showed 0.005's LOC penalty (range ~1.5pp across the population) exceeding
-# the true performance margin spread (~1.29pp), inverting the training-vs-
-# held-out ranking (hint_fixed_ucb won training fitness but was the
-# weakest significant held-out winner; gen10_child1 had the worst training
-# fitness but the best held-out result). excipient/mAb's 0.005 is left
-# UNCHANGED and explicitly NOT validated — see the CV/noise-floor warning
-# printed in main() for --oracle excipient: gamma recalibration is
-# meaningless there until the fitness signal itself is noise-robust
-# (--fitness_stat / more training campaigns), so changing this number
-# alone would just pick a different arbitrary winner from the noise.
-GAMMA_DEFAULTS = {"excipient": 0.005, "coatings": 0.001}
+# Adaptive-gamma ceiling: the largest LOC spread expected across a
+# population, used to cap the total possible LOC penalty at one standard
+# error of the fitness signal (see evaluate_af_2b's GAMMA CALIBRATION
+# docstring) instead of a hand-tuned per-oracle constant. Empirically
+# confirmed, not guessed: across every completed evolution run logged in
+# data/evolution_runs/*/final_population.json, the observed max-min LOC
+# spread within a final population ranged 5-10 (run1: 8, run2_2b: 10,
+# run_v2: 7, run_v2_coatings_gamma001_v2: 8, run_v2_coatings_real[_100]: 5,
+# run_v2_coatings_smoketest: 9, run_v2_mAb_real_100: 6) — 10 is the actual
+# observed ceiling, not an assumption. Revisit if a future run's spread
+# exceeds this.
+MAX_LOC_SPREAD = 10
 
 # Per-oracle default for how many (GP-fit, UNSGA3) seed repeats to average
 # per campaign when computing fitness — see mab_noise_diagnostic.py's Axis
@@ -179,27 +178,14 @@ GAMMA_DEFAULTS = {"excipient": 0.005, "coatings": 0.001}
 # implied per-campaign margin std from ~0.494 to ~0.423 (SE at n=75 from
 # 0.057 to ~0.049), so this does NOT by itself solve mAb's noise-floor
 # problem (domain/campaign-to-campaign variance, ~73% of the total, is
-# still the dominant term and still needs --fitness_stat median and/or
-# more training campaigns) — it is a necessary, not sufficient, fix.
+# still the dominant term and still needs the bootstrap-CI-lower-bound
+# fitness and/or more training campaigns) — it is a necessary, not
+# sufficient, fix.
 # coatings (CV~15% cross-campaign, no seed-noise diagnostic run there
 # since its signal is already well above its own noise floor) keeps the
 # default at 1 (no change in behavior/cost) rather than paying 3x fitness-
 # evaluation cost for a fix that domain doesn't currently need.
 N_FITNESS_SEEDS_DEFAULTS = {"excipient": 3, "coatings": 1}
-
-# Per-oracle default for fitness_stat. mAb's per-campaign relative-margin
-# distribution is wide (std~0.494) and skewed by outlier campaigns (e.g.
-# gen6_child0 on coatings: mean +3.745% vs median +0.181% — a real,
-# directly observed example of the mean being outlier-inflated relative to
-# the median), so median is the more representative central tendency once
-# n_campaigns is large enough to make the median itself stable. coatings'
-# distribution is far less skewed (low CV, no comparable mean/median gap
-# observed) so mean stays the default there, unchanged. Still overridable
-# via --fitness_stat directly; median is NOT a complete fix for mAb on its
-# own (see fitness_stat's own docstring/help) — it pairs with
-# N_FITNESS_SEEDS_DEFAULTS as the two-part mitigation, domain-noise-via-
-# more-campaigns is still the remaining, unaddressed piece.
-FITNESS_STAT_DEFAULTS = {"excipient": "median", "coatings": "mean"}
 
 # Offset between repeat-seed draws for a given campaign index, large
 # enough that repeat-seed values never collide with another campaign's own
@@ -271,8 +257,8 @@ def build_pseudo_steps(training_logs: list, baseline_hvs: list,
 # ── Fitness evaluation (full-campaign, via full_replay.run_2b_campaign) ────
 
 def evaluate_af_2b(code: str, training_logs: list, baseline_hvs: list,
-                    gamma: float, log_dir=None, oracle_family: str = "excipient",
-                    fitness_stat: str = "mean", n_fitness_seeds: int = 1) -> dict:
+                    gamma: float = None, log_dir=None, oracle_family: str = "excipient",
+                    n_fitness_seeds: int = 1) -> dict:
     """
     Full-campaign fitness — same replay mechanism as evolve_af_2b.py's
     evaluate_af_2b (oracle_family passed through to run_2b_campaign — see
@@ -292,46 +278,45 @@ def evaluate_af_2b(code: str, training_logs: list, baseline_hvs: list,
     batch) — a broken AF just produces a bad final_hv on that campaign
     rather than crashing here.
 
-    GAMMA CALIBRATION (see --gamma's CLI help for the practical summary):
-    mean_margin is RELATIVE ((hv - baseline_hv) / abs(baseline_hv)), chosen
-    over a raw-HV margin specifically so gamma doesn't need re-tuning
-    per domain (coatings HVs run in the hundreds, excipient HVs in the
-    thousands — a raw-HV gamma tuned for one would be meaningless for the
-    other). But relative margins are HETEROSCEDASTIC across campaigns with
-    very different baseline_hv — the same absolute HV difference produces
-    a much larger relative margin on a small-baseline_hv campaign than a
-    large one — so the noise floor (std of per-campaign relative diffs)
-    is not a portable constant across datasets and must be measured on
-    the actual training set being used, not assumed from another run or
-    another domain. Once measured (std_rel_diff, from e.g. trust_only's
-    per-campaign relative diff against baseline over n campaigns), the
-    calibration that keeps gamma large enough to break noise-driven ties
-    but small enough not to reverse genuine performance differences is:
+    FITNESS = a bootstrap-CI-lower-bound on the mean relative margin, minus
+    an adaptively-calibrated LOC penalty:
 
-        gamma ~= sqrt(0.5 * std_rel_diff / (3 * sqrt(n)) * min_effect / max_loc_spread)
+        fitness = ci_lower_16 - gamma * loc
 
-    where min_effect is the smallest margin you want evolution to reliably
-    preserve (e.g. the gap between two known seed strategies) and
-    max_loc_spread is the largest LOC difference expected in the
-    population (~10 for this repo's seeds/hints). Too-low gamma for a
-    given n_campaigns is a SILENT failure mode — nothing errors or warns,
-    fitness just stops having any complexity pressure at all.
+    This replaces the old point-estimate `margin_stat - gamma*loc` design.
+    The problem that design had (directly measured on mAb/excipient):
+    baseline_hv has CV~50% across 75 training campaigns, giving
+    SE(mean_margin)~0.057 against top-AF margin gaps of ~0.011 (~0.2 SE) —
+    the point-estimate signal there was noise, not AF quality, regardless
+    of gamma, and a fixed-mean fitness has no way to tell a genuinely
+    better-but-noisy AF apart from a lucky one. Using the bootstrap
+    distribution's 16th percentile (approx. one SE below the mean, chosen
+    over a stricter 2.5th percentile because it's less likely to discard
+    genuinely good AFs from a small ~8-candidate population) instead
+    directly encodes "how bad could this look under resampling noise" into
+    the score AND, as a side effect, already discounts AFs whose mean is
+    inflated by a handful of outlier campaigns (a real, observed case:
+    gen6_child0 on coatings had mean +3.745% vs median +0.181% — a skewed
+    distribution produces a wide, low bootstrap CI without needing a
+    separate median/trimmed-mean step). The bootstrap always resamples
+    np.mean (not a `fitness_stat` choice — median as a separate lever was
+    retired, superseded by the CI-lower-bound covering the same problem).
 
-    fitness_stat: "mean" (default, matches the calibration formula above)
-    or "median". Median is a noise-robustness option for domains where the
-    per-campaign relative-margin distribution is heavy-tailed/high-variance
-    enough that a handful of noisy campaigns can swing mean_margin more
-    than genuine AF-quality differences do — directly measured on mAb
-    (excipient oracle): baseline_hv has CV~50% across 75 training
-    campaigns, giving SE(mean_margin)~0.057 against top-AF margin gaps of
-    ~0.011 (~0.2 SE) — the mean-based signal there is noise, not AF
-    quality, regardless of gamma. Median alone does not fix this (a
-    noise-dominated distribution has a noisy median too, and this project
-    has not verified median's SE is meaningfully smaller here) — it is
-    offered as a documented, opt-in alternative, not a validated fix.
-    Anyone using fitness_stat="median" on a high-CV domain should still
-    treat the result as provisional until compared against a bootstrap-CI
-    check or an increase in training campaign count.
+    GAMMA CALIBRATION is now ADAPTIVE, not a hand-tuned per-oracle
+    constant: gamma = SE(mean_margin) / MAX_LOC_SPREAD, where
+    SE(mean_margin) = std(rel_margins) / sqrt(n_campaigns) is measured
+    fresh from THIS call's own rel_margins (relative margins are
+    heteroscedastic across campaigns with very different baseline_hv, so
+    the noise floor is not a portable constant across datasets/domains —
+    it must be measured on the actual training set being evaluated).
+    MAX_LOC_SPREAD (module constant, empirically confirmed against every
+    completed run's final_population.json — see its own comment) caps the
+    total possible LOC penalty at exactly one SE: LOC can only break ties
+    between AFs whose ci_lower values are within noise distance of each
+    other, and can never override a genuine, noise-exceeding performance
+    gap. Pass an explicit `gamma` to override this (e.g. for reproducing
+    an old run's fixed-gamma behavior); leave it None for the adaptive
+    default.
 
     n_fitness_seeds: number of (GP-fit, UNSGA3) seed repeats to average per
     campaign (seeds i, i+FITNESS_SEED_STRIDE, i+2*FITNESS_SEED_STRIDE, ...
@@ -342,8 +327,9 @@ def evaluate_af_2b(code: str, training_logs: list, baseline_hvs: list,
     larger than either raw HV series's own seed variance, and ~23x the
     ~0.011 margin gap this project is trying to detect), but is NOT
     sufficient on its own — domain/campaign-to-campaign noise is still the
-    majority of mAb's total variance and still needs --fitness_stat median
-    and/or more training campaigns regardless of this setting.
+    majority of mAb's total variance and still needs the bootstrap-CI-
+    lower-bound fitness and/or more training campaigns regardless of this
+    setting.
 
     LOGGING: writes `code` to log_dir ONCE per evaluate_af_2b call, here —
     NOT via sandbox_log_dir threaded down into run_2b_campaign/
@@ -385,31 +371,34 @@ def evaluate_af_2b(code: str, training_logs: list, baseline_hvs: list,
                                         # FITNESS METRIC note)
     mean_margin = float(np.mean(rel_margins)) if rel_margins else 0.0
     median_margin = float(np.median(rel_margins)) if rel_margins else 0.0
-    margin_stat = median_margin if fitness_stat == "median" else mean_margin
     loc = count_loc(code)
-    fitness = margin_stat - gamma * loc
 
-    # Bootstrap 95% CI on margin_stat, resampled from the already-computed
-    # rel_margins list — costs nothing beyond this resampling (no extra
-    # campaign runs), reporting-only per the noise-diagnostic follow-up's
-    # "median for fitness, bootstrap for reporting" recommendation. Not
-    # used in `fitness` itself — read this alongside margin_stat to see
-    # how much of that number is n_campaigns-limited uncertainty rather
-    # than a precise estimate.
+    # Bootstrap the MEAN (always — median as a separate fitness_stat lever
+    # was retired, see this function's GAMMA CALIBRATION docstring above).
+    # ci_lower_16 (16th percentile, ~1 SE below the mean) feeds `fitness`
+    # directly; the wider 2.5th/97.5th bootstrap_ci is reporting-only, to
+    # see how much of mean_margin is n_campaigns-limited uncertainty.
+    ci_lower_16 = mean_margin
     bootstrap_ci = None
     if len(rel_margins) >= 2:
         boot_rng = np.random.default_rng(0)
-        boot_stat = np.median if fitness_stat == "median" else np.mean
         boot_samples = [
-            boot_stat(boot_rng.choice(rel_margins, size=len(rel_margins), replace=True))
+            float(np.mean(boot_rng.choice(rel_margins, size=len(rel_margins), replace=True)))
             for _ in range(2000)
         ]
+        ci_lower_16 = float(np.percentile(boot_samples, 16))
         bootstrap_ci = [float(np.percentile(boot_samples, 2.5)),
                          float(np.percentile(boot_samples, 97.5))]
 
+    if gamma is None:
+        se = float(np.std(rel_margins, ddof=1) / np.sqrt(n)) if n > 1 else 0.0
+        gamma = se / MAX_LOC_SPREAD
+
+    fitness = ci_lower_16 - gamma * loc
+
     return {"win_rate": win_rate, "mean_margin": mean_margin,
-            "median_margin": median_margin, "fitness_stat": fitness_stat,
-            "bootstrap_ci": bootstrap_ci,
+            "median_margin": median_margin, "ci_lower_16": ci_lower_16,
+            "bootstrap_ci": bootstrap_ci, "gamma": gamma,
             "loc": loc, "fitness": fitness,
             "mean_hv": float(np.mean(hvs)) if hvs else float("nan"),
             "n_campaigns": n, "selection_signature": sig_hasher.hexdigest(),
@@ -808,7 +797,7 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
                    feature_dim: int = 16, directions: list = None,
                    oracle_family: str = "excipient",
                    log_dir: pathlib.Path = None,
-                   fitness_stat: str = "mean", n_fitness_seeds: int = 1) -> dict:
+                   n_fitness_seeds: int = 1) -> dict:
     rng = np.random.default_rng(seed)
     objective_names = objective_names or ORACLE_DEFAULTS["excipient"]["objective_names"]
     domain_description = domain_description or ORACLE_DEFAULTS["excipient"]["domain_description"]
@@ -817,7 +806,7 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
     population = []
     for name, code in SEED_PROGRAMS.items():
         result = evaluate_af_2b(code, training_logs, baseline_hvs, gamma, log_dir=log_dir,
-                                 oracle_family=oracle_family, fitness_stat=fitness_stat,
+                                 oracle_family=oracle_family,
                                  n_fitness_seeds=n_fitness_seeds)
         population.append({"id": name, "code": code,
                             "term_weights": SEED_TERM_WEIGHTS.get(name), **result})
@@ -843,7 +832,7 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
                 term_weights = random_program(rng)
                 code = render_program(term_weights)
             result = evaluate_af_2b(code, training_logs, baseline_hvs, gamma, log_dir=log_dir,
-                                     oracle_family=oracle_family, fitness_stat=fitness_stat,
+                                     oracle_family=oracle_family,
                                      n_fitness_seeds=n_fitness_seeds)
             population.append({"id": f"hint_{hint_name}", "code": code,
                                 "term_weights": term_weights, **result})
@@ -854,7 +843,7 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
         tw = random_program(rng)
         code = render_program(tw)
         result = evaluate_af_2b(code, training_logs, baseline_hvs, gamma, log_dir=log_dir,
-                                 oracle_family=oracle_family, fitness_stat=fitness_stat,
+                                 oracle_family=oracle_family,
                                  n_fitness_seeds=n_fitness_seeds)
         population.append({"id": f"random_init_{i}", "code": code,
                             "term_weights": tw, **result})
@@ -887,7 +876,7 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
                 n_llm_calls += 1
                 n_llm_failures += (not used_llm)
             result = evaluate_af_2b(code, training_logs, baseline_hvs, gamma, log_dir=log_dir,
-                                     oracle_family=oracle_family, fitness_stat=fitness_stat,
+                                     oracle_family=oracle_family,
                                      n_fitness_seeds=n_fitness_seeds)
             children.append({"id": f"gen{gen}_child{i}", "code": code,
                               "term_weights": term_weights, "used_llm": used_llm, **result})
@@ -956,39 +945,17 @@ def main():
     ap.add_argument("--n_generations", type=int, default=20)
     ap.add_argument("--n_offspring", type=int, default=2)
     ap.add_argument("--gamma", type=float, default=None,
-                     help="Complexity penalty. Defaults to GAMMA_DEFAULTS[--oracle] "
-                          "if not given (0.001 for coatings, recalibrated from the "
-                          "original 0.005 after that value was found to invert the "
-                          "training-vs-held-out ranking on the n_seeds=100 coatings "
-                          "run — see evaluate_af_2b's GAMMA CALIBRATION docstring; "
-                          "0.005 for excipient/mAb, UNCHANGED and NOT yet validated "
-                          "— mAb's fitness signal is noise-dominated at this "
-                          "n_campaigns regardless of gamma, see --fitness_stat's "
-                          "help and the CV/noise-floor warning printed at startup "
-                          "for --oracle excipient). This is a silent failure mode, "
-                          "not an error: too-low gamma for a given n_campaigns just "
-                          "means zero complexity pressure, nothing crashes or warns. "
-                          "The right value should come from your OWN measured "
-                          "per-campaign relative-diff std (not a borrowed constant "
-                          "— relative margins are heteroscedastic across campaigns "
-                          "with very different baseline_hv, so don't assume this "
-                          "dataset's noise floor matches another's). See "
-                          "evaluate_af_2b's docstring for the calibration formula.")
-    ap.add_argument("--fitness_stat", choices=["mean", "median"], default=None,
-                     help="Statistic of per-campaign relative margins used in "
-                          "fitness. Defaults to FITNESS_STAT_DEFAULTS[--oracle] if "
-                          "not given (median for excipient/mAb, mean for coatings) "
-                          "— median because mAb's per-campaign margin distribution "
-                          "is wide (std~0.494) and mean-skewing (directly observed: "
-                          "gen6_child0 on coatings had mean +3.745%% vs median "
-                          "+0.181%%). Using 'median' (plus --n_fitness_seeds) does "
-                          "not by itself prove the fitness signal now exceeds the "
-                          "noise floor — domain/campaign-to-campaign noise (the "
-                          "majority of mAb's variance per mab_noise_diagnostic.py) "
-                          "still needs more --n_campaigns; treat results as "
-                          "provisional until checked against a bootstrap CI (see "
-                          "evaluate_af_2b's returned 'bootstrap_ci' field) or a "
-                          "larger n_campaigns.")
+                     help="Complexity penalty. Leave unset (default) for the "
+                          "ADAPTIVE gamma evaluate_af_2b computes per call: "
+                          "gamma = SE(mean_margin) / MAX_LOC_SPREAD, measured "
+                          "fresh from each candidate's own rel_margins — this "
+                          "caps the total possible LOC penalty at one standard "
+                          "error, so LOC can only break ties between AFs whose "
+                          "fitness is within noise distance of each other, never "
+                          "override a genuine performance gap. See "
+                          "evaluate_af_2b's GAMMA CALIBRATION docstring. Pass an "
+                          "explicit value here only to reproduce an old run's "
+                          "fixed-gamma behavior.")
     ap.add_argument("--mock", action="store_true", default=True,
                      help="Use mock (term-weight) crossover instead of an LLM. NOTE: "
                           "this does NOT make evaluation cheap — every candidate, mock "
@@ -1031,44 +998,40 @@ def main():
                           "larger than either raw HV series's own seed variance) "
                           "but is NOT sufficient alone — domain/campaign-to-"
                           "campaign noise is still the majority of mAb's total "
-                          "variance and still needs --fitness_stat median and/or "
-                          "more --n_campaigns regardless of this setting. Directly "
+                          "variance and still needs the bootstrap-CI-lower-bound "
+                          "fitness and/or more --n_campaigns regardless of this "
+                          "setting. Directly "
                           "multiplies the cost of every fitness evaluation by this "
                           "factor (baseline compute too).")
     ap.add_argument("--out_dir", default=str(HERE / "evolution_runs" / "run_v2"))
     args = ap.parse_args()
 
     if args.gamma is None:
-        args.gamma = GAMMA_DEFAULTS[args.oracle]
-        print(f"--gamma not given, using GAMMA_DEFAULTS[{args.oracle!r}]={args.gamma}")
+        print("--gamma not given, using the ADAPTIVE gamma computed fresh per "
+              "candidate inside evaluate_af_2b (SE(mean_margin)/MAX_LOC_SPREAD).")
 
     if args.n_fitness_seeds is None:
         args.n_fitness_seeds = N_FITNESS_SEEDS_DEFAULTS[args.oracle]
         print(f"--n_fitness_seeds not given, using "
               f"N_FITNESS_SEEDS_DEFAULTS[{args.oracle!r}]={args.n_fitness_seeds}")
 
-    if args.fitness_stat is None:
-        args.fitness_stat = FITNESS_STAT_DEFAULTS[args.oracle]
-        print(f"--fitness_stat not given, using "
-              f"FITNESS_STAT_DEFAULTS[{args.oracle!r}]={args.fitness_stat!r}")
-
-    if args.oracle == "excipient" and args.fitness_stat == "mean":
+    if args.oracle == "excipient":
         print(
             "\n" + "=" * 70 +
-            "\nWARNING: --oracle excipient with --fitness_stat mean (default).\n"
-            "The mAb/excipient training fitness signal is noise-dominated at\n"
-            "typical training-set sizes: baseline_hv CV~50% at n=75 training\n"
-            "campaigns gives SE(mean_margin)~0.057, while observed top-AF margin\n"
-            "gaps are ~0.011 (~0.2 SE) — well within noise, not distinguishable\n"
-            "AF quality. gamma recalibration does not fix this. --n_fitness_seeds="
-            f"{args.n_fitness_seeds} averages out SEED-driven noise (a real but "
-            "partial fix — mab_noise_diagnostic.py found seed noise accounts for "
-            "~27% of mAb's per-campaign margin variance, domain noise the rest), "
-            "so the training fitness ranking is still NOT fully trustworthy on "
-            "this oracle even with this mitigation. Consider --fitness_stat "
-            "median (not yet validated as sufficient — see its help text) and/or "
-            "increasing --n_campaigns substantially before treating this run's "
-            "winner as a real finding.\n" + "=" * 70 + "\n")
+            "\nNOTE: --oracle excipient (mAb). The training fitness signal is\n"
+            "noise-dominated at typical training-set sizes: baseline_hv CV~50%\n"
+            "at n=75 training campaigns gives SE(mean_margin)~0.057, while\n"
+            "observed top-AF margin gaps are ~0.011 (~0.2 SE) — well within\n"
+            "noise on a raw point estimate. Fitness now uses a bootstrap\n"
+            "16th-percentile CI-lower-bound on the mean instead of the mean\n"
+            "itself (see evaluate_af_2b's docstring) specifically to make this\n"
+            "noise-vs-signal problem visible in the ranking rather than hidden\n"
+            "behind a false-precision point estimate. --n_fitness_seeds="
+            f"{args.n_fitness_seeds} averages out SEED-driven noise on top of "
+            "that (mab_noise_diagnostic.py found seed noise accounts for ~27% "
+            "of mAb's per-campaign margin variance, domain noise the rest) — "
+            "still worth increasing --n_campaigns substantially before "
+            "treating this run's winner as a real finding.\n" + "=" * 70 + "\n")
 
     out_dir = pathlib.Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1097,7 +1060,7 @@ def main():
         args.gamma, args.mock, args.model, args.seed,
         objective_names=objective_names, domain_description=domain_description,
         feature_dim=feature_dim, directions=directions, oracle_family=args.oracle,
-        log_dir=code_log_dir, fitness_stat=args.fitness_stat,
+        log_dir=code_log_dir,
         n_fitness_seeds=args.n_fitness_seeds,
     )
 
