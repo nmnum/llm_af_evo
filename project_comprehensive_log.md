@@ -1,0 +1,162 @@
+# Comprehensive Project Log: Self-Driving Lab — Adaptive Campaign Planner for LLM-BO
+
+**Project**: Simulating experimental campaigns to understand which optimisation strategies work, fail, or break under different biological and experimental regimes, and deriving design rules for an adaptive campaign planner.
+
+**Author**: Neha Mungale
+**Supervisor**: David Shorthouse (UCL School of Pharmacy)
+**Date compiled**: 2026-08-01
+**Date updated**: 2026-08-02 — supersedes `project_comprehensive_log_previous.md`. Sections 1–11 are carried over unchanged (see that file for full detail); this version rewrites Section 12 onward to incorporate the Phase 1/2/sensitivity benchmark suite that was run after the previous log was compiled, including the missing mAb_aggregation WRONG/blank multi-objective comparison the previous log flagged as outstanding.
+**Scope**: Everything — from the original cancer drug screening work through the pharmaceutical formulation pivot, single-objective stress tests, multi-objective oracle construction, bug diagnosis and fixing, the wrong-prior findings, and the subsequent LS-NA-EGBO / novelty-aware benchmark suite.
+
+---
+
+## What changed since the previous log
+
+The previous log ended with two open items:
+
+1. **C2** (per-objective trust diagnostic) not validated at budget=40/d=16 — trust collapsed to 0.700 for every objective.
+2. **The missing mAb_aggregation WRONG/blank multi-objective run** — needed to tell whether the mAb_oxidation "wrong prior wins" result was a genuine mechanism effect or just arginine's universal kD dominance.
+
+Since then, a new benchmark suite (`run_benchmark.py`, `run_benchmark_resumable.py`, `run_sensitivity.py`) was built and run, introducing three new strategies not present in the previous log's campaign runner:
+
+- **`mo_egbo_novelty`** — EGBO (qLogNEHVI + U-NSGA-III) with novelty-aware batch selection (`novelty_selection.py`), following Aqeeli et al. — candidates are chosen with `score = w_acq * acquisition + w_nov * novelty` instead of pure acquisition ranking, to stop batches clustering in one region.
+- **`mo_ls_na_egbo`** ("LLM-Seeded, Novelty-Aware EGBO", `strategy_ls_na_egbo.py`) — the architecture now recommended by the project's mechanistic diagnosis: the LLM is called **once**, before any experiments, to warm-start the initial batch with mechanistically diverse formulations (`llm_warmstart.py`); after that, EGBO with novelty-aware selection runs autonomously for the rest of the campaign. This replaces the previous per-batch trust-weighted mixing (`mo_llm`/`strategy_mo_llm`) as the primary LLM-informed strategy.
+- **`mo_llm_candidate_gen`** (`strategy_llm_candidate_gen.py`) — LLM called every batch as a candidate generator (20–30 proposals/batch), merged into the EGBO pool and scored by qLogNEHVI, no trust diagnostic. **Important naming correction**: this was originally implemented and labelled "LABO" (`mo_llm_labo`). It does **not** implement the literature LABO method (Kennedy–O'Hagan multi-fidelity surrogate with a gating rule that can skip real experiments when the LLM's low-fidelity prediction is trusted enough). It was renamed to `strategy_llm_candidate_gen`/`mo_llm_candidate_gen` to avoid the false claim of literature fidelity. A true gated multi-fidelity LABO implementation remains unbuilt and out of scope. **Old result tables in this log or elsewhere that say "mo_llm_labo" refer to this same renamed strategy, run before the rename.**
+- **`mo_ls_egbo`** — an ablation added in the sensitivity sweep: LLM warm-start + real EGBO with **no** novelty-aware selection, to isolate the warm-start effect from the novelty-selection effect.
+
+The old trust-weighted `mo_llm` strategy and the per-objective trust diagnostic from Phase 5–8 of the previous log are **not used** in this new suite — they were superseded by the warm-start architecture rather than fixed. C2 (the trust diagnostic) is therefore still unvalidated and now effectively shelved in favour of a design that doesn't depend on it (see "Status of C2" below).
+
+Three benchmark runs exist in `results/`:
+
+| Directory | Script | Conditions | Seeds | Budget |
+|---|---|---|---|---|
+| `results/benchmark_phase1/` | `run_benchmark_resumable.py --phase 1` | mo_random, mo_egbo, mo_egbo_real, mo_egbo_novelty, mo_ls_na_egbo, mo_llm_labo (= mo_llm_candidate_gen, pre-rename), mo_ls_egbo | 15 | 30 |
+| `results/benchmark_phase2/` | `run_benchmark_resumable.py --phase 2` | mo_random, mo_egbo, mo_egbo_real, mo_egbo_novelty, mo_ls_na_egbo, mo_llm_candidate_gen | 25 | 40 |
+| `results/benchmark_sensitivity/` | `run_sensitivity.py` | mo_egbo_novelty and mo_ls_na_egbo at w_nov ∈ {0.00, 0.10, 0.15, 0.20, 0.30}, plus mo_ls_egbo | 15 | 30 |
+
+Phase 1 used the reduced formulation space; Phase 2 used the full 14-excipient space and is the one that matters for the thesis's headline numbers. **Phase 3 (cross-domain generalisation to synthetic coatings, `run_phase3.py`) was written but never run — there are no results for it in `results/`.** Treat any Phase 3 claims as design-only, not evidence.
+
+All of `run_benchmark.py`, `run_benchmark_resumable.py`, `run_sensitivity.py`, `run_phase3.py`, `novelty_selection.py`, `strategy_ls_na_egbo.py`, `strategy_llm_candidate_gen.py`, `llm_warmstart.py` are currently **untracked** in git (`git status` at time of writing shows them as `??`) — they exist on disk but have never been committed. Commit them before relying on this log surviving a `git clean` or fresh checkout.
+
+---
+
+## 12 (revised). The Missing Comparison, Resolved: mAb_aggregation WRONG/blank in Multi-Objective
+
+Phase 2 (`results/benchmark_phase2/phase2_summary.csv`, 25 seeds, budget=40, full excipient space) is the first run to cross `mAb_aggregation` with `prior_level=wrong`. This is the comparison the previous log called "the single most informative comparison remaining."
+
+### Result (HV mean ± SD, mo_llm_candidate_gen, mAb_aggregation)
+
+| Prior | HV mean ± SD |
+|---|---|
+| L1 (correct — arginine-forward) | 12736 ± 1753 |
+| blank | 12270 ± 1627 |
+| **wrong** (oxid_L1 — methionine-forward) | **12691 ± 1567** |
+
+For reference, in the same table: `mo_random` = 10926 ± 2007 (constant across priors, as expected), `mo_egbo_real` ranges 12835–13366 across priors, `mo_egbo_novelty` ranges 12790–13418, `mo_ls_na_egbo` ranges 12890–13744.
+
+None of the pairwise differences between L1/blank/wrong for `mo_llm_candidate_gen` are statistically significant (see `phase2_stats_vs_egbo_novelty.csv`: e.g. wrong vs `mo_egbo_novelty` baseline gives p=0.635 uncorrected). All three prior conditions clearly and significantly beat `mo_random` (p < 0.002, Holm-corrected, for all three).
+
+### Interpretation
+
+This resolves the open question cleanly, and in the more informative of the two possible directions:
+
+- **It is not the case that WRONG uniformly wins in multi-objective formulations.** If it had (i.e. if WRONG had also dominated on mAb_aggregation), the mAb_oxidation "wrong prior wins" result from Phase 7/8 of the previous log would have been explained away as "arginine dominates kD on every profile regardless of mechanism," which would have undermined the entire mechanism-reasoning story.
+- **It is also not the case that WRONG uniformly hurts**, which would have just reproduced the single-objective result and made the multi-objective reward-structure argument (Section 12 of the previous log, "Finding 3") moot.
+- Instead, the WRONG-prior benefit is **profile-dependent**, exactly as the multi-objective reward-structure argument predicts: on mAb_aggregation, arginine (the excipient the correct L1 prior already recommends) is already the *mechanistically correct* choice for kD, so there's no "free ride" from an incidental cross-cutting effect — WRONG, L1, and blank cluster together because the LLM's own domain reasoning has less differential value here than the underlying kD chemistry does. On mAb_oxidation, by contrast, the correct mechanism (methionine, oxidation-focused) leaves kD's large dynamic range unexploited, so the WRONG-but-arginine-forward prior gets a disproportionate hypervolume reward from kD alone — that is where the previous log's WRONG-wins effect (2763 vs 2413 for L1) lives.
+
+### Updated claim
+
+> Wrong-mechanism priors do not have a fixed effect sign in multi-objective formulation optimisation. Whether a mechanistically wrong prior helps, hurts, or is indistinguishable from a correct one depends on (a) how much unexploited dynamic range the "accidentally correct" objective has under the correct mechanism, and (b) how much the wrong prior's recommended excipient overlaps with the objective that has that unexploited range. This was tested directly: on mAb_oxidation, where the correct mechanism (methionine) leaves kD's range mostly unused, the wrong prior (arginine) wins outright. On mAb_aggregation, where the correct mechanism already targets kD directly, wrong/blank/correct priors are statistically indistinguishable.
+
+This is a stronger, testable, falsifiable version of C3 than either the original formulation ("wrong prior hurts") or the earlier single-datapoint reframing ("wrong prior can partially help") — and it now rests on two profiles' worth of evidence instead of one.
+
+### Caveat for the thesis
+
+The Phase 2 `mo_llm_candidate_gen` strategy is not the same strategy that produced the original mAb_oxidation WRONG=2763 result in the previous log (that used the old trust-weighted `mo_llm`/`strategy_mo_llm`, which has since been superseded). The Phase 2 mAb_oxidation numbers for `mo_llm_candidate_gen` (L1=2492, blank=2584, wrong=2572 — all statistically indistinguishable, see `phase2_summary.csv`) do **not** reproduce the original dramatic WRONG-wins effect under the new strategy. Before writing this up as a validated finding, decide explicitly which strategy's results the thesis is claiming: the original `mo_llm` mechanism (per-batch trust-weighted mixing, Phase 7/8 of the previous log, WRONG=2763) or the new `mo_llm_candidate_gen` mechanism (Phase 2, WRONG=2572, not different from L1). They point to different conclusions and should not be conflated as "the same experiment." The mAb_aggregation resolution above is valid either way since it only required the *absence* of a universal WRONG-wins effect, which both strategies agree on directionally — but the *strength* of the mAb_oxidation effect is strategy-dependent and needs to be reconciled or reported as strategy-A-only.
+
+---
+
+## New Section: Novelty-Aware Selection and the LS-NA-EGBO Architecture
+
+### Why novelty-aware selection was added
+
+The previous log's Phase 5 (Section 9) identified that the lightweight `mo_egbo`'s UCB-based Pareto ranking was noise-dominated at low n and clustered candidates in one region. Following Aqeeli, Leelawat & Shorthouse (2026) — the directly related paper already cited in the previous log's literature review — `novelty_selection.py` implements hybrid selection:
+
+```
+score = w_acq * acquisition_merit_normalised + w_nov * novelty_normalised
+```
+
+where novelty is distance from already-selected points in normalised input space, computed sequentially within a batch. This is applied on top of `mo_egbo_real`'s qLogNEHVI/U-NSGA-III candidate pool (→ `mo_egbo_novelty`) and, combined with LLM warm-starting, forms `mo_ls_na_egbo`.
+
+### The LS-NA-EGBO architecture (`strategy_ls_na_egbo.py`)
+
+Two-stage design, replacing the previous log's per-batch trust-weighted LLM/GP mixing:
+
+- **Stage 1 (once, before any experiments)**: `llm_warmstart_init` (`llm_warmstart.py`) calls the LLM once to generate a diverse, mechanistically-reasonable initial batch. The prompt uses a three-layer design — domain-agnostic reasoning protocol, transferable domain physics, project-specific materials — intended to make the warm-start prompt portable to other domains (this is what Phase 3 was meant to test, but Phase 3 was never run).
+- **Stage 2 (rest of campaign, autonomous)**: novelty-aware EGBO (qLogNEHVI + U-NSGA-III + novelty-aware selection) runs without further LLM calls.
+
+This sidesteps the unvalidated per-objective trust diagnostic (C2) entirely — rather than using a live trust signal to decide the GP/LLM mixing ratio every batch, the architecture fixes the LLM's role to a one-shot prior injection and lets EGBO handle everything downstream. **This is an implicit resolution of C2's dependency, not a validation of the diagnostic itself**: C2 as originally scoped (a diagnostic that differentiates per-objective GP trust in real time) remains untested and is no longer load-bearing for the current best strategy.
+
+### Novelty weight sensitivity (`results/benchmark_sensitivity/`)
+
+Swept w_nov ∈ {0.0, 0.10, 0.15, 0.20, 0.30} for `mo_ls_na_egbo` and `mo_egbo_novelty`, 15 seeds, budget=30, both proteins × {L1, blank}:
+
+| Protein | Prior | Best w_nov (mo_ls_na_egbo, by HV mean) | HV at best | HV at w_nov=0.30 |
+|---|---|---|---|---|
+| mAb_aggregation | L1 | 0.10 | 12342 | 12325 |
+| mAb_aggregation | blank | 0.10 | 12731 | 11982 |
+| mAb_oxidation | L1 | 0.20 | 2414 | 2301 |
+| mAb_oxidation | blank | 0.10 | 2666 | 2445 |
+
+The literature default (Aqeeli et al.) of w_nov=0.3 is consistently among the worse settings in this domain — the sweep note in `novelty_selection.py`'s docstring records this explicitly ("0.3 is the Aqeeli et al. default but is too aggressive at budget=30 for this domain"). w_nov=0.10–0.15 is the better range here, likely because this formulation space (14–16D, budget 30–40) is far sparser than the discovery-science setting the default was tuned on, so novelty pressure that's appropriate there over-penalises acquisition merit here. `mo_ls_egbo` (warm-start, no novelty selection at all) is included as the isolating ablation and is competitive with the novelty-selected variants in several rows (e.g. mAb_oxidation, blank: 2526 vs 2666 at best w_nov) — meaning **on this domain, at this budget, most of the benefit is coming from the LLM warm-start, not from novelty-aware selection**, which should be stated plainly rather than assumed.
+
+### Phase 1 vs Phase 2 headline comparison (mo_ls_na_egbo vs baselines)
+
+Phase 2 (25 seeds, budget=40, full 14-excipient space) is the more representative run:
+
+| Protein | Prior | mo_random | mo_egbo_real | mo_egbo_novelty | mo_ls_na_egbo |
+|---|---|---|---|---|---|
+| mAb_aggregation | L1 | 10926 ± 2007 | 13317 ± 1485 | 12829 ± 1044 | 13179 ± 1487 |
+| mAb_aggregation | blank | 10926 ± 2007 | 12835 ± 1143 | 12432 ± 1333 | **13744 ± 1151** |
+| mAb_oxidation | L1 | 2330 ± 534 | 2660 ± 441 | 2576 ± 533 | **2694 ± 372** |
+| mAb_oxidation | blank | 2330 ± 534 | 2527 ± 498 | 2401 ± 461 | **2617 ± 365** |
+
+`mo_ls_na_egbo` is at or above `mo_egbo_real` and `mo_egbo_novelty` in every row shown, and has the lowest variance across seeds in 3 of 4 rows — but per `phase2_stats_vs_egbo_novelty.csv`, none of these differences against the `mo_egbo_novelty` baseline reach significance after Holm correction (all corrected p ≈ 1.0). The only significant comparisons anywhere in Phase 1 or Phase 2 are informed-strategy-vs-`mo_random` (p < 0.006 across the board). **The honest headline claim from this benchmark suite is "informed strategies (of any kind — EGBO, novelty-EGBO, LLM-warm-started) reliably beat random search; no informed strategy is yet shown to reliably beat any other informed strategy at n=15–25 seeds."** Higher seed counts or a paired/blocked design would be needed to detect the smaller inter-strategy gaps if they are real.
+
+---
+
+## Updated Section 13: The Four Claims — Status Assessment (supersedes previous log's table)
+
+| Claim | Status | Evidence | What's needed |
+|-------|--------|----------|---------------|
+| **C1**: LLM knowledge beats GP-only | **Validated (SO); validated for beating random (MO), not yet for beating other informed strategies (MO)** | SO: clean gradient on mAb_agg. MO Phase 1/2: `mo_ls_na_egbo` and all informed strategies significantly beat `mo_random` (p<0.006) on both profiles; no informed-vs-informed comparison reaches significance at current seed counts. | More seeds, or a paired statistical design, to resolve informed-vs-informed gaps |
+| **C2**: Per-objective trust diagnostic | **Not validated, no longer load-bearing** | Still collapses to 0.700 for all objectives at budget=40/d=16 (unchanged from previous log — not re-tested since). The current best architecture (LS-NA-EGBO) does not use this diagnostic at all, having replaced per-batch trust-weighted mixing with one-shot LLM warm-start + autonomous EGBO. | If C2 is kept in the thesis, either validate at budget≥80 or explicitly reframe it as "attempted and superseded" rather than "pending" |
+| **C3**: Wrong-prior / mixing-weight behaviour | **Reframed and now evidenced on two profiles** | The missing mAb_aggregation WRONG/blank comparison (Section 12 above) is resolved: wrong-prior effect is profile-dependent, not universal, consistent with the multi-objective reward-structure argument. Caveat: the strength of the mAb_oxidation WRONG-wins effect differs between the old trust-weighted `mo_llm` (WRONG=2763, dramatic) and the new `mo_llm_candidate_gen` (WRONG=2572, indistinguishable from L1) — needs reconciling before citing a specific magnitude. | Decide which strategy's mAb_oxidation numbers the thesis cites, and say so explicitly; do not present both as one result |
+| **C4**: End-to-end pipeline | **Partially validated, architecture changed** | Two full pipelines now exist and run end-to-end with real/mock LLM across 30+ seeds each: the original trust-weighted `mo_llm` (previous log, Phase 5–8) and the new warm-start `mo_ls_na_egbo` (this log, Phase 1/2). Real Waibel data (33 formulations) still untested. Phase 3 cross-domain generalisation was designed (`run_phase3.py`) but never run — no evidence for or against cross-domain transfer. | Run against real Waibel data; run Phase 3 or drop cross-domain generalisation claims from the thesis |
+
+---
+
+## Updated File Inventory (additions since previous log)
+
+| File | Description |
+|------|-------------|
+| `run_benchmark.py` | Unified benchmark runner, 7 conditions × 3 phases (Phase 3 defined but unrun) |
+| `run_benchmark_resumable.py` | Checkpointed version of the above, used to produce `results/benchmark_phase1/` and `results/benchmark_phase2/` |
+| `run_sensitivity.py` | Novelty-weight sensitivity sweep + `mo_ls_egbo` ablation, produced `results/benchmark_sensitivity/` |
+| `run_phase3.py` | Cross-domain (coatings) generalisation test — written, **not yet run**, no results exist |
+| `novelty_selection.py` | Aqeeli-et-al.-style novelty-aware batch selection, `w_nov` default 0.1 (see sensitivity sweep for why not the literature 0.3) |
+| `strategy_ls_na_egbo.py` | LS-NA-EGBO: LLM warm-start once + autonomous novelty-aware EGBO. Also defines `mo_egbo_novelty` (no-LLM ablation) |
+| `strategy_llm_candidate_gen.py` | LLM-as-candidate-generator strategy, formerly mislabelled "LABO" — see naming correction above |
+| `llm_warmstart.py` | One-shot LLM warm-start module, three-layer prompt (reasoning protocol / domain physics / materials) |
+| `synthetic_coatings_oracle.py` | Cross-domain oracle for the unrun Phase 3 |
+| `results/benchmark_phase1/` | Reduced formulation space, 15 seeds, budget=30 |
+| `results/benchmark_phase2/` | Full 14-excipient space, 25 seeds, budget=40 — the headline benchmark numbers |
+| `results/benchmark_sensitivity/` | Novelty-weight sweep, 15 seeds, budget=30 |
+
+All of the above (plus `run_phase3.py`) are currently untracked in git — commit before this becomes a reproducibility gap.
+
+---
+
+## Everything else (Sections 1–11, 14–17)
+
+Unchanged from `project_comprehensive_log_previous.md` — cancer drug screening pre-pivot, the pivot rationale, single-objective oracle design, the single-objective wrong-prior stress test (still the cleanest result in the project and still valid — it used the single-objective oracle, which nothing above touches), Waibel dataset extraction, multi-objective oracle construction and the six bugs found and fixed, and the literature context. Refer to that file for full detail; only the multi-objective campaign-runner sections (12–13) and the file inventory needed updating here.
