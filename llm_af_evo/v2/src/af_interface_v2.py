@@ -270,4 +270,39 @@ STRATEGY_HINTS = {
         "roughly O(n_candidates * n_samples), not "
         "O(n_candidates^2 * n_samples) — the sandbox has a 10-second "
         "timeout.",
+
+    # --- DRO-inspired robust MC-HVI (new; penalizes fragile HVI, not just mean) ---
+    # Requires: context["pareto_front"], pool gp_posterior
+    # Backtested by hand on 10 real mAb training campaigns before adding
+    # this hint (no LLM calls): mean_margin +10.1% vs fixed_ucb's +7.2% and
+    # noisy_front_hvi's +7.4%, mean_hv highest of the three (5931 vs 5812/
+    # 5899) — encouraging but NOT conclusive at n=10 (mAb's fitness signal
+    # is noise-dominated even at n=75, see evaluate_af_2b's GAMMA
+    # CALIBRATION docstring and the --oracle excipient startup warning).
+    "dro_robust_hvi":
+        "Score candidates by a ROBUST estimate of hypervolume improvement, "
+        "not just its average: for each candidate, draw n_samples (e.g. "
+        "20) samples from its own gp_posterior N(mean, std) per objective "
+        "using np.random.normal or a numpy Generator's .normal (all-"
+        "maximise convention, no sign-flipping). For EACH sample s, "
+        "compute a per-sample improvement value: if context['pareto_front'] "
+        "is non-empty, check whether s is dominated by any front point "
+        "(dominated iff ANY q in pareto_front has ALL(q >= s) AND ANY(q > "
+        "s) — get this direction exactly right, same test as "
+        "pareto_membership's hint above) and heavily discount s's raw "
+        "volume-to-ref_point (np.prod(np.maximum(s - ref_point, 0))) when "
+        "dominated (e.g. multiply by 0.1), full value when not dominated. "
+        "This gives you n_samples improvement values per candidate — "
+        "compute their MEAN and their STD. The final score MUST be "
+        "`mean(improvement_values) - lam * std(improvement_values)` with a "
+        "PLUS-becomes-MINUS penalty (lam is a positive weight, e.g. 1.0, "
+        "left for you to tune) — candidates whose improvement swings a "
+        "lot across samples (fragile under posterior noise, likely an "
+        "extrapolated or noise-driven prediction) must score LOWER than "
+        "equally-averaging candidates whose improvement is stable across "
+        "samples. Do NOT write `mean + lam*std` (that is plain UCB-style "
+        "optimism, not this hint) and do NOT wrap the std term in `(1 - "
+        "x)` or any other transform — subtract it directly, exactly once. "
+        "This does not need context['Y_obs'] — only context['pareto_front'] "
+        "and each candidate's own gp_posterior.",
 }
