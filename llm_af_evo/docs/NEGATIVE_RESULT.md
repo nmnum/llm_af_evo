@@ -4,7 +4,10 @@
 `llm_evolved_afs_comprehensive_log.md`, and `L_COATINGS_FINDINGS.md` into a
 single, standalone account of the negative result, closing the two items
 that were left open at the end of those documents (mu/sigma-dominance +
-win-overlap; the mAb fixed-hints re-test) with data gathered in this pass.
+win-overlap; the mAb fixed-hints re-test) with data gathered in this pass,
+plus two further follow-up pilots (a directional-inversion-bug re-test on
+three additional Run-4 candidates, and a decay-schedule tuning sweep for
+`hint_fixed_ucb`'s family) that close the remaining open items below.
 
 ## The question
 
@@ -193,6 +196,70 @@ fail to beat the baseline. This closes the "maybe the evolved AFs have
 untapped potential" thread raised mid-project: they don't, at least not
 among the mechanisms tried so far.
 
+## Part 5: Two more loose ends, closed this pass
+
+Two follow-up pilots were run after Part 4, targeting the two items still
+listed as open at that point.
+
+**5a. Sign-fixed re-test of three more Run-4 candidates.** Independent of
+the three hints in Part 4, a later read of `run_v2_mAb_gamma001_fixed`'s
+`af_code_logs/` (generations past where fitness scoring had stopped, so
+never evolutionarily evaluated) turned up the same directional-inversion
+bug class in three more candidates: `call_00016` (a distance-to-observed
+penalty computed as `dist/max_dist` instead of `(max_dist-dist)/max_dist`,
+rewarding near-duplicates), `call_00021` (a Pareto-dominance check with the
+improving/dominated branches swapped), and `call_00030` (a "novelty" score
+computed as `1/(min_dist_sq+eps)`, again rewarding near-duplicates of
+observed points instead of penalizing them). All three were hand-fixed
+(`fixed_merge_hints/call_0001{6,21,30}_fixed.py`) and re-tested on 20
+genuinely held-out mAb campaigns (a disjoint `train`/`heldout` split, an
+improvement over Part 4's single-split pilot), 3-seed-averaged:
+
+| Hint | Mean margin | Median margin | Wins | p-value |
+|---|---|---|---|---|
+| `call_00016_fixed` | +0.5% | −1.4% | 9/20 | 0.956 |
+| `call_00021_fixed` | −2.1% | −1.3% | 8/20 | 0.475 |
+| `call_00030_fixed` | −2.3% | −0.9% | 10/20 | 0.330 |
+
+Null across the board — two negative on mean, all at or below even on
+median, none close to significant. Combined with Part 4's three hints and
+`dpp_diversity` from Run 4, that's now **seven** distinct new (non-UCB)
+mechanisms tried across this project, correct or bug-fixed, and none beats
+baseline. This closes the "maybe a later, unscored generation has something
+Part 4 missed" thread raised at the end of Part 4.
+
+**5b. Decay-schedule tuning for the `hint_fixed_ucb` family.** Rule 2 (mAb
+signal is thin but real) and Rule 3 (stagnation terms hurt) leave open
+whether the *fixed-UCB family itself* — `hint_fixed_ucb` (β=2, no decay),
+`gen5_child0` (linear decay, p=1), `gen9_child0` (quadratic decay, p=2), all
+three shown individually significant/robust under 3-seed re-validation — is
+tuned optimally, or whether a swept `beta0`/decay-exponent grid could do
+better. A three-stage pilot (`pilot_decay_schedule_mab.py`) tested
+`score = sum(mu) + beta0*(1-progress)^p*sum(sigma)` over
+`beta0∈{0.5,...,2.5}, p∈{0,1,2}` (15 configs), with a pre-registered kill
+criterion (`mean_margin>0 and p<0.05 and wins≥12/20`) fixed in advance to
+rule out post-hoc threshold shopping:
+
+- **Stage A** (10 train campaigns × 3 seeds × 15 configs, ranked by median
+  margin per the noise diagnostic's own recommendation): top-2 were
+  `beta0=2.5,p=1` (mean +4.6%, median +3.6%, 7/10, p=0.13) and
+  `beta0=1.5,p=0` (mean +0.7%, median +2.0%, 6/10, p=0.92).
+- **Stage B** (same 10 campaigns × 5 seeds): `beta0=2.5,p=1` held up (mean
+  +4.1%, median +1.7%, 7/10, p=0.13); `beta0=1.5,p=0` did not (mean +0.8%,
+  median **−1.5%**, 3/10, p=0.85) and was dropped. Winner: `beta0=2.5,p=1`.
+- **Held-out validation** (20 genuinely disjoint heldout campaigns × 3
+  seeds): mean +2.6%, median +2.1%, 12/20 wins, p=0.50.
+
+**Verdict: FAIL, per the pre-registered kill criterion.** The held-out
+result is directionally positive on every metric (mean, median, and win
+count clears the ≥12/20 bar on its own) but p=0.50 is far from the required
+p<0.05 — at n=20 held-out campaigns, this is indistinguishable from noise.
+No post-hoc re-tuning was performed, per the pre-registration. This closes
+the "is the fixed-UCB family itself under-tuned" question: sweeping
+`beta0`/decay together doesn't produce a decay schedule that clears a
+properly powered significance bar, even though the single best swept point
+looks similar in magnitude to `hint_fixed_ucb`'s own already-validated edge.
+
 ## Design rules this body of evidence supports
 
 1. **mu_sum dominance (coatings-specific).** Any nonzero uncertainty weight
@@ -274,6 +341,6 @@ either one is.
 - `run_v2_mAb_gamma001_fixed`, the one run that would have tested full
   20-generation evolution on mAb with the fixed hint set, never finished
   (interrupted at gen 11/20) — whether a completed run would find something
-  the fixed-hints pilot in Part 4 missed is unknown, though Part 4's null
-  result across all three individually-tested hints makes that less likely
-  than it looked before this pass.
+  the seven individually-tested candidates across Part 4 and Part 5a missed
+  is unknown, though their uniform null result makes that less likely than
+  it looked before this pass.
