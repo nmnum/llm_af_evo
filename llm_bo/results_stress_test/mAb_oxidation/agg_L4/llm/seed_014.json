@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 14,
+  "auc": 0.9469628043704127,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations have used methionine, sucrose, and polysorbate80 or polysorbate20. EDTA presence seems to slightly decrease the score in the second best formulation. We will explore variations around these components while also testing a few new combinations with other amino acids and sugars.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.39969130176863665,
+        0.5768247852919323,
+        0.2578638821161207,
+        0.12949133278941022
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that methionine and sucrose are beneficial for stability. Polysorbate20 at higher concentrations also seems to contribute positively, as does the presence of EDTA. Exploring variations around these parameters may yield further improvements.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5377053638597638,
+        0.20239163266440496,
+        0.49817000241170806,
+        0.4735372036032776
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine and sucrose, with polysorbate20 or polysorbate80 as surfactants. EDTA presence seems to have a minor impact. We will explore variations around these successful components while slightly adjusting concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5070523118204221,
+        0.5677669844865033,
+        0.3259958943337411,
+        0.3432275948961591
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine and sucrose, suggesting these excipients are beneficial. Polysorbate20 and polysorbate80 appear to be more effective than poloxamer188 in the current data. EDTA seems to have a positive impact when present. We will explore variations around these parameters while also testing other amino acids and sugars to ensure we are not missing out on potentially better combinations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.26101159187536854,
+        0.4745917017956229,
+        0.1059593067732664,
+        0.13977139979333614
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine and sucrose, suggesting these excipients are beneficial. Polysorbate20 and polysorbate80 appear to be more effective than poloxamer188 in the current data. EDTA seems to have a positive impact when present. We will explore variations around these successful components while also testing some boundary conditions.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.17199474904702167,
+        0.560925240342643,
+        0.0854876048911516,
+        0.1361274736814197
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and sucrose as the sugar. Polysorbate20 and polysorbate80 are used in these top formulations, with EDTA presence showing a slight preference. To explore further, we will vary the concentrations of methionine, sucrose, and surfactants while alternating the use of EDTA.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.6019585603379578,
+        0.15861310415484045,
+        0.5059565637560042,
+        0.18154399851694794
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and sucrose as the sugar. Poloxamer188 or polysorbate20 are used in these top formulations, with EDTA mostly present. We will explore variations around these successful components to potentially improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5089662411592996,
+        0.5044854382047521,
+        0.5713557249820607,
+        0.5413297366939576
+      ]
+    }
+  ]
+}

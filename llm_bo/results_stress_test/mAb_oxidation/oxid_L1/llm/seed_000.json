@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 0,
+  "auc": 0.9378701901657569,
+  "final": 0.956508825835334,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing the protein against oxidation. Formulations with both these components have higher stability scores. Methionine concentration should be optimized, as it is a primary stabilizer. EDTA's presence significantly boosts stability when combined with methionine. Poloxamer188 appears to provide better protection than other surfactants at similar concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.227364076754703,
+        0.22981105584105424,
+        0.12814063993726457,
+        0.521680007138963
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include methionine and EDTA, indicating their importance in stabilizing the protein against oxidation. Poloxamer188 and polysorbate80 also show a positive impact when combined with these primary stabilizers. The sugar type seems less critical for stability scores, but mannitol is present in the top two formulations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.28603962435298214,
+        0.12025702708619936,
+        0.358739941149989,
+        0.5059565637560042
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein against oxidation. Polysorbate 80 or poloxamer188 at around 0.9% also appear beneficial. Mannitol is a common sugar used, but we can explore other sugars to see if they offer better stability. Increasing methionine concentration slightly from the top formulation might further improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5513620030270776,
+        0.47945170121500547,
+        0.3432275948961591,
+        0.4683751243289855
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations consistently use methionine and EDTA, indicating their importance in stabilising the protein against oxidation. Polysorbate80 appears to be slightly more effective than poloxamer188 based on the scores of the top-5 formulations. Mannitol is used frequently among the top candidates, suggesting it provides good conformational stability without interfering with the antioxidant effects.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5757786757503881,
+        0.44869691031761877,
+        0.23339315360254487,
+        0.45033859208262755
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilizing the protein against oxidation. Polysorbate 80 appears to be a better surfactant option compared to others based on the higher scores of formulations containing it. Mannitol is consistently present but at varying concentrations, suggesting that while it provides some benefit, its concentration may not critically impact stability as much as methionine and EDTA.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.15904244747162305,
+        0.5713557249820607,
+        0.4745917017956229,
+        0.5213789581543535
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein against oxidation. Polysorbate 80 appears to be a better surfactant option compared to poloxamer188 based on the higher scores of formulations containing it. Mannitol and sorbitol are both present in high-scoring formulations, suggesting they can provide conformational stability without negatively impacting the score.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5677669844865033,
+        0.22297383889055186,
+        0.5298235861067528,
+        0.2505964216580423
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein against oxidation. Polysorbate 80 is also present in most of the top formulations, suggesting its role in protecting against interface aggregation. Mannitol and sucrose are frequently used sugars, which may provide additional stability benefits.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.19706074056502706,
+        0.560925240342643,
+        0.1780652106378643,
+        0.18154399851694794
+      ]
+    }
+  ]
+}

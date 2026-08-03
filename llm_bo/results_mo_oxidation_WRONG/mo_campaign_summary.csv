@@ -1,0 +1,16 @@
+protein,prior_level,condition,seed,final_hv,final_pf_size,n_obs
+mAb_oxidation,WRONG,mo_llm,0,2774.1518005427674,12,40
+mAb_oxidation,WRONG,mo_llm,1,2905.4437493264413,9,40
+mAb_oxidation,WRONG,mo_llm,2,2830.124725646183,11,40
+mAb_oxidation,WRONG,mo_llm,3,2669.48780603304,11,40
+mAb_oxidation,WRONG,mo_llm,4,2912.9831768164804,11,40
+mAb_oxidation,WRONG,mo_llm,5,2741.422692354808,9,40
+mAb_oxidation,WRONG,mo_llm,6,3045.2031009552497,8,40
+mAb_oxidation,WRONG,mo_llm,7,2860.1486049349955,10,40
+mAb_oxidation,WRONG,mo_llm,8,2905.339751151186,11,40
+mAb_oxidation,WRONG,mo_llm,9,2818.9503716147346,9,40
+mAb_oxidation,WRONG,mo_llm,10,2067.6584384474836,15,40
+mAb_oxidation,WRONG,mo_llm,11,2640.219967969275,9,40
+mAb_oxidation,WRONG,mo_llm,12,2798.183865085624,7,40
+mAb_oxidation,WRONG,mo_llm,13,2966.5211100944875,9,40
+mAb_oxidation,WRONG,mo_llm,14,2513.0094393092827,9,40

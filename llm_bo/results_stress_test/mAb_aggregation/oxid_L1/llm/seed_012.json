@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 12,
+  "auc": 0.5146466228880606,
+  "final": 0.5146466228880604,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilising the protein against oxidation. Formulations without these components have lower stability scores. Therefore, the proposed formulations will include both methionine and EDTA to maximise the antioxidant effect.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.20295017682870597,
+        0.34318905948658723,
+        0.3544634019502615,
+        0.24747886367089716
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing the oxidation-prone monoclonal antibody. Formulations containing both methionine and EDTA have shown better stability scores, even though they are not at the top of the list. The best formulation so far does not contain methionine but includes arginine, which has minimal benefit in this context. Therefore, we should focus on formulations that include methionine and EDTA while optimizing other components for additional stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3827829519337028,
+        0.35937326439993345,
+        0.386418622752277,
+        0.40051423713158535
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the combination of methionine and EDTA is crucial for stabilising oxidation-prone monoclonal antibodies. Formulations with higher concentrations of methionine, especially when combined with EDTA, tend to perform better. Trehalose also appears to be a beneficial sugar, likely due to its conformational stability properties. Polysorbate 20 seems to offer moderate protection against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3059315769114356,
+        0.3685414701646142,
+        0.29969603640633796,
+        0.33079405051309296
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing the protein against oxidation. Formulations with both methionine and EDTA have higher stability scores, indicating their synergistic effect. Trehalose also appears to be beneficial when combined with methionine. Polysorbate 20 is preferred over other surfactants in the top formulations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3585332905692632,
+        0.11130349071683562,
+        0.2888129047046371,
+        0.1690520950841403
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing the oxidation-prone monoclonal antibody. Formulations with both methionine and EDTA tend to have higher stability scores, indicating their synergistic effect in preventing oxidation. Additionally, trehalose appears to be a better sugar option compared to mannitol, as it provides conformational stability without compromising the primary goal of addressing oxidation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.36548601651999524,
+        0.39221574715915547,
+        0.3904382258400266,
+        0.3159245750675889
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the combination of methionine and EDTA is crucial for stabilising oxidation-prone monoclonal antibodies. Formulations with higher concentrations of methionine, especially when combined with EDTA, tend to perform better. Trehalose also appears to be a beneficial sugar, likely due to its conformational stability properties. Polysorbate 20 and 80 are both effective surfactants, but polysorbate 20 seems slightly more prevalent in the top formulations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.2333287727161769,
+        0.09541070804393817,
+        0.28712842538815037,
+        0.3820665572705836
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the combination of methionine and EDTA is crucial for stabilising oxidation-prone monoclonal antibodies. Formulations with these components, especially at higher concentrations of methionine, tend to perform better. Sucrose or trehalose can be used for conformational stability, but they do not significantly impact oxidation. Polysorbate 20 and 80 provide moderate benefits in preventing interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.4600208142813698,
+        0.3173895272925945,
+        0.2935937250928684,
+        0.34418272838018527
+      ]
+    }
+  ]
+}

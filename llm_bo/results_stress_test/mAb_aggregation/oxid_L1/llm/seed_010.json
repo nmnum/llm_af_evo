@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 10,
+  "auc": 0.5344018847885695,
+  "final": 0.5344018847885698,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the inclusion of methionine and EDTA is crucial for improving stability scores, as they directly address the primary degradation pathway of oxidation. The top formulations without these components have lower scores, indicating their importance. Additionally, trehalose appears to be a better sugar option compared to sucrose or other sugars in the presence of methionine and EDTA.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.24747886367089716,
+        0.3638889197737124,
+        0.35937326439993345,
+        0.34318905948658723
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of methionine and EDTA is crucial for improving stability scores, especially in oxidation-prone formulations. The top-performing formulations without these components have lower scores. Therefore, the proposed candidates will focus on optimizing concentrations of methionine and EDTA while maintaining a balance with other stabilizing excipients.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.20295017682870597,
+        0.34659404975342073,
+        0.29969603640633796,
+        0.36546864788495587
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of methionine and EDTA, which are key in preventing oxidation, is crucial for improving stability scores. The top formulations without these components have lower scores. Therefore, focusing on higher concentrations of methionine and including EDTA should be prioritized.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.2765619604701209,
+        0.386418622752277,
+        0.21935876779469296,
+        0.3904382258400266
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine and EDTA, which are crucial for protecting against oxidation. Methionine acts as a sacrificial antioxidant, while EDTA chelates metal ions that catalyze oxidative reactions. Given the primary degradation pathway is methionine/tryptophan oxidation, incorporating these excipients should improve stability. Additionally, trehalose and polysorbate 80 have shown moderate benefits in previous formulations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3159245750675889,
+        0.3827829519337028,
+        0.18190219952206987,
+        0.09541070804393817
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine and EDTA, which are crucial for addressing oxidation. Methionine acts as a sacrificial antioxidant, while EDTA chelates metal ions that catalyse oxidative reactions. Given the primary degradation pathway is methionine/tryptophan oxidation, incorporating these excipients should improve stability. Additionally, trehalose and polysorbate 80 have shown moderate benefits in previous formulations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.29611502061846184,
+        0.4600208142813698,
+        0.40051423713158535,
+        0.11130349071683562
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing the protein against oxidation. Formulations without these components, even with other stabilizers like arginine or trehalose, do not perform as well. Therefore, the proposed formulations will focus on optimizing the concentrations of methionine and EDTA while using supportive excipients.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.1733889707914993,
+        0.3685414701646142,
+        0.30231608180766795,
+        0.2823634949937535
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that a combination of methionine and EDTA is beneficial for stability, as they address the primary degradation pathway. Trehalose provides conformational stability without interfering with oxidation protection. Polysorbate 80 offers moderate benefits in protecting against interface aggregation. The absence of arginine or other amino acids in the top formulations indicates that their contribution to stability is minimal when methionine and EDTA are present.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.35884268236758254,
+        0.3293321293978316,
+        0.330757873377906,
+        0.17536667705118045
+      ]
+    }
+  ]
+}

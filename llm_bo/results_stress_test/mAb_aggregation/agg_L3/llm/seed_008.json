@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L3",
+  "condition": "llm",
+  "seed": 8,
+  "auc": 0.843362346544932,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include arginine and polysorbate80, which are known to have a synergistic effect against aggregation. EDTA also shows some benefit when included. We will focus on optimizing the concentrations of these excipients while avoiding mannitol due to crystallization risks at higher concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6914382639145921,
+        0.8998923415795039,
+        0.570804533995043,
+        0.8184317547377613
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating that this combination is highly effective. Sucrose appears to be more beneficial than trehalose or sorbitol when used with these excipients. EDTA seems to provide a slight benefit but is not critical. We will explore the upper range of arginine and polysorbate80 concentrations while maintaining sucrose within its optimal range.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6003905695348467,
+        0.5070721380688189,
+        0.5234943566978817,
+        0.47617510352291764
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating that this combination is highly effective. Sucrose appears to be more beneficial than trehalose when used with these excipients. EDTA seems to provide a slight benefit but is not critical. We will explore the upper range of arginine and polysorbate80 concentrations while maintaining sucrose within its optimal range.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5508045799903799,
+        0.42328960700298474,
+        0.6991652680407341,
+        0.7328557168159052
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and sucrose, indicating their effectiveness in stabilizing the monoclonal antibody. Polysorbate80 is also a common component among the top performers, suggesting its importance in interface protection. EDTA's presence or absence does not seem to significantly impact stability scores when compared with other factors. Therefore, I will focus on optimizing arginine and sucrose concentrations while maintaining polysorbate80 at an effective level.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.9882292373430821,
+        0.7301404569727012,
+        0.6933725745328679,
+        0.7318712764939983
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating their effectiveness in preventing aggregation. Sucrose and sorbitol are the preferred sugars, with sucrose showing a slight edge at higher concentrations. EDTA appears to provide an additional benefit when included.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7119184900899121,
+        0.6218441024600123,
+        0.5853435318520913,
+        0.625964019938903
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating their effectiveness in preventing aggregation. EDTA also appears to have a positive impact when present. The sugar type seems less critical than the other components, but sucrose and sorbitol are preferred over mannitol due to crystallization risks at higher concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5833709431273365,
+        0.7733971850753026,
+        0.5960674432290942,
+        0.8222204590121308
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating their importance in preventing aggregation. Sucrose and sorbitol appear to be better sugar stabilizers compared to mannitol and trehalose at the concentrations used. EDTA seems beneficial when present. The proposed formulations aim to refine these parameters further.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6452179284656616,
+        0.7474981007313554,
+        0.835511913933914,
+        0.7891375959983183
+      ]
+    }
+  ]
+}

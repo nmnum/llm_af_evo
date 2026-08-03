@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 12,
+  "auc": 0.845371532525265,
+  "final": 0.9243148187697005,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that methionine, trehalose, and poloxamer188 are favorable components. EDTA appears to have a negative impact on stability when present. We will explore variations around these components while also testing the boundaries of their concentration ranges.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5281658682666887,
+        0.44161172316887076,
+        0.5521986558191911,
+        0.33441446683210013
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine and trehalose, with poloxamer188 as the surfactant. EDTA presence seems to have a positive impact on stability scores in the best formulation. We will explore variations around these components while also testing other amino acids and sugars to ensure we are not missing out on potentially better combinations.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.47945170121500547,
+        0.24583447791554,
+        0.227364076754703,
+        0.20106038637169973
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine and trehalose, suggesting these excipients are beneficial. Poloxamer188 is also common in the top formulations. EDTA presence seems to have a slight positive impact. We will explore variations around these components while also testing other amino acids and sugars to ensure we are not missing better combinations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.5365954332483583,
+        0.5212242920813135,
+        0.18329707792856947,
+        0.21670762877522498
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine and trehalose, suggesting these excipients are beneficial. Poloxamer188 appears to be more effective than other surfactants at higher concentrations when EDTA is present. Exploring variations around these parameters may yield further improvements.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5563992176056493,
+        0.4745917017956229,
+        0.5469740198816695,
+        0.44630340592904266
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and poloxamer188 as the surfactant, with EDTA present. This suggests that these components are beneficial for stability. We will explore variations around these successful combinations while also testing other excipients to ensure we have not missed a potentially better combination.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "histidine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.28603962435298214,
+        0.2511850614663182,
+        0.18385533955457636,
+        0.2943855158574267
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and poloxamer188 as the surfactant, with EDTA present. This suggests that these components are beneficial for stability. We will explore variations around these successful combinations while also testing some new parameters to potentially find a better formulation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.26973050435931245,
+        0.12814063993726457,
+        0.3696343102244635,
+        0.1780652106378643
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid, mannitol or trehalose as sugar, and poloxamer188 as surfactant with EDTA present. We will explore variations around these successful components to potentially improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.521680007138963,
+        0.3039638727426016,
+        0.1826536975204238,
+        0.4153504840719189
+      ]
+    }
+  ]
+}

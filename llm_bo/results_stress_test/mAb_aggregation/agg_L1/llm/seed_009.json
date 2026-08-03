@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L1",
+  "condition": "llm",
+  "seed": 9,
+  "auc": 0.8456523366772946,
+  "final": 0.9106109266701341,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that arginine and polysorbate20 are beneficial for stability, while EDTA has a moderate benefit. Mannitol should be used below 40 mM to avoid crystallization risks during freeze-drying. Trehalose also shows promise as a stabilizer.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6954514840505988,
+        0.570804533995043,
+        0.6982971445924058,
+        0.865445964537742
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation uses arginine, trehalose, and polysorbate20 without EDTA. This suggests that the combination of these excipients is highly effective in preventing aggregation. The next best formulations also use arginine but with mannitol or different surfactants, which are less effective. Therefore, it's worth exploring variations around the top-performing formulation to potentially improve stability further.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6198482374654065,
+        0.3273878093152329,
+        0.835511913933914,
+        0.43339942699653256
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that a combination of arginine, trehalose, and polysorbate20 or polysorbate80 without EDTA yields the highest stability scores. Arginine and trehalose appear to be more effective than other amino acids and sugars, respectively. Polysorbate20 at 0.4% seems optimal when combined with arginine and trehalose. The presence of EDTA generally reduces the score, so it should be avoided.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.3969949198976126,
+        0.7718083313802928,
+        0.7236112888419924,
+        0.8997098241032881
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine and a sugar (trehalose or mannitol), with polysorbate 20 or 80. EDTA is absent in the best formulations, suggesting it has minimal benefit for this protein. The highest stability scores are achieved with lower concentrations of sugars to avoid crystallization risks during freeze-drying. Arginine concentration appears to have a positive correlation with stability up to about 15 mM.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5103715320591053,
+        0.7225358525302361,
+        0.625964019938903,
+        0.606551776540021
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, a sugar (trehalose or mannitol), and a surfactant. Polysorbate 20 and polysorbate 80 are the most common surfactants in the top formulations. EDTA is not included in any of the top formulations, suggesting it has minimal benefit for this specific protein. Mannitol should be used at concentrations below 40 mM to avoid crystallization issues during freeze-drying.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7733971850753026,
+        0.5449263632186344,
+        0.6914382639145921,
+        0.7968272825360739
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, indicating its importance in preventing aggregation. Polysorbate 20 and polysorbate 80 are both present, with a slight preference for polysorbate 20 based on the highest score. Trehalose is used more frequently than mannitol, likely due to crystallization concerns at higher concentrations of mannitol. EDTA's presence does not seem to significantly improve stability scores in these top formulations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.4371336795792193,
+        0.3741563528985716,
+        0.8184317547377613,
+        0.6116228876823094
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, indicating its importance in preventing aggregation. Polysorbate 20 and polysorbate 80 are both present, with a slight preference for polysorbate 20. Trehalose and sucrose appear to be more effective than mannitol when paired with arginine. EDTA is not beneficial in the top formulations. The best formulation uses lower concentrations of excipients, suggesting that higher concentrations may not always improve stability.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7552846528758308,
+        0.7301404569727012,
+        0.7474981007313554,
+        0.8998923415795039
+      ]
+    }
+  ]
+}

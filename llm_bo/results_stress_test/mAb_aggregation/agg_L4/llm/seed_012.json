@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 12,
+  "auc": 0.795314971796878,
+  "final": 0.9104262352348691,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that arginine and mannitol, along with polysorbate20 and the presence of EDTA, contribute positively to stability. We will explore variations around these components while also testing other combinations to ensure a broad exploration.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "histidine",
+        "glycine"
+      ],
+      "queried_y": [
+        0.6982971445924058,
+        0.7968272825360739,
+        0.39158903915455107,
+        0.2912616298944496
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and mannitol as the sugar, with polysorbate20 as the surfactant. EDTA is present in the top three formulations. To explore further, we will vary the concentrations of these components while keeping the same choices for a more fine-grained search.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7225358525302361,
+        0.6838043553543366,
+        0.8997098241032881,
+        0.606551776540021
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and mannitol, with polysorbate20 as the surfactant. EDTA presence seems to have a mixed effect. We will explore variations around these successful components while also testing other amino acids and sugars to see if we can find an even better combination.",
+      "proposed_aa": [
+        "arginine",
+        "proline",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.5449263632186344,
+        0.5043424268603968,
+        0.865445964537742,
+        0.2935861567238427
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and polysorbate20 as the surfactant. EDTA is mostly absent in the top formulations, suggesting it may not be beneficial for stability. Mannitol and trehalose appear to be favorable sugars. Exploring variations around these successful components while slightly adjusting concentrations could potentially yield a higher stability score.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7257390000293641,
+        0.6198482374654065,
+        0.8222204590121308,
+        0.3273878093152329
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and mannitol or trehalose as sugars. Polysorbate20 is a common surfactant in these top formulations, and EDTA is mostly absent. To explore further, we will vary the concentrations of these components slightly and introduce some diversity by testing other excipients.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "proline"
+      ],
+      "queried_y": [
+        0.83852708642062,
+        0.6954514840505988,
+        0.6218441024600123,
+        0.4538709944979316
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and polysorbate20 or polysorbate80 as surfactants, with mannitol being a common sugar. EDTA is mostly absent in high-scoring formulations. We will explore variations around these successful components while slightly adjusting concentrations to find potential improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.4878130080411311,
+        0.5283580619909661,
+        0.43339942699653256,
+        0.6452179284656616
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations consistently use arginine as the amino acid and mannitol or trehalose as sugars. Polysorbate20 is also frequently used, and EDTA is generally not included in high-scoring formulations. Exploring variations around these parameters may yield further improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7552846528758308,
+        0.3969949198976126,
+        0.7891375959983183,
+        0.7164935463412976
+      ]
+    }
+  ]
+}

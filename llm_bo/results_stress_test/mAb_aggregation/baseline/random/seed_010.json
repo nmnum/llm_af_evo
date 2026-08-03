@@ -1,0 +1,9 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "baseline",
+  "condition": "random",
+  "seed": 10,
+  "auc": 0.7243383050568543,
+  "final": 0.8485147521794174,
+  "decisions": []
+}

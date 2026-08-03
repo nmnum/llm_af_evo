@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 3,
+  "auc": 0.8302721657451907,
+  "final": 0.9106109266701341,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that proline and arginine are favorable amino acids, sorbitol and mannitol are beneficial sugars, and poloxamer188 is a preferred surfactant. EDTA appears to have a negative impact on stability when present. Exploring concentrations around the best-performing values while slightly varying them could help identify an optimal formulation.",
+      "proposed_aa": [
+        "proline",
+        "arginine",
+        "proline",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6020846150901858,
+        0.83852708642062,
+        0.6241627618128869,
+        0.6479885532917634
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations have arginine or proline as the amino acid, mannitol or sorbitol as the sugar, and polysorbate80 or poloxamer188 as the surfactant. EDTA is not present in any of the top formulations. We will explore variations around these successful combinations to potentially find a better formulation.",
+      "proposed_aa": [
+        "arginine",
+        "proline",
+        "arginine",
+        "proline"
+      ],
+      "queried_y": [
+        0.22827902628146607,
+        0.6398243020076905,
+        0.3911022774988107,
+        0.6614646867546335
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use polysorbate80 as the surfactant and do not include EDTA. Arginine and proline are the most effective amino acids, with arginine showing a slight edge. Mannitol is the preferred sugar in these top formulations. We will explore variations around these successful components to potentially improve stability.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "proline",
+        "arginine"
+      ],
+      "queried_y": [
+        0.8222204590121308,
+        0.7891375959983183,
+        0.45310738440711734,
+        0.6452179284656616
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that arginine and mannitol, combined with polysorbate80 without EDTA, yield the highest stability scores. We will explore variations around these conditions to potentially improve the score further.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6218441024600123,
+        0.6481858342116847,
+        0.7257390000293641,
+        0.8997098241032881
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and mannitol as the sugar. Polysorbate20 and polysorbate80 are the most common surfactants in the top formulations, with EDTA mostly set to false. To explore further, we will vary the concentrations of these excipients while keeping the same choices for amino acid and sugar. We will also test one formulation with a different surfactant (poloxamer188) to see if it can improve stability.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6838043553543366,
+        0.8184317547377613,
+        0.606551776540021,
+        0.4878130080411311
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and mannitol or sucrose as the sugar. Polysorbate20 and polysorbate80 are the most common surfactants, with EDTA mostly set to false. We will explore variations around these successful components while also testing some new combinations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "proline",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7968272825360739,
+        0.8998923415795039,
+        0.30630305052230306,
+        0.6536996918579724
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid, suggesting it has a positive impact on stability. Sucrose and mannitol are the preferred sugars in these formulations, with polysorbate80 being the most common surfactant. EDTA presence seems to have a slight advantage. We will explore variations around these successful components while also testing some boundary conditions.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6003905695348467,
+        0.5449263632186344,
+        0.6982971445924058,
+        0.6914382639145921
+      ]
+    }
+  ]
+}

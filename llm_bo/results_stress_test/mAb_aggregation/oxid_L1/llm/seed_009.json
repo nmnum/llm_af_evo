@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 9,
+  "auc": 0.8080365784639048,
+  "final": 0.8757542600789157,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, which is critical for oxidation protection. Given the primary degradation pathway, incorporating methionine and EDTA should improve stability scores. Additionally, using trehalose or sucrose for conformational stability and polysorbate 80 for interface protection may further enhance stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.24747886367089716,
+        0.3293321293978316,
+        0.3827829519337028,
+        0.2333287727161769
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations show that arginine and polysorbate20 are beneficial, but the absence of methionine and EDTA in the best formulation suggests a need to balance these components. Methionine is crucial for oxidation protection, and EDTA can synergize with it. Trehalose provides conformational stability and has shown some benefit when combined with polysorbate20.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.34318905948658723,
+        0.6954514840505988,
+        0.3173895272925945,
+        0.865445964537742
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation lacks EDTA and methionine, which are crucial for preventing oxidation. However, it includes arginine, trehalose, and polysorbate 20, which provide good stability against aggregation and conformational changes. To improve the stability score, we should incorporate methionine and EDTA while maintaining or adjusting the concentrations of other excipients to optimize their synergistic effects.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.40051423713158535,
+        0.43339942699653256,
+        0.29969603640633796,
+        0.7733971850753026
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, which is a critical sacrificial antioxidant for oxidation-prone proteins. However, the presence of EDTA and polysorbate20/80 seems to provide some stability. Given that methionine is essential for addressing the primary degradation pathway (methionine/tryptophan oxidation), it should be included in the new formulations. Additionally, histidine can be used as a buffer with some antioxidant properties at low concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.35937326439993345,
+        0.11130349071683562,
+        0.3904382258400266,
+        0.33814102870747237
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations show that arginine and trehalose are beneficial, but the absence of EDTA in the best formulation suggests it may not be necessary when other stabilisers are optimised. Methionine should be included as a primary antioxidant to address oxidation directly. Polysorbate 20 has shown better performance than polysorbate 80 in the top formulations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3685414701646142,
+        0.1690520950841403,
+        0.3741563528985716,
+        0.3059315769114356
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations show that arginine and trehalose are beneficial, but the absence of EDTA in the best formulation suggests it may not be necessary. Methionine, a strong sacrificial antioxidant, has not been used yet and could potentially improve stability scores further by directly addressing oxidation.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2888129047046371,
+        0.4371336795792193,
+        0.20295017682870597,
+        0.5103715320591053
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations show that arginine and trehalose are beneficial, but the absence of EDTA in the best formulation suggests it may not be necessary when other stabilisers are optimised. Methionine, a strong sacrificial antioxidant, has not been used yet and could potentially improve stability scores further.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2438380865497028,
+        0.6198482374654065,
+        0.3159245750675889,
+        0.7718083313802928
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "oxid_L2",
+  "condition": "llm",
+  "seed": 3,
+  "auc": 0.9439997902914472,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation includes methionine and EDTA, indicating that the combination of a sacrificial antioxidant and metal chelator is crucial for stability. The presence of polysorbate 80 also seems beneficial. We will focus on optimizing these components while exploring different sugars to potentially enhance conformational stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5366397969002493,
+        0.560925240342643,
+        0.521680007138963,
+        0.4745917017956229
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating that these components are crucial for stabilising the oxidation-prone monoclonal antibody. The presence of sucrose or trehalose also seems beneficial, but not as critical as the antioxidant combination. Polysorbate 80 is consistently used in the top formulations, suggesting its importance in interface protection.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3432275948961591,
+        0.19706074056502706,
+        0.23339315360254487,
+        0.18154399851694794
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein against oxidation. Sucrose and trehalose are also present, suggesting they provide additional stability benefits. Polysorbate 80 is consistently used, likely for its interface protection properties. The next set of candidates will focus on optimising the concentrations of methionine, sucrose/trehalose, and polysorbate 80 while maintaining EDTA.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5677669844865033,
+        0.5144377067464305,
+        0.15861310415484045,
+        0.1780652106378643
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilizing the protein against oxidation. Sucrose and polysorbate 80 also appear to be beneficial. We will focus on optimizing these components while exploring a wider range of concentrations for sucrose and polysorbate 80.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5309065735129226,
+        0.3039638727426016,
+        0.5213337066737307,
+        0.5757786757503881
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilizing the protein. The surfactant concentration seems to have a less significant impact compared to the presence of methionine and EDTA. Sucrose and mannitol appear to be more effective than trehalose at these concentrations. Arginine is not prioritized due to its lack of anti-oxidation properties.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.39969130176863665,
+        0.44869691031761877,
+        0.38698310655875034,
+        0.1361274736814197
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating that these excipients are crucial for stabilizing the oxidation-prone monoclonal antibody. The presence of a sugar (sucrose or mannitol) and polysorbate80 also seems beneficial. To further optimize stability, we will explore variations in methionine concentration within its effective range (0.5-2 mM), while keeping EDTA constant. We will also test different sugars and surfactants to identify any potential improvements.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.45130423788739343,
+        0.47945170121500547,
+        0.12025702708619936,
+        0.5768247852919323
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating that these components are crucial for stability. The surfactant concentration seems to have a less significant impact compared to the presence of methionine and EDTA. Sucrose appears slightly more favorable than mannitol in the top formulations. Given this, we will focus on optimizing the concentrations of methionine and sucrose while maintaining EDTA and varying the surfactant type and concentration.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.6019585603379578,
+        0.5377053638597638,
+        0.5521986558191911,
+        0.5089662411592996
+      ]
+    }
+  ]
+}

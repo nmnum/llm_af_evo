@@ -1,0 +1,55 @@
+{
+  "seed": 10,
+  "hv_trajectory": [
+    8277.957524192818,
+    8763.687474838433,
+    8919.784304590632,
+    9168.707508284939,
+    9193.55195416397,
+    10564.850747617464
+  ],
+  "decisions": [
+    {
+      "step": 10,
+      "n_obs": 15,
+      "pareto_size": 6,
+      "hypervolume": 8277.957524192818,
+      "llm_tags": []
+    },
+    {
+      "step": 15,
+      "n_obs": 20,
+      "pareto_size": 7,
+      "hypervolume": 8763.687474838433,
+      "llm_tags": []
+    },
+    {
+      "step": 20,
+      "n_obs": 25,
+      "pareto_size": 11,
+      "hypervolume": 8919.784304590632,
+      "llm_tags": []
+    },
+    {
+      "step": 25,
+      "n_obs": 30,
+      "pareto_size": 13,
+      "hypervolume": 9168.707508284939,
+      "llm_tags": []
+    },
+    {
+      "step": 30,
+      "n_obs": 35,
+      "pareto_size": 14,
+      "hypervolume": 9193.55195416397,
+      "llm_tags": []
+    },
+    {
+      "step": 35,
+      "n_obs": 40,
+      "pareto_size": 15,
+      "hypervolume": 10564.850747617464,
+      "llm_tags": []
+    }
+  ]
+}

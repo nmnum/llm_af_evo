@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L2",
+  "condition": "llm",
+  "seed": 3,
+  "auc": 0.8807002645951304,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations have included arginine, sucrose or sorbitol, and a surfactant. Given the primary degradation pathway is aggregation, we will focus on using arginine for charge-shielding, sucrose or trehalose for stabilization, and polysorbate 80 for interface protection. We will also test EDTA to see if it has any beneficial effects despite oxidation not being the main concern.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.8184317547377613,
+        0.835511913933914,
+        0.5508045799903799,
+        0.570804533995043
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate 80, with trehalose or sucrose as the sugar. The best scores are achieved without EDTA. We will explore variations around these successful components to potentially improve stability further.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7718083313802928,
+        0.8998923415795039,
+        0.5103715320591053,
+        0.7301404569727012
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a strong preference for arginine and sucrose, with polysorbate 80. EDTA seems to have a positive impact when present. The best scores are achieved within the mid-range of arginine (14-19 mM) and higher concentrations of sucrose (79-97 mM). Polysorbate 80 at 0.2-0.5% appears optimal. We will explore this space further, slightly adjusting the ranges to find a potential improvement.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6003905695348467,
+        0.47617510352291764,
+        0.6991652680407341,
+        0.5070721380688189
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that a combination of arginine, sucrose or trehalose, and polysorbate 80 is effective. EDTA seems to have a positive impact when present. The concentration ranges for these excipients in the best formulations are: arginine (11-19 mM), sugar (79-97 mM), and polysorbate 80 (0.2-0.5%). We will explore variations around these concentrations, including the use of trehalose instead of sucrose to see if it can further improve stability.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.9882292373430821,
+        0.6914382639145921,
+        0.5234943566978817,
+        0.625964019938903
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that a combination of arginine, sucrose or trehalose, and polysorbate 80 with EDTA is effective. The best formulation uses sorbitol instead of sucrose or trehalose, which might be worth exploring further. Additionally, the concentration ranges for these excipients in the top formulations are relatively narrow, indicating that small adjustments could potentially yield improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5960674432290942,
+        0.7733971850753026,
+        0.6933725745328679,
+        0.7236112888419924
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a strong preference for arginine and polysorbate 80, with sucrose or trehalose also contributing positively. EDTA seems to have a positive effect in the presence of these excipients. The best formulation uses sorbitol instead of sucrose or trehalose, which suggests that it might be worth exploring further. However, since mannitol is not recommended above 40 mM due to crystallization risk, we will avoid using it at higher concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5853435318520913,
+        0.6536996918579724,
+        0.42328960700298474,
+        0.24813590537671568
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a strong preference for arginine and polysorbate 80, with sucrose or trehalose also contributing positively. EDTA seems beneficial in the presence of these excipients. The best formulation uses sorbitol instead of sucrose or trehalose, which suggests that it might be worth exploring further. Given this, I will propose formulations that vary the concentration of arginine and polysorbate 80 slightly, while also testing a different sugar (trehalose) at a higher concentration to see if it can surpass the stability score of sorbitol.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7318712764939983,
+        0.6218441024600123,
+        0.6452179284656616,
+        0.7474981007313554
+      ]
+    }
+  ]
+}

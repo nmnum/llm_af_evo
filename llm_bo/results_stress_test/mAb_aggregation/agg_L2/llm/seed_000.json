@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L2",
+  "condition": "llm",
+  "seed": 0,
+  "auc": 0.8098744903754289,
+  "final": 0.9106109266701341,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include arginine, trehalose, and poloxamer188. The presence of EDTA seems to have a positive impact on stability scores when combined with these excipients. Given the primary degradation pathway is aggregation, focusing on combinations that enhance anti-aggregation properties (arginine) and stabilisation (trehalose) while maintaining low viscosity should be prioritized.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.682176372587985,
+        0.6914382639145921,
+        0.3829426894199753,
+        0.7718083313802928
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a clear preference for arginine and trehalose, with polysorbate 80 providing additional stability. EDTA's presence does not seem to significantly impact the score in the absence of oxidation concerns. The best formulation has a moderate concentration of arginine (14 mM) and high trehalose (79 mM), suggesting that these concentrations are effective for this particular mAb. Slight variations around these values, while maintaining polysorbate 80 at or near 0.7%, could potentially yield further improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.835511913933914,
+        0.5103715320591053,
+        0.625964019938903,
+        0.7733971850753026
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a preference for arginine, trehalose, and polysorbate 80. EDTA does not seem to significantly improve the stability score in these conditions. The best scores are achieved with moderate concentrations of arginine (11-14 mM) and higher concentrations of trehalose (79-82 mM). Polysorbate 80 at 0.2-0.7% also contributes positively. We will explore this space further, slightly adjusting the concentrations to find an optimal balance.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.570804533995043,
+        0.7236112888419924,
+        0.865445964537742,
+        0.8184317547377613
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a preference for arginine and trehalose, with polysorbate 80 at lower concentrations. EDTA does not seem to contribute positively when present. The next set of candidates will explore the upper range of arginine and trehalose while maintaining low surfactant levels, and also test the effect of slightly higher surfactant concentration without exceeding the optimal range.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7318712764939983,
+        0.8222204590121308,
+        0.278321902187986,
+        0.3273878093152329
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that a combination of arginine, trehalose, and polysorbate 80 is effective. Arginine concentrations around 17-19 mM seem optimal, while trehalose at 45-82 mM provides good stability. Polysorbate 80 at 0.2-0.4% appears to be beneficial. EDTA does not seem necessary for achieving high scores.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7474981007313554,
+        0.4091204888992619,
+        0.5139113179489134,
+        0.8509450937889043
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a preference for arginine and trehalose, with polysorbate 80 at lower concentrations. EDTA is not beneficial in the current context. The best formulation uses arginine at 18 mM and trehalose at 45 mM, which suggests that these concentrations are effective but there might be room for optimization by slightly adjusting these levels or exploring other surfactants.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6198482374654065,
+        0.6954514840505988,
+        0.2271157297038813,
+        0.24813590537671568
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a strong preference for arginine and polysorbate 80, with trehalose or sucrose as stabilizers. Mannitol is less favorable due to crystallization risks at higher concentrations. EDTA was not used in the top formulations, suggesting it may not be necessary. The best scores are achieved with moderate concentrations of arginine (11-19 mM) and polysorbate 80 (0.2-0.4%). Trehalose seems to perform better than sucrose at higher concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.39575324469432516,
+        0.8998923415795039,
+        0.83852708642062,
+        0.3969949198976126
+      ]
+    }
+  ]
+}

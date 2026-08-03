@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "oxid_L2",
+  "condition": "llm",
+  "seed": 0,
+  "auc": 0.9414419638693213,
+  "final": 0.958246668953566,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The best formulation so far includes methionine and EDTA, which are known to be effective against oxidation. The use of mannitol as a stabilizer also seems beneficial. We should focus on optimizing the concentrations of these components while maintaining the presence of EDTA. Additionally, we can explore the effect of different surfactants at optimal concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.15904244747162305,
+        0.227364076754703,
+        0.5059565637560042,
+        0.23339315360254487
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations include methionine as the primary antioxidant, with EDTA present in the two highest scoring formulations. Mannitol and polysorbate are also common among the top performers. The next set of candidates will focus on optimizing these components while exploring slight variations to potentially improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.22297383889055186,
+        0.22981105584105424,
+        0.521680007138963,
+        0.5213789581543535
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein against oxidation. The surfactants used (poloxamer188, polysorbate80, polysorbate20) show that interface protection is beneficial but less critical than the antioxidant properties of methionine and EDTA. Mannitol appears to be a preferred sugar, possibly due to its stabilising effect without interfering with oxidation prevention.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5513620030270776,
+        0.28603962435298214,
+        0.5108547586694292,
+        0.5757786757503881
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilizing the protein against oxidation. The surfactants used vary but polysorbate80 appears more frequently among the top performers. Mannitol is also present in all top formulations, suggesting its role as a stabilizer is beneficial. To further optimize, we will focus on fine-tuning methionine and EDTA concentrations while exploring different sugars and surfactant levels.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.44869691031761877,
+        0.12025702708619936,
+        0.4745917017956229,
+        0.19706074056502706
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilizing the protein. The surfactants used vary but polysorbate80 appears more frequently among the top performers. Mannitol is also present in all top formulations, suggesting its role as a stabilizer is beneficial. To further optimize stability, we will focus on fine-tuning methionine and polysorbate80 concentrations while maintaining EDTA and exploring different sugar stabilizers.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.45033859208262755,
+        0.5366397969002493,
+        0.5713557249820607,
+        0.3432275948961591
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein against oxidation. The surfactants used are primarily polysorbate 80 or poloxamer 188, with a slight preference for polysorbate 80 based on higher scores. Mannitol and sorbitol appear to be more effective than trehalose at these concentrations. To further optimise, we will focus on refining the methionine concentration around 0.9-1.3 mM, use EDTA, and test a range of mannitol and sorbitol concentrations with polysorbate 80.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5677669844865033,
+        0.5298235861067528,
+        0.1439685347850959,
+        0.560925240342643
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilizing the protein against oxidation. The surfactants used are primarily polysorbate 80, which suggests it is beneficial for interface protection. Mannitol and sucrose appear to be effective sugars, but there is a need to explore trehalose as an alternative conformational stabilizer. Given that arginine does not contribute to anti-oxidation, we will focus on other amino acids like proline or glycine which may provide additional stability without interfering with the primary goal of oxidation prevention.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "proline"
+      ],
+      "queried_y": [
+        0.5144377067464305,
+        0.2505964216580423,
+        0.5768247852919323,
+        0.3220201351335775
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 14,
+  "auc": 0.8383542211206706,
+  "final": 0.9106109266701341,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation uses arginine, sucrose, and polysorbate20 without EDTA. We will explore variations around this combination to potentially improve the stability score.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7301404569727012,
+        0.6116228876823094,
+        0.7119184900899121,
+        0.2979290183591614
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate20, with sucrose as the sugar. EDTA presence seems to have a minor impact. We will explore variations around these components while also testing other sugars and surfactants to see if we can find a better combination.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.5175616478482743,
+        0.865445964537742,
+        0.6218441024600123,
+        0.3302022688327599
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and polysorbate20 as the surfactant, with EDTA set to no. Trehalose and sucrose appear to be more effective sugars compared to mannitol and sorbitol. We will explore variations around these successful components while also testing some new combinations that have not been fully explored yet.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.3273878093152329,
+        0.5836438237428433,
+        0.6954514840505988,
+        0.6198482374654065
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate20, with trehalose or sucrose as the sugar. EDTA is not beneficial in these top formulations. We will explore variations around these successful combinations to potentially find a better formulation.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.570804533995043,
+        0.508172980293405,
+        0.3969949198976126,
+        0.19571004598039257
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate20, with trehalose or sucrose as the sugar. EDTA is not present in the top two formulations. We will explore variations around these successful combinations to potentially improve stability.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.43339942699653256,
+        0.5731499246156728,
+        0.7236112888419924,
+        0.8184317547377613
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and exclude EDTA. Trehalose and sucrose appear to be more effective sugars, with polysorbate20 being a common surfactant in high-scoring formulations. Exploring variations around these successful components may yield further improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.835511913933914,
+        0.7328557168159052,
+        0.5103715320591053,
+        0.5510436901338457
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and do not include EDTA. Trehalose and sucrose are the most common sugars, with polysorbate20 and polysorbate80 being the preferred surfactants. Exploring variations around these successful components may yield further improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.4371336795792193,
+        0.8998923415795039,
+        0.7718083313802928,
+        0.6838043553543366
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "agg_L1",
+  "condition": "llm",
+  "seed": 3,
+  "auc": 0.9159467766643706,
+  "final": 0.9159467766643707,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation includes methionine, mannitol, polysorbate80, and EDTA. However, since the primary degradation pathway is aggregation, we should focus on excipients that specifically address this issue: arginine, sucrose/trehalose, and polysorbate80. Methionine and EDTA have minimal to moderate benefits for oxidation but not for aggregation. Therefore, I will propose formulations with higher concentrations of arginine, sucrose or trehalose, and polysorbate80 while avoiding mannitol above 40 mM.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.29763307204869105,
+        0.2443084676564997,
+        0.1751579529262993,
+        0.2578638821161207
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include methionine, mannitol, and polysorbate80 with EDTA. However, since the primary degradation pathway is aggregation, we should focus on arginine, sucrose/trehalose, and polysorbate80. Methionine and EDTA have minimal to moderate benefits for this specific issue. We will increase the concentration of arginine and polysorbate80 while maintaining a safe level of mannitol to avoid crystallization issues during freeze-drying.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2404107944523845,
+        0.31583351340197924,
+        0.26264977825323826,
+        0.06369493473368995
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include arginine, sucrose or trehalose, and polysorbate80 with EDTA. Methionine and mannitol do not seem to contribute significantly to stability in the context of aggregation prevention. Therefore, focusing on combinations that leverage the synergistic effects of arginine and polysorbate80 while optimizing sugar concentration and the presence of EDTA is likely to yield better results.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2943855158574267,
+        0.19193006564580434,
+        0.2787821144894782,
+        0.22119796707821845
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include arginine, trehalose or sucrose, and polysorbate80 with EDTA. Methionine and mannitol do not seem to contribute significantly to stability in the context of aggregation prevention. Therefore, focusing on combinations that leverage the synergistic effects of arginine and polysorbate80 while optimizing sugar concentration and including EDTA should yield better results.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.16610068243424975,
+        0.18811162952119073,
+        0.13846231404625126,
+        0.26369130651781636
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations indicate that the combination of arginine, a sugar (sucrose or trehalose), and polysorbate80 with EDTA yields better stability scores. Methionine and mannitol do not seem to contribute significantly to anti-aggregation properties. Therefore, focusing on optimizing concentrations of arginine, sucrose/trehalose, and polysorbate80 while including EDTA is likely to improve the formulation.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.24583447791554,
+        0.2505964216580423,
+        0.2877034186787767,
+        0.27316185920013863
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include arginine, trehalose or sucrose, and polysorbate80 with EDTA. Methionine and mannitol do not seem to contribute significantly to stability in the context of aggregation prevention. Given that arginine and polysorbate80 have a synergistic effect on mAb stabilization against aggregation, we will focus on these excipients while optimizing their concentrations. We will also explore higher concentrations of sucrose or trehalose for better stabilization.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.18022793563025066,
+        0.24972243233162011,
+        0.3815938190796867,
+        0.25658525992049847
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a clear benefit from using polysorbate80 and EDTA. Methionine, while beneficial for oxidation, does not seem to contribute significantly to stability in the context of aggregation. Arginine appears to be more effective than other amino acids when combined with sugars and surfactants. Sucrose and trehalose are nearly equivalent stabilisers, but sucrose is used at a higher concentration in the top formulations. Mannitol should be avoided at high concentrations due to crystallisation risks during freeze-drying.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.12420201826995468,
+        0.27045177763227873,
+        0.2186419327615054,
+        0.1780652106378643
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "oxid_L3",
+  "condition": "llm",
+  "seed": 0,
+  "auc": 0.9565543439200176,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are critical for stabilizing the oxidation-prone monoclonal antibody. Formulations with these components have shown higher stability scores. Additionally, sucrose or trehalose at appropriate concentrations provide conformational stability, while polysorbate80 offers interface protection. The best formulation so far uses methionine 1.1 mM, mannitol 40 mM, poloxamer188 0.9%, and EDTA. We will explore variations around these parameters to potentially improve the stability score.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.4745917017956229,
+        0.560925240342643,
+        0.521680007138963,
+        0.5366397969002493
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein. Sucrose and trehalose appear to be more effective than mannitol or sorbitol for conformational stability. Polysorbate80 is consistently used over other surfactants. We will explore variations around these top-performing components to potentially improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3432275948961591,
+        0.19706074056502706,
+        0.5677669844865033,
+        0.1780652106378643
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein. Sucrose and polysorbate80 are also frequently present, suggesting they contribute positively to stability. We will explore variations around these successful components while slightly adjusting concentrations to potentially find a better combination.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.18154399851694794,
+        0.5144377067464305,
+        0.44869691031761877,
+        0.5309065735129226
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein. Sucrose and polysorbate80 also appear frequently among the top performers. We will explore variations around these components to potentially improve stability further.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.39969130176863665,
+        0.5213337066737307,
+        0.5768247852919323,
+        0.5757786757503881
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein. Sucrose and mannitol are also frequently used, suggesting they provide good conformational stability. Polysorbate80 appears to be more effective than other surfactants at these concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.15861310415484045,
+        0.23339315360254487,
+        0.38698310655875034,
+        0.6019585603379578
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein. Sucrose is also prevalent among the top choices, suggesting its role in conformational stability. Polysorbate80 appears to be a better surfactant option compared to others for this specific case.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3039638727426016,
+        0.5521986558191911,
+        0.5070523118204221,
+        0.4153504840719189
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilisation. Sucrose appears to be a better sugar option compared to mannitol or trehalose. Polysorbate80 is also frequently present among the top candidates, suggesting its effectiveness as a surfactant.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.49817000241170806,
+        0.5298235861067528,
+        0.45130423788739343,
+        0.1361274736814197
+      ]
+    }
+  ]
+}

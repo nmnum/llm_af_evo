@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 3,
+  "auc": 0.6799867976924212,
+  "final": 0.6799867976924211,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing oxidation-prone proteins. Formulations without EDTA have generally performed poorly, indicating the importance of metal ion chelation in preventing oxidative degradation. Methionine, even at low concentrations, provides significant protection against oxidation. Sucrose or trehalose can be used to provide conformational stability, and polysorbate 80 offers moderate benefits by protecting against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.35937326439993345,
+        0.21935876779469296,
+        0.29969603640633796,
+        0.2765619604701209
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, which is critical for oxidation protection. Given the primary degradation pathway, we should focus on using methionine and EDTA to maximize stability. The current best formulation does not use methionine or EDTA, suggesting a significant improvement potential by incorporating these excipients.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.20295017682870597,
+        0.24747886367089716,
+        0.30231608180766795,
+        0.21198213411664815
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing the oxidation-prone monoclonal antibody. Formulations without EDTA have performed poorly, indicating its importance in chelating metal ions that catalyze oxidative reactions. Methionine, as a sacrificial antioxidant, is also essential. Sucrose or trehalose can be used to provide conformational stability. Polysorbate 80 has shown moderate benefits and should be included for interface protection.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.34318905948658723,
+        0.3293321293978316,
+        0.3544634019502615,
+        0.3243135568454091
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing oxidation-prone proteins. The top formulations lack methionine, which is a primary stabilizer against oxidation. Including methionine at higher concentrations along with EDTA should improve stability scores. Additionally, trehalose or sucrose can be used to provide conformational stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3159245750675889,
+        0.19544498791301998,
+        0.29611502061846184,
+        0.34659404975342073
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, a critical sacrificial antioxidant for oxidation-prone proteins. However, the presence of EDTA and an appropriate surfactant (polysorbate80) shows some benefit. We should focus on optimizing methionine concentration while ensuring EDTA is present to chelate metal ions that catalyze oxidative reactions. Additionally, we will explore higher concentrations of trehalose for conformational stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.09541070804393817,
+        0.3904382258400266,
+        0.18190219952206987,
+        0.40051423713158535
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing oxidation-prone proteins. The top formulations lack these components or have them at suboptimal levels. Therefore, the proposed candidates will focus on higher concentrations of methionine and the inclusion of EDTA.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3827829519337028,
+        0.35884268236758254,
+        0.3059315769114356,
+        0.2823634949937535
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, a critical sacrificial antioxidant for oxidation-prone proteins. However, the presence of EDTA and an appropriate surfactant (polysorbate 80) shows some benefit. The best formulation so far does not include EDTA or a strong stabiliser against oxidation. Therefore, we should focus on formulations that combine methionine with EDTA and polysorbate 80 to potentially improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.4600208142813698,
+        0.34418272838018527,
+        0.0564928201369413,
+        0.2982803638901855
+      ]
+    }
+  ]
+}
