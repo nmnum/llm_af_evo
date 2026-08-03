@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 13,
+  "auc": 0.8342354563833826,
+  "final": 0.9106109266701341,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations show that EDTA and poloxamer188 are beneficial. Methionine, a strong sacrificial antioxidant, has not been used yet but should be considered given the primary degradation pathway is oxidation. Histidine can provide some additional antioxidant effect at low concentrations. Sucrose or trehalose will be chosen for conformational stability.",
+      "proposed_aa": [
+        "methionine",
+        "histidine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.34659404975342073,
+        0.45310945939098546,
+        0.6991652680407341,
+        0.24747886367089716
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations include arginine, sucrose, and poloxamer188 with EDTA. Methionine is a critical sacrificial antioxidant for oxidation-prone proteins but has not been tested yet in the presence of EDTA. Increasing methionine concentration while maintaining other stabilisers could improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.36546864788495587,
+        0.6536996918579724,
+        0.8998923415795039,
+        0.3290029264772287
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation includes arginine, sucrose, and polysorbate80 with EDTA. Methionine is a critical sacrificial antioxidant for oxidation-prone proteins but was not used in the top formulations. Given that methionine can significantly enhance stability by protecting against oxidation, it should be included in new formulations. Additionally, increasing the concentration of methionine and optimizing other components may further improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.2765619604701209,
+        0.35937326439993345,
+        0.6003905695348467,
+        0.29969603640633796
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the combination of arginine, sucrose, polysorbate80, and EDTA is particularly effective. Methionine as a sacrificial antioxidant should be included to further protect against oxidation. The top formulation lacks methionine, which could potentially improve stability scores.",
+      "proposed_aa": [
+        "arginine",
+        "methionine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.47617510352291764,
+        0.21935876779469296,
+        0.6914382639145921,
+        0.20295017682870597
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation includes arginine, sucrose, polysorbate80, and EDTA. Methionine is a critical sacrificial antioxidant for oxidation-prone proteins but was not used in the top formulations. Given that methionine can significantly enhance stability by protecting against oxidation, it should be included in new formulations. Additionally, increasing the concentration of methionine within its range might further improve stability. Histidine has some antioxidant properties and could complement methionine's effect.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "histidine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.30231608180766795,
+        0.3904382258400266,
+        0.28857439691081604,
+        0.3159245750675889
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation includes arginine, sucrose, polysorbate80, and EDTA. Methionine is a critical sacrificial antioxidant for oxidation-prone proteins, which has not been tested in the top formulations. Increasing methionine concentration while maintaining other stabilizers could improve stability. Additionally, testing histidine at higher concentrations might provide some antioxidant benefits.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "histidine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.3293321293978316,
+        0.625964019938903,
+        0.3782511931396536,
+        0.5508045799903799
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the combination of arginine, sucrose, polysorbate80, and EDTA is particularly effective. Methionine, as a sacrificial antioxidant, should be included to further protect against oxidation. The top formulation lacks methionine, which could potentially improve stability scores even more.",
+      "proposed_aa": [
+        "arginine",
+        "methionine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.8184317547377613,
+        0.3243135568454091,
+        0.7733971850753026,
+        0.18190219952206987
+      ]
+    }
+  ]
+}

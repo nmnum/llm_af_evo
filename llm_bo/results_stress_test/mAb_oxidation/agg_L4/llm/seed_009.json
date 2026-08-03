@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 9,
+  "auc": 0.8428442108375784,
+  "final": 0.9243148187697005,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that methionine, sorbitol, and polysorbate20 are favorable components. However, to explore the space further, we will test combinations with other amino acids (arginine and histidine) and sugars (sucrose and trehalose), while keeping the surfactant as polysorbate20 or poloxamer188. We also vary EDTA presence to see its impact.",
+      "proposed_aa": [
+        "arginine",
+        "histidine",
+        "methionine",
+        "proline"
+      ],
+      "queried_y": [
+        0.23446030623344305,
+        0.21670762877522498,
+        0.20239163266440496,
+        0.21032815152183645
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that methionine, sorbitol, and polysorbate20 are favorable components. EDTA appears to have a negative impact on stability when present. We will explore variations around these components while also testing some boundary conditions.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.3259958943337411,
+        0.22981105584105424,
+        0.17519902611029375,
+        0.09581023024543059
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that methionine, sorbitol, and polysorbate20 are favorable components. EDTA appears to have a negative impact on stability when present. We will explore variations around these optimal conditions while also testing some boundary values for the concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.25223663034915017,
+        0.227364076754703,
+        0.2581727908999287,
+        0.18342259091399613
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that methionine, sorbitol, and polysorbate20 are favorable components. EDTA appears to have a negative impact on stability when present. We will explore variations around these optimal conditions while also testing some boundary values for the concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5044854382047521,
+        0.1826536975204238,
+        0.3023722524801718,
+        0.1925520742226637
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and sorbitol or mannitol as sugars. Polysorbate20 and poloxamer188 are the most common surfactants in the top formulations, with EDTA presence being split. We will explore variations around these successful components to potentially improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.4832966002586227,
+        0.5563992176056493,
+        0.29307326131698486,
+        0.28603962435298214
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid, suggesting it may be a key component for stability. Mannitol and sorbitol appear to be more effective sugars compared to others. Poloxamer188 and polysorbate20 are the preferred surfactants in the top formulations. EDTA seems beneficial when included.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.12814063993726457,
+        0.3756684562482696,
+        0.521680007138963,
+        0.3317434510797632
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that methionine, mannitol or sorbitol, and poloxamer188 or polysorbate20 are favorable. EDTA seems to have a positive impact on stability. We will explore variations around these components while also testing some new combinations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "histidine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5059565637560042,
+        0.5213789581543535,
+        0.154236784230779,
+        0.24328777348692698
+      ]
+    }
+  ]
+}

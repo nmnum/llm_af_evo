@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 13,
+  "auc": 0.7986509949198317,
+  "final": 0.9106109266701341,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top two formulations both use poloxamer188 as the surfactant, suggesting it may be more effective than the other options. The amino acids arginine and proline are also prominent in these top formulations, indicating they might contribute positively to stability. Sucrose and sorbitol appear to be beneficial sugars. EDTA's presence or absence does not seem to have a clear impact on the score based on the current data.",
+      "proposed_aa": [
+        "arginine",
+        "proline",
+        "arginine",
+        "proline"
+      ],
+      "queried_y": [
+        0.6991652680407341,
+        0.671982834486946,
+        0.6536996918579724,
+        0.41125746265625646
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that arginine and poloxamer188 are beneficial, as well as the presence of EDTA. Sucrose appears to be a favorable sugar. We will explore variations around these components while also testing other sugars and surfactants to ensure we have not missed any potential improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "proline",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7328557168159052,
+        0.682176372587985,
+        0.4490232598734911,
+        0.6003905695348467
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and poloxamer188, with sucrose as the sugar. EDTA presence seems to have a minor impact. We will explore variations around these components while slightly adjusting concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5731499246156728,
+        0.5828059620087211,
+        0.5833709431273365,
+        0.5510436901338457
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and poloxamer188, with sucrose as the sugar. EDTA presence seems to have a minor impact. We will explore variations around these components while slightly adjusting concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.3847498733151058,
+        0.8998923415795039,
+        0.7301404569727012,
+        0.7119184900899121
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and sucrose, suggesting these excipients are particularly effective. The surfactants vary, but polysorbate80 appears in the highest scoring formulation. EDTA's presence also seems to correlate with higher scores. We will explore variations around these parameters while slightly adjusting concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.47617510352291764,
+        0.5836438237428433,
+        0.8184317547377613,
+        0.5508045799903799
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and sucrose, suggesting these excipients are beneficial for stability. Polysorbate80 appears to be the most effective surfactant in combination with EDTA. We will explore variations around these successful components while also testing a few new combinations involving other amino acids and sugars.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "proline",
+        "histidine"
+      ],
+      "queried_y": [
+        0.5070721380688189,
+        0.7318712764939983,
+        0.330757873377906,
+        0.33433438645474006
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine as the amino acid and sucrose as the sugar, with polysorbate80 being a common surfactant. EDTA presence seems to have a positive impact on stability scores in the best formulation. We will explore variations around these parameters while also testing other surfactants and slightly different concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5234943566978817,
+        0.5175616478482743,
+        0.6847793365610368,
+        0.6914382639145921
+      ]
+    }
+  ]
+}

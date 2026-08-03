@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 2,
+  "auc": 1.0,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulation uses methionine, sucrose, and poloxamer188 with EDTA. We will explore variations around this combination to potentially improve the stability score.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5089662411592996,
+        0.3039638727426016,
+        0.26101159187536854,
+        0.5413297366939576
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine and poloxamer188, suggesting these excipients are beneficial. Sucrose appears to be the preferred sugar. EDTA seems to have a positive impact when present. We will explore variations around these components while also testing other amino acids and sugars to ensure we are not missing out on potentially better combinations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.2225820165887414,
+        0.5365954332483583,
+        0.27316185920013863,
+        0.17176817856850168
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and poloxamer188 as the surfactant. EDTA presence seems to have a positive impact on stability scores in these top formulations. We will explore variations around these parameters, adjusting sugar types and concentrations, while keeping other components similar to the best formulation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5521986558191911,
+        0.5677669844865033,
+        0.5563992176056493,
+        0.45130423788739343
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and include EDTA. Poloxamer188 is used in three of the top five, suggesting it may be beneficial. Sucrose appears to be a favorable sugar choice. We will explore variations around these successful components while also testing some boundary conditions.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3432275948961591,
+        0.1780652106378643,
+        0.227364076754703,
+        0.05811986139049055
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid, sucrose or mannitol as sugars, and poloxamer188 as the surfactant. EDTA is present in most of the top formulations. We will explore variations around these components to potentially improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5768247852919323,
+        0.22981105584105424,
+        0.5281658682666887,
+        0.5377053638597638
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and include EDTA. They also favor sucrose or trehalose as sugars, with poloxamer188 or polysorbate20 as surfactants. To explore further, we will test a wider range of concentrations for these components while maintaining the successful elements.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.10683847108709836,
+        0.2511850614663182,
+        0.521680007138963,
+        0.5469740198816695
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and include EDTA. They also favor sucrose or trehalose at higher concentrations with poloxamer188 or polysorbate20/80 as surfactants. Exploring variations around these parameters may yield further improvements.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.560925240342643,
+        0.4745917017956229,
+        0.5059565637560042,
+        0.2021702238751242
+      ]
+    }
+  ]
+}

@@ -1,0 +1,352 @@
+{
+  "seed": 2,
+  "hv_trajectory": [
+    8943.303337197189,
+    9215.805849691606,
+    9432.440314022628,
+    9506.551945614601,
+    10655.029124311619,
+    11078.805621471765
+  ],
+  "decisions": [
+    {
+      "step": 10,
+      "n_obs": 15,
+      "pareto_size": 7,
+      "hypervolume": 8943.303337197189,
+      "trust": {
+        "Tm": 0.7999999999999999,
+        "kD": 0.7999999999999999,
+        "viscosity": 0.7999999999999999
+      },
+      "mixing_weight": 0.20000000000000007,
+      "cache_hit": false,
+      "n_llm_proposed": 6,
+      "llm_tags": [
+        {
+          "targets": [
+            "Tm",
+            "kD"
+          ],
+          "tradeoff": "raises viscosity"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "moderate kD"
+        },
+        {
+          "targets": [
+            "kD",
+            "viscosity"
+          ],
+          "tradeoff": "lower Tm"
+        },
+        {
+          "targets": [
+            "Tm",
+            "kD"
+          ],
+          "tradeoff": "high viscosity"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "moderate kD"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "moderate kD"
+        }
+      ]
+    },
+    {
+      "step": 15,
+      "n_obs": 20,
+      "pareto_size": 9,
+      "hypervolume": 9215.805849691606,
+      "trust": {
+        "Tm": 0.7999999999999999,
+        "kD": 0.7999999999999999,
+        "viscosity": 0.7999999999999999
+      },
+      "mixing_weight": 0.20000000000000007,
+      "cache_hit": false,
+      "n_llm_proposed": 6,
+      "llm_tags": [
+        {
+          "targets": [
+            "kD",
+            "Tm"
+          ],
+          "tradeoff": "moderate viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        },
+        {
+          "targets": [
+            "kD",
+            "viscosity"
+          ],
+          "tradeoff": "moderate Tm"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        },
+        {
+          "targets": [
+            "kD",
+            "viscosity"
+          ],
+          "tradeoff": "moderate Tm"
+        }
+      ]
+    },
+    {
+      "step": 20,
+      "n_obs": 25,
+      "pareto_size": 11,
+      "hypervolume": 9432.440314022628,
+      "trust": {
+        "Tm": 0.7999999999999999,
+        "kD": 0.7999999999999999,
+        "viscosity": 0.7999999999999999
+      },
+      "mixing_weight": 0.20000000000000007,
+      "cache_hit": false,
+      "n_llm_proposed": 6,
+      "llm_tags": [
+        {
+          "targets": [
+            "Tm",
+            "kD"
+          ],
+          "tradeoff": "moderate viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm"
+          ],
+          "tradeoff": "slight viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "minimal kD improvement"
+        },
+        {
+          "targets": [
+            "kD"
+          ],
+          "tradeoff": "moderate viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "slight kD improvement"
+        },
+        {
+          "targets": [
+            "kD",
+            "Tm"
+          ],
+          "tradeoff": "moderate viscosity increase"
+        }
+      ]
+    },
+    {
+      "step": 25,
+      "n_obs": 30,
+      "pareto_size": 12,
+      "hypervolume": 9506.551945614601,
+      "trust": {
+        "Tm": 0.7999999999999999,
+        "kD": 0.7999999999999999,
+        "viscosity": 0.7999999999999999
+      },
+      "mixing_weight": 0.20000000000000007,
+      "cache_hit": false,
+      "n_llm_proposed": 6,
+      "llm_tags": [
+        {
+          "targets": [
+            "kD",
+            "Tm"
+          ],
+          "tradeoff": "moderate viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "moderate kD"
+        },
+        {
+          "targets": [
+            "kD",
+            "Tm"
+          ],
+          "tradeoff": "viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        },
+        {
+          "targets": [
+            "kD",
+            "Tm"
+          ],
+          "tradeoff": "moderate viscosity"
+        }
+      ]
+    },
+    {
+      "step": 30,
+      "n_obs": 35,
+      "pareto_size": 11,
+      "hypervolume": 10655.029124311619,
+      "trust": {
+        "Tm": 0.7999999999999999,
+        "kD": 0.7999999999999999,
+        "viscosity": 0.7999999999999999
+      },
+      "mixing_weight": 0.20000000000000007,
+      "cache_hit": false,
+      "n_llm_proposed": 6,
+      "llm_tags": [
+        {
+          "targets": [
+            "Tm",
+            "kD"
+          ],
+          "tradeoff": "raises viscosity"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "moderate kD"
+        },
+        {
+          "targets": [
+            "Tm",
+            "kD"
+          ],
+          "tradeoff": "viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "kD trade-off"
+        },
+        {
+          "targets": [
+            "kD",
+            "viscosity"
+          ],
+          "tradeoff": "Tm trade-off"
+        }
+      ]
+    },
+    {
+      "step": 35,
+      "n_obs": 40,
+      "pareto_size": 13,
+      "hypervolume": 11078.805621471765,
+      "trust": {
+        "Tm": 0.6,
+        "kD": 0.9,
+        "viscosity": 0.9
+      },
+      "mixing_weight": 0.6,
+      "cache_hit": false,
+      "n_llm_proposed": 5,
+      "llm_tags": [
+        {
+          "targets": [
+            "kD",
+            "Tm"
+          ],
+          "tradeoff": "moderate viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        },
+        {
+          "targets": [
+            "Tm",
+            "kD"
+          ],
+          "tradeoff": "slight viscosity increase"
+        },
+        {
+          "targets": [
+            "Tm",
+            "viscosity"
+          ],
+          "tradeoff": "lower kD"
+        }
+      ]
+    }
+  ]
+}

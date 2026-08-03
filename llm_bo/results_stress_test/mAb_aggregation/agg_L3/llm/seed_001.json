@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L3",
+  "condition": "llm",
+  "seed": 1,
+  "auc": 0.8291256985215171,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations have not utilized arginine, which is known to be the strongest anti-aggregation amino acid. Additionally, polysorbate80 has shown better performance in interface protection for mAbs compared to other surfactants. EDTA may provide a moderate benefit through metal chelation, and sucrose or trehalose are preferred over mannitol due to crystallization risks at higher concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.8998923415795039,
+        0.835511913933914,
+        0.6914382639145921,
+        0.8184317547377613
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating a strong synergy between these excipients. Sucrose and trehalose are the preferred sugars, with sucrose slightly outperforming trehalose. EDTA shows a moderate benefit when present. The next set of candidates will explore variations around these successful components to further optimize stability.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6003905695348467,
+        0.625964019938903,
+        0.5070721380688189,
+        0.7718083313802928
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating that this combination is highly effective. Sucrose and trehalose both perform well as stabilisers. EDTA provides a moderate benefit when present. The goal is to refine the concentrations of these excipients to potentially achieve a higher stability score.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5508045799903799,
+        0.7733971850753026,
+        0.5234943566978817,
+        0.570804533995043
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating that this combination is highly effective. Sucrose appears to be slightly more beneficial than trehalose when used with these excipients. EDTA seems to provide a moderate benefit but is not essential for high stability scores. Exploring the upper limits of arginine concentration while maintaining optimal sugar and surfactant levels may yield further improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.47617510352291764,
+        0.6536996918579724,
+        0.7328557168159052,
+        0.5103715320591053
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating a strong synergy between these excipients. Sucrose and trehalose both perform well as stabilisers, with sucrose slightly outperforming in the best formulation. EDTA shows mixed results but is present in the top two formulations. Exploring variations around the concentrations of these components may yield further improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6991652680407341,
+        0.9882292373430821,
+        0.7301404569727012,
+        0.24813590537671568
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating their effectiveness in preventing aggregation. EDTA also appears to have a positive impact when present. The sugar type seems less critical than the other components, but sucrose and sorbitol are more frequently used in the top formulations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7119184900899121,
+        0.5960674432290942,
+        0.6218441024600123,
+        0.6933725745328679
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and polysorbate80, indicating their effectiveness in preventing aggregation. EDTA also appears to have a positive impact when present. The sugar type seems less critical than the other components, but sucrose and sorbitol are more frequently used in the top formulations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5833709431273365,
+        0.5853435318520913,
+        0.6954514840505988,
+        0.3782511931396536
+      ]
+    }
+  ]
+}

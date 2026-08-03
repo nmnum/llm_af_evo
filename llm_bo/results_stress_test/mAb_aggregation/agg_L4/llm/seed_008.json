@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 8,
+  "auc": 0.8715904749648897,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that proline and sorbitol are favorable choices. Polysorbate80 at lower concentrations also appears to be beneficial, while the presence of EDTA seems less critical for higher scores. Exploring variations around these components with slight adjustments in concentration may yield further improvements.",
+      "proposed_aa": [
+        "proline",
+        "proline",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.5509995486018451,
+        0.419181234260337,
+        0.9882292373430821,
+        0.31533457685019695
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulation uses arginine, sorbitol, and polysorbate80 with EDTA. The second-best formulation also uses sorbitol but with proline and without EDTA. To explore further, we will vary the concentrations of these excipients around their current values and test a different surfactant while keeping other parameters similar to the top formulations.",
+      "proposed_aa": [
+        "arginine",
+        "proline",
+        "arginine",
+        "proline"
+      ],
+      "queried_y": [
+        0.5960674432290942,
+        0.4228024923005433,
+        0.6164348765500618,
+        0.3324356479919749
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulation uses arginine, sorbitol, and polysorbate80 with EDTA. The second-best formulation also uses arginine and sorbitol but with a different surfactant (polysorbate20) and higher concentration. To explore further, we will test variations around the best-performing conditions while also exploring other amino acids and sugars to ensure that no better combination is missed.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "proline",
+        "histidine"
+      ],
+      "queried_y": [
+        0.5853435318520913,
+        0.7733971850753026,
+        0.5370731233145432,
+        0.31855644398774835
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and sorbitol, with polysorbate80 as the surfactant. EDTA is present in all of them. We will explore variations around these components to potentially improve stability.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7318712764939983,
+        0.45279518608503155,
+        0.8509450937889043,
+        0.7474981007313554
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and sorbitol, with polysorbate80 as the surfactant. EDTA presence seems to have a positive impact on stability scores in these top formulations. We will explore variations around these parameters while also testing other amino acids and sugars to ensure we are not missing out on potentially better combinations.",
+      "proposed_aa": [
+        "arginine",
+        "proline",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.5833267650477536,
+        0.4846970134094978,
+        0.625964019938903,
+        0.2040819625717119
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and sorbitol, with polysorbate80 as the surfactant. EDTA presence seems to have a positive impact on stability scores in these top formulations. We will explore variations around these parameters while also testing other amino acids and sugars to ensure we are not missing out on potentially better combinations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "proline",
+        "histidine"
+      ],
+      "queried_y": [
+        0.5098200271890024,
+        0.6914382639145921,
+        0.4126537536634327,
+        0.32125781250449564
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and sorbitol, with polysorbate80 as the surfactant. EDTA presence seems to have a positive impact on stability scores in these top formulations. We will explore variations around these parameters while also testing other amino acids and sugars to ensure we are not missing out on potentially better combinations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "proline",
+        "histidine"
+      ],
+      "queried_y": [
+        0.6442178579076921,
+        0.7718083313802928,
+        0.6673091949041837,
+        0.33895393168565424
+      ]
+    }
+  ]
+}

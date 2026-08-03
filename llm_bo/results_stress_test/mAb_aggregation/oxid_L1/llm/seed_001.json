@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 1,
+  "auc": 0.4937001717095507,
+  "final": 0.49370017170955055,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation includes EDTA, which is crucial for chelating metal ions that catalyse oxidation. Methionine, a sacrificial antioxidant, should be included to protect the protein from oxidation. Histidine can provide some additional antioxidant effect and buffer capacity. Sucrose or trehalose will be used for conformational stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "histidine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.35937326439993345,
+        0.2333287727161769,
+        0.4268809635520008,
+        0.2935937250928684
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of EDTA and a sacrificial antioxidant (methionine) are crucial for improving stability scores. Formulations without methionine or EDTA have lower scores, indicating their importance in mitigating oxidation. Additionally, histidine appears to provide some benefit when combined with sugars like trehalose or sucrose. Polysorbate 80 and 20 offer moderate protection against interface aggregation but are less critical for oxidation prevention.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "histidine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.24747886367089716,
+        0.2765619604701209,
+        0.33814102870747237,
+        0.3820665572705836
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of EDTA and methionine significantly improves stability, likely due to their roles in preventing metal-catalyzed oxidation. Formulations with histidine also show some promise, possibly due to its buffer capacity and minor antioxidant properties. Sucrose and trehalose provide conformational stability but do not address oxidation directly. Polysorbate 80 offers moderate protection against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "histidine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.20295017682870597,
+        0.3782511931396536,
+        0.36548601651999524,
+        0.330400123988899
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of EDTA and methionine significantly improves stability, likely due to their roles in preventing oxidation. Histidine also shows some benefit, possibly from its buffer capacity and minor antioxidant effect. Sucrose or trehalose provide conformational stability but do not address oxidation directly. Polysorbate 80 offers moderate protection against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "histidine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.29969603640633796,
+        0.4271324656375462,
+        0.3173895272925945,
+        0.2693109057448209
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of EDTA is crucial for achieving higher stability scores, as all top formulations include it. Methionine, despite being a primary stabiliser against oxidation, has not been used effectively in the top formulations. However, given its importance, we should test higher concentrations. Histidine and sucrose/trehalose combinations have shown moderate success, indicating that buffer capacity and conformational stability are also important. Polysorbate 80 seems to be more beneficial than polysorbate 20 based on the top formulations.",
+      "proposed_aa": [
+        "methionine",
+        "histidine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.21935876779469296,
+        0.3735096248572957,
+        0.16672377653318773,
+        0.28857439691081604
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of EDTA is crucial for achieving higher stability scores, as all top formulations include it. Methionine, despite being a primary stabiliser against oxidation, has not been used effectively in the top formulations. Histidine and sucrose/trehalose combinations show promise but are limited without methionine or at suboptimal concentrations. Therefore, the proposed formulations will focus on incorporating methionine with EDTA, optimizing sugar and surfactant types, and exploring histidine's potential synergistic effect.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "histidine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.34318905948658723,
+        0.3141749654749099,
+        0.29257587075660546,
+        0.34418272838018527
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of EDTA and a sacrificial antioxidant (methionine) are crucial for improving stability scores. Histidine also shows some benefit, possibly due to its buffer capacity and minor antioxidant effect. Sucrose and trehalose provide conformational stability but do not address oxidation directly. Polysorbate 80 is beneficial in protecting against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "histidine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.3827829519337028,
+        0.3916942652171486,
+        0.2769884075417416,
+        0.278321902187986
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 5,
+  "auc": 0.9023596939038568,
+  "final": 0.9431994524137038,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulation uses methionine, trehalose, and polysorbate80 without EDTA. We will explore variations around this combination to potentially improve the stability score.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5213337066737307,
+        0.38698310655875034,
+        0.4745917017956229,
+        0.5366397969002493
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine and trehalose, with polysorbate80 as the surfactant. EDTA presence seems to have a slight positive effect on stability scores in these top formulations. We will explore variations around these conditions while also testing other amino acids and sugars to ensure we are not missing out on potentially better combinations.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.19706074056502706,
+        0.31583351340197924,
+        0.5213789581543535,
+        0.0963902030770451
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and trehalose or mannitol as sugars. Polysorbate80 is used in most of these, with EDTA being present in some but not others. To explore further, we will vary the concentrations of methionine, trehalose/mannitol, and polysorbate80 while alternating the presence of EDTA.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.1780652106378643,
+        0.44869691031761877,
+        0.5212242920813135,
+        0.5108547586694292
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and either trehalose or mannitol as the sugar. Polysorbate80 and polysorbate20 are the most common surfactants, with EDTA presence being split evenly. To explore further, we will vary the concentrations of these components while keeping the same excipients to see if a more optimal combination can be found.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.560925240342643,
+        0.5059565637560042,
+        0.5281658682666887,
+        0.45589209427645494
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid, suggesting it may be a key factor in stability. Sucrose and trehalose appear to perform better than other sugars. Polysorbate80 is used more frequently among the top candidates. EDTA seems beneficial when present.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5521986558191911,
+        0.5677669844865033,
+        0.10071739810798755,
+        0.3432275948961591
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid and include EDTA. Sucrose and trehalose are the preferred sugars, with polysorbate80 and poloxamer188 being effective surfactants. We will explore variations around these successful components to potentially improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.18154399851694794,
+        0.44161172316887076,
+        0.15861310415484045,
+        0.4153504840719189
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use methionine as the amino acid, suggesting it may be a key component for stability. Sucrose and trehalose are the most common sugars in the top formulations, with polysorbate80 being the preferred surfactant. EDTA is present in the top 3 formulations, indicating its potential importance.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.2511850614663182,
+        0.5309065735129226,
+        0.5365954332483583,
+        0.5070523118204221
+      ]
+    }
+  ]
+}

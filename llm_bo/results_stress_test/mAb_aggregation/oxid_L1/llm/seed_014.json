@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 14,
+  "auc": 0.7642808210233307,
+  "final": 0.7642808210233307,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation lacks EDTA and methionine, which are crucial for preventing oxidation. Given the primary degradation pathway is methionine/tryptophan oxidation, incorporating both EDTA and methionine should improve stability. Additionally, increasing the concentration of sucrose or trehalose may provide better conformational stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "histidine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2765619604701209,
+        0.3827829519337028,
+        0.4271324656375462,
+        0.6954514840505988
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine, which acts as a sacrificial antioxidant, and EDTA, which chelates metal ions to prevent oxidative reactions, are crucial for stabilising the protein. The top formulations lack methionine, indicating its potential benefit if included. Sucrose or trehalose provide conformational stability, while polysorbate 20/80 offers moderate protection against interface aggregation. Arginine and histidine have minimal impact on oxidation but can be considered for their other benefits.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.2935937250928684,
+        0.11130349071683562,
+        0.5175616478482743,
+        0.4268809635520008
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations show that arginine, sucrose, and polysorbate20 are beneficial. However, the absence of EDTA in the best formulation suggests it may not be necessary when other stabilisers are present. Methionine, a strong sacrificial antioxidant, has not been used yet and could potentially improve stability scores further.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.299294766098413,
+        0.43339942699653256,
+        0.7119184900899121,
+        0.34318905948658723
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine, as a sacrificial antioxidant, and EDTA, for chelating metal ions, are crucial for preventing oxidation. The top formulations lack methionine, which is essential given the primary degradation pathway. Including both methionine and EDTA should enhance stability. Sucrose or trehalose can be used to provide conformational stability, while polysorbate 20 has shown a moderate benefit in previous formulations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3117907972070467,
+        0.1690520950841403,
+        0.25119377856854885,
+        0.35937326439993345
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the combination of arginine, sucrose or trehalose, and polysorbate20 with EDTA can yield high stability scores. Methionine as a sacrificial antioxidant is not present in the top formulations but should be considered given its primary role in protecting against oxidation. Increasing methionine concentration while maintaining other stabilizers might improve the score.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.17135807325997096,
+        0.40051423713158535,
+        0.5836438237428433,
+        0.3741563528985716
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine, as a sacrificial antioxidant, and EDTA, for chelating metal ions, are crucial for stabilising oxidation-prone proteins. The top formulations lack methionine, which is essential given the primary degradation pathway. Including methionine and maintaining or slightly increasing sucrose concentrations while using polysorbate 20 could enhance stability. Arginine has shown a moderate benefit in previous formulations, so it will be included at lower concentrations to balance the formulation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.4604528792096886,
+        0.3141749654749099,
+        0.3685414701646142,
+        0.508172980293405
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine, as a sacrificial antioxidant, and EDTA, for chelating metal ions, are crucial for stabilising oxidation-prone proteins. The top formulations lack methionine, which is essential given the primary degradation pathway. Sucrose or trehalose provide conformational stability, but methionine should be prioritised to address oxidation. Polysorbate 20 has shown a moderate benefit in the top formulations, and histidine can offer some antioxidant effect at low concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.3293321293978316,
+        0.24747886367089716,
+        0.38200525719073836,
+        0.39158903915455107
+      ]
+    }
+  ]
+}

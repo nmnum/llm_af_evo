@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 11,
+  "auc": 0.8610806699837428,
+  "final": 0.8610806699837428,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation lacks EDTA and methionine, which are crucial for oxidation protection. However, it includes arginine and a sugar (sorbitol) that provide conformational stability. The second-best formulation uses trehalose and polysorbate20 with EDTA, suggesting these excipients also contribute positively to stability. Methionine is underrepresented in the top formulations, likely due to its low concentration range. To improve on the best score (0.851), we will focus on incorporating methionine and EDTA while maintaining or enhancing conformational stability with sugars and surfactants.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.24747886367089716,
+        0.6914382639145921,
+        0.2333287727161769,
+        0.33814102870747237
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation lacks EDTA and methionine, which are critical for oxidation protection. However, it has a high concentration of arginine and sorbitol, suggesting that conformational stability is also important. The second-best formulation includes EDTA but uses trehalose instead of sucrose or sorbitol, indicating that the choice of sugar might not be as significant as the presence of methionine for oxidation protection. Given this, we will focus on including both methionine and EDTA while maintaining high concentrations of arginine and a suitable sugar.",
+      "proposed_aa": [
+        "arginine",
+        "methionine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5098200271890024,
+        0.35937326439993345,
+        0.43339942699653256,
+        0.4600208142813698
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulation lacks EDTA and methionine, which are crucial for oxidation protection. The second-best formulation includes EDTA but uses a higher concentration of arginine and trehalose, suggesting that these excipients have some stabilizing effect but not specifically against oxidation. Methionine should be included as the primary antioxidant, and EDTA to chelate metal ions. Sucrose or sorbitol can provide conformational stability without interfering with the primary antioxidants.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.21935876779469296,
+        0.35884268236758254,
+        0.29969603640633796,
+        0.21198213411664815
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation lacks EDTA and methionine, which are crucial for oxidation protection. However, it includes arginine and sorbitol, suggesting these excipients provide some stability benefits. The second-best formulation uses trehalose and polysorbate20 with EDTA, indicating a moderate benefit from this combination. Methionine should be included in new formulations to address the primary degradation pathway of oxidation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3904382258400266,
+        0.1733889707914993,
+        0.625964019938903,
+        0.3827829519337028
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation lacks EDTA and uses sorbitol, suggesting that while conformational stability is important, the primary focus should be on addressing oxidation. Methionine as a sacrificial antioxidant and EDTA for metal ion chelation are critical. The moderate benefit of polysorbate 80 suggests it should still be included to protect against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.20295017682870597,
+        0.3159245750675889,
+        0.34318905948658723,
+        0.09541070804393817
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulation lacks EDTA and methionine, which are crucial for oxidation protection. The second-best formulation includes EDTA but uses a higher concentration of arginine and trehalose, suggesting that these excipients may have some stabilizing effect but not specifically against oxidation. Methionine should be included as the primary antioxidant, and EDTA to chelate metal ions. Sucrose or trehalose can provide conformational stability, while polysorbate 80 offers moderate protection against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.18190219952206987,
+        0.3293321293978316,
+        0.3544634019502615,
+        0.30231608180766795
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulation lacks EDTA and methionine, which are critical for addressing oxidation. The second-best formulation includes EDTA but not methionine. Given the primary degradation pathway is oxidation, we should focus on formulations that include both methionine and EDTA to maximize stability. Additionally, we will explore different concentrations of these excipients while maintaining a moderate level of arginine and polysorbate 80 for additional stabilization.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.11130349071683562,
+        0.11567644932774404,
+        0.25074985050675147,
+        0.2765619604701209
+      ]
+    }
+  ]
+}

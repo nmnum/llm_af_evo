@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L1",
+  "condition": "llm",
+  "seed": 2,
+  "auc": 0.8382424490872618,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation includes arginine, mannitol (below the crystallisation risk level), and polysorbate20. EDTA was not included in this top formula, suggesting it may have a lesser role in preventing aggregation compared to other excipients. Given that arginine and polysorbate80 synergistically suppress aggregation better than either alone for mAbs, we should explore combinations with these two components while avoiding mannitol concentrations above 40 mM to prevent crystallisation risks during freeze-drying.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.83852708642062,
+        0.7718083313802928,
+        0.5070721380688189,
+        0.5449263632186344
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations indicate that a combination of arginine, mannitol or trehalose/sucrose, and polysorbate80 without EDTA yields the best stability scores. Arginine appears to be crucial for preventing aggregation, while sucrose/trehalose and polysorbate80 provide additional stabilization. Mannitol is less effective when its concentration exceeds 31 mM due to crystallization risks during freeze-drying. Therefore, formulations will focus on optimizing arginine, sucrose/trehalose, and polysorbate80 concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.835511913933914,
+        0.5234943566978817,
+        0.5103715320591053,
+        0.8184317547377613
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine, indicating its importance in preventing aggregation. Polysorbate80 is also consistently present, suggesting it synergizes well with arginine. Sucrose and trehalose are both effective stabilizers, but sucrose seems to perform slightly better at higher concentrations of arginine. EDTA's absence suggests that metal ion chelation is not a significant factor in this formulation. Mannitol should be used below 40 mM to avoid crystallization issues.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.8998923415795039,
+        0.6914382639145921,
+        0.6003905695348467,
+        0.8222204590121308
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, sucrose or trehalose, and polysorbate80. EDTA is present in the best formulation but not consistently across the top five. Mannitol is associated with lower scores when above ~40 mM. Therefore, focusing on combinations of arginine (16-25 mM), sucrose/trehalose (79-82 mM), and polysorbate80 (0.2-0.5%) while testing EDTA presence/absence could yield improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.47617510352291764,
+        0.570804533995043,
+        0.5508045799903799,
+        0.625964019938903
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, sucrose or trehalose, and polysorbate80. EDTA is beneficial when present. The highest score was achieved with a combination of these excipients at specific concentrations. To further optimize, we will adjust the concentrations slightly around the best-performing formulation while maintaining the key components.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6991652680407341,
+        0.7733971850753026,
+        0.6933725745328679,
+        0.6536996918579724
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, sucrose or trehalose, and polysorbate80. EDTA is beneficial when present. Mannitol should be avoided due to crystallization risks at higher concentrations. The best formulation has a high concentration of arginine and sucrose with low polysorbate80 and the presence of EDTA.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.9882292373430821,
+        0.6218441024600123,
+        0.7119184900899121,
+        0.6954514840505988
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, polysorbate80, and EDTA. The presence of sorbitol or sucrose at higher concentrations also seems beneficial. Mannitol is less favorable due to crystallization risks during freeze-drying. We will focus on optimizing the concentration of these excipients while maintaining a balance that avoids potential issues like mannitol crystallization.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5960674432290942,
+        0.6452179284656616,
+        0.24813590537671568,
+        0.5853435318520913
+      ]
+    }
+  ]
+}

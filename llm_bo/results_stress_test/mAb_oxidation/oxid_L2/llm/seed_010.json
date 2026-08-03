@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "oxid_L2",
+  "condition": "llm",
+  "seed": 10,
+  "auc": 1.0,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations include methionine and EDTA, indicating their importance in stabilizing the protein against oxidation. Sucrose or trehalose also contribute to stability but are secondary to the antioxidant effect. Poloxamer188 appears more effective than other surfactants at these concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.47945170121500547,
+        0.26101159187536854,
+        0.4745917017956229,
+        0.3039638727426016
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating that these excipients are crucial for stabilizing the oxidation-prone monoclonal antibody. The presence of a surfactant also seems beneficial, with poloxamer188 appearing in the two highest-scoring formulations. Sucrose and trehalose have both shown utility, but at varying concentrations. Given this information, we will focus on optimizing the concentration of methionine, EDTA, and the choice of sugar while maintaining a surfactant presence.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3808616613924175,
+        0.3432275948961591,
+        0.5281658682666887,
+        0.45130423788739343
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations show that methionine and EDTA are crucial for achieving higher stability scores. Sucrose or trehalose, along with poloxamer188, also contribute positively but to a lesser extent. Polysorbate80 has not shown significant improvement in the top formulations. Therefore, we will focus on optimizing the concentrations of methionine and EDTA while exploring different combinations of sugars and surfactants.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5365954332483583,
+        0.5089662411592996,
+        0.1780652106378643,
+        0.5413297366939576
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating that these excipients are crucial for stabilising the oxidation-prone monoclonal antibody. Sucrose or trehalose at moderate concentrations also seem to contribute positively. Poloxamer188 appears to be more effective than other surfactants in this context. The next formulations will focus on optimising the concentration of methionine and EDTA, while exploring a wider range for sucrose and trehalose.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.2225820165887414,
+        0.26973050435931245,
+        0.5469740198816695,
+        0.33441446683210013
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating that these components are crucial for stabilisation against oxidation. Sucrose or trehalose at moderate concentrations also appear beneficial. Poloxamer188 is present in the top formulations, suggesting its importance. The next set of candidates will focus on optimising the concentration of methionine, while maintaining other effective components.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.10683847108709836,
+        0.44161172316887076,
+        0.560925240342643,
+        0.4153504840719189
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating that these excipients are crucial for stabilizing the oxidation-prone monoclonal antibody. Sucrose appears to be a preferred sugar over trehalose or sorbitol in the top formulations. Polysorbate 80 is also present in one of the top formulations, suggesting it may provide additional stability benefits. Given this information, we will focus on optimizing the concentrations of methionine and polysorbate 80 while maintaining EDTA presence.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5677669844865033,
+        0.18154399851694794,
+        0.15861310415484045,
+        0.5309065735129226
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating that these excipients are crucial for stabilising the oxidation-prone monoclonal antibody. The surfactant type (poloxamer188 or polysorbate80) seems to have a secondary effect on stability. Sucrose appears more effective than other sugars in the top formulations. Given this, we will focus on methionine and EDTA while exploring different concentrations of sucrose and surfactants.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.1361274736814197,
+        0.05811986139049055,
+        0.39969130176863665,
+        0.49817000241170806
+      ]
+    }
+  ]
+}

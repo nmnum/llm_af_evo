@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 6,
+  "auc": 0.7415847347182671,
+  "final": 0.7415847347182674,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, a critical sacrificial antioxidant for oxidation-prone proteins. Incorporating methionine and EDTA should enhance stability by addressing the primary degradation pathway. Sucrose or trehalose can be used for conformational stability, while polysorbate 80 offers moderate protection against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.2765619604701209,
+        0.35937326439993345,
+        0.36546864788495587,
+        0.3827829519337028
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, a critical sacrificial antioxidant for oxidation-prone proteins. Incorporating methionine and EDTA should enhance stability by addressing the primary degradation pathway. Sucrose or trehalose can be used for conformational stability, while polysorbate 80 offers moderate protection against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.21935876779469296,
+        0.24747886367089716,
+        0.34659404975342073,
+        0.34318905948658723
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, a critical sacrificial antioxidant for oxidation-prone proteins. EDTA should be included to chelate metal ions that catalyze oxidative reactions. Sucrose or trehalose can provide conformational stability. Polysorbate 80 is chosen as it offers moderate protection against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.30231608180766795,
+        0.29969603640633796,
+        0.3293321293978316,
+        0.3904382258400266
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, a critical sacrificial antioxidant for oxidation-prone proteins. EDTA should be included to chelate metal ions that catalyze oxidative reactions. Sucrose or trehalose can provide conformational stability. Polysorbate 80 is chosen as it offers moderate protection against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3243135568454091,
+        0.20295017682870597,
+        0.19544498791301998,
+        0.3159245750675889
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, a critical sacrificial antioxidant for oxidation-prone proteins. EDTA is also underutilized despite its importance in chelating metal ions that catalyze oxidative reactions. The best scores are achieved without EDTA, possibly due to the absence of methionine. Introducing methionine and optimizing EDTA use could improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.38200525719073836,
+        0.18190219952206987,
+        0.6991652680407341,
+        0.4268809635520008
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, a critical sacrificial antioxidant for oxidation-prone proteins. EDTA should be included to chelate metal ions that catalyze oxidative reactions. Sucrose and poloxamer188 have shown moderate benefits in previous formulations. Histidine can provide some additional antioxidant effect at low concentrations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "histidine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.38264491471332823,
+        0.3544634019502615,
+        0.3567772826824521,
+        0.40051423713158535
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations lack methionine, which is critical for oxidation protection. EDTA should be included to chelate metal ions that catalyze oxidative reactions. Sucrose and poloxamer188 have shown good performance in the top formulations, so they will be prioritized. Methionine at a higher concentration (2-3 mM) will be tested alongside EDTA to enhance stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.14228470885412262,
+        0.2728410279035597,
+        0.3638889197737124,
+        0.09541070804393817
+      ]
+    }
+  ]
+}

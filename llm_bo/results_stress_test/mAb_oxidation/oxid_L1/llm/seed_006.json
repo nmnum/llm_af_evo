@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 6,
+  "auc": 0.8539707504915768,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilising the protein against oxidation. Trehalose also appears to provide some benefit, likely due to its conformational stability effect. Polysorbate 20 is preferred over other surfactants in the top formulations. Increasing methionine concentration within the range might further improve stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.4153504840719189,
+        0.2511850614663182,
+        0.19706074056502706,
+        0.5212242920813135
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein against oxidation. Trehalose is consistently present, suggesting its role in conformational stability. Polysorbate 20 appears to be more effective than poloxamer 188 at these concentrations. Increasing methionine concentration slightly from the best formulation might further protect against oxidation without causing other issues.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.44630340592904266,
+        0.4269340745271003,
+        0.5521986558191911,
+        0.5366397969002493
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that a combination of methionine and EDTA is crucial for achieving higher stability scores. Trehalose appears to be beneficial, as it is present in the top formulations. Poloxamer188 and polysorbate80 are preferred surfactants based on their presence in high-scoring formulations.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5281658682666887,
+        0.4745917017956229,
+        0.49467365458872725,
+        0.44161172316887076
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that methionine and EDTA are crucial for stabilizing the oxidation-prone monoclonal antibody. Trehalose also appears to provide significant stability, likely due to its conformational stabilization properties. Poloxamer188 at a concentration of 0.4% or higher seems to offer better protection compared to polysorbate20 and polysorbate80. Histidine may have some antioxidant effect but is not as effective as methionine.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3808616613924175,
+        0.47945170121500547,
+        0.1780652106378643,
+        0.5365954332483583
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilizing the protein against oxidation. Trehalose is also present in most of these formulations, suggesting its role in providing conformational stability. Poloxamer188 appears to be slightly more beneficial than polysorbate80 based on the scores. The next set of candidates will focus on optimizing methionine and EDTA concentrations while exploring different surfactants and sugar types.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5469740198816695,
+        0.5144377067464305,
+        0.33441446683210013,
+        0.5044854382047521
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine and EDTA, indicating their importance in stabilising the protein against oxidation. Trehalose appears to be a better sugar option compared to sorbitol based on the scores of the top formulations. Poloxamer188 is slightly more prevalent among the top candidates than polysorbate80.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.227364076754703,
+        0.5298235861067528,
+        0.6019585603379578,
+        0.5213337066737307
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the combination of methionine and EDTA is crucial for achieving higher stability scores. Sucrose and trehalose, along with poloxamer188, also contribute positively to the formulation. The top formulations have methionine concentrations between 0.8-1.5 mM, which indicates this range is beneficial. Increasing the concentration of sugars and optimizing surfactant levels may further enhance stability.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.5089662411592996,
+        0.560925240342643,
+        0.3039638727426016,
+        0.5070523118204221
+      ]
+    }
+  ]
+}

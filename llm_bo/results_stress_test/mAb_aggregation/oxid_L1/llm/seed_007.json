@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "oxid_L1",
+  "condition": "llm",
+  "seed": 7,
+  "auc": 1.0,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The observations suggest that the presence of EDTA and methionine are crucial for achieving high stability scores due to their roles in preventing oxidation. Formulations with arginine, sucrose or sorbitol, and polysorbate 80 also perform well, indicating these excipients provide additional stabilization benefits. The top formulation lacks methionine but includes arginine, suggesting a combination of both could potentially yield even better results.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2765619604701209,
+        0.8998923415795039,
+        0.35937326439993345,
+        0.7733971850753026
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include EDTA, indicating its importance in preventing oxidation. Methionine is a critical sacrificial antioxidant but was not used in the top formulations. Given that methionine can significantly improve stability by preferentially oxidizing, it should be included. Sucrose and trehalose provide conformational stability, with sucrose showing better performance. Polysorbate 80 has shown consistent benefits across the top formulations. Arginine is beneficial for aggregation but not oxidation; however, its presence in all top formulations suggests a positive impact on overall stability.",
+      "proposed_aa": [
+        "methionine",
+        "arginine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.21935876779469296,
+        0.6914382639145921,
+        0.30231608180766795,
+        0.625964019938903
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include EDTA, indicating its importance in preventing oxidation. Methionine is a critical sacrificial antioxidant but was not used in the top formulations. Given that methionine can significantly enhance stability by preferentially oxidizing, it should be included at an optimal concentration. Sucrose and trehalose provide conformational stability and have been successful in previous formulations. Polysorbate 80 is consistently present in the top formulations, suggesting its importance in protecting against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3293321293978316,
+        0.24747886367089716,
+        0.19544498791301998,
+        0.29969603640633796
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include EDTA, indicating its importance in preventing oxidation. Methionine is a critical sacrificial antioxidant but was not used in the top formulations. Given that methionine can significantly enhance stability by protecting against oxidation, it should be included. Sucrose and trehalose are preferred for conformational stability over sorbitol and mannitol based on their higher scores. Polysorbate 80 is consistently present in the top formulations, suggesting its effectiveness.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.3243135568454091,
+        0.20295017682870597,
+        0.0564928201369413,
+        0.3904382258400266
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, polysorbate 80, and EDTA. Methionine is a critical sacrificial antioxidant for oxidation-prone proteins but was not used in the top-5 formulations. Including methionine at an optimal concentration could further enhance stability. Sucrose and sorbitol have been more effective than trehalose in these observations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.6003905695348467,
+        0.5960674432290942,
+        0.36546864788495587,
+        0.4600208142813698
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include EDTA, indicating its importance in preventing oxidation. Methionine is a critical sacrificial antioxidant but was not used in the top formulations. Given that methionine can significantly improve stability by preferentially oxidizing, it should be included at an optimal concentration. Sucrose and trehalose provide conformational stability; sucrose has shown better results in the top formulations. Polysorbate 80 is consistently present in the top formulations, suggesting its importance in protecting against interface aggregation.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "methionine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.34659404975342073,
+        0.3159245750675889,
+        0.38200525719073836,
+        0.18190219952206987
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include EDTA, indicating its importance in preventing oxidation. Methionine is a critical sacrificial antioxidant but was not used in the top formulations. Given that methionine can significantly enhance stability by protecting against oxidation, it should be included. Sucrose and trehalose provide conformational stability, with sucrose showing better performance in the top formulations. Polysorbate 80 appears to be more effective than other surfactants. Arginine is consistently present but at varying concentrations; a moderate concentration might balance aggregation and solubility.",
+      "proposed_aa": [
+        "methionine",
+        "methionine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2333287727161769,
+        0.3827829519337028,
+        0.5508045799903799,
+        0.24813590537671568
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L1",
+  "condition": "llm",
+  "seed": 1,
+  "auc": 0.8291256985215171,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include polysorbate20 or polysorbate80, and EDTA. Arginine is not present in the top-5 but is known to be effective against aggregation. Sucrose and trehalose are both strong stabilisers, with sucrose slightly outperforming trehalose in the top-5. Mannitol should be used at low concentrations to avoid crystallisation issues during freeze-drying. EDTA's presence correlates with higher scores, suggesting it has a beneficial effect even if not directly addressing aggregation.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "histidine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.8998923415795039,
+        0.6914382639145921,
+        0.3782511931396536,
+        0.2534280531529715
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations include arginine, sucrose or trehalose, and polysorbate80 with EDTA. Arginine appears to be the most effective amino acid for preventing aggregation, while sucrose and trehalose are nearly equivalent stabilisers. Polysorbate80 is essential for interface protection, and EDTA provides a moderate benefit by chelating metal ions.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6003905695348467,
+        0.625964019938903,
+        0.47617510352291764,
+        0.7718083313802928
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulations all include arginine, sucrose or trehalose, and polysorbate80. EDTA is present in the best formulation but not necessarily beneficial as it's absent from the second-best one. The optimal concentrations seem to be around 16 mM for arginine, 79-82 mM for sugar (either sucrose or trehalose), and 0.5-0.7% for polysorbate80. Methionine is not beneficial for aggregation prevention.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7733971850753026,
+        0.5070721380688189,
+        0.835511913933914,
+        0.8184317547377613
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations consistently use arginine, sucrose or trehalose, and polysorbate80. EDTA is beneficial but not essential for high scores. Methionine and mannitol are less favorable based on the provided data.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5508045799903799,
+        0.5103715320591053,
+        0.5234943566978817,
+        0.570804533995043
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, sucrose or trehalose, and polysorbate80. EDTA presence seems to have a slight positive effect when combined with higher concentrations of arginine and polysorbate80. The best formulation uses the highest concentration of polysorbate80 among the top five, suggesting that increasing this further might not be beneficial. However, there is room to explore slightly higher or lower concentrations of arginine and sucrose/trehalose.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.6991652680407341,
+        0.6536996918579724,
+        0.42328960700298474,
+        0.9882292373430821
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, polysorbate80, and EDTA. Sucrose and sorbitol appear to be more effective than trehalose in these contexts. The best formulation has a moderate concentration of arginine (17 mM) with sorbitol (39 mM). Slight variations around this combination may yield further improvements.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5960674432290942,
+        0.6933725745328679,
+        0.5853435318520913,
+        0.7318712764939983
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include arginine, a sugar (sucrose or trehalose), and polysorbate80. EDTA is present in the two highest scoring formulations. The optimal concentration of arginine seems to be around 17 mM, while sucrose and trehalose are effective at higher concentrations. Polysorbate80 appears most beneficial at 0.5%. Therefore, I will propose formulations that build on these observations, slightly varying the concentrations to explore further optimization.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7119184900899121,
+        0.24813590537671568,
+        0.6218441024600123,
+        0.5836438237428433
+      ]
+    }
+  ]
+}

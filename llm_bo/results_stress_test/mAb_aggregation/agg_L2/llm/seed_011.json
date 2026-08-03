@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L2",
+  "condition": "llm",
+  "seed": 11,
+  "auc": 0.9488191942045368,
+  "final": 1.0,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation uses arginine, sorbitol, and polysorbate80 without EDTA. Given the primary degradation pathway is aggregation, we will focus on these excipients while exploring a wider range of concentrations to potentially improve stability further. We will also test trehalose as an alternative sugar for its known stabilisation properties in lyophilised formulations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7474981007313554,
+        0.835511913933914,
+        0.7318712764939983,
+        0.7718083313802928
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a clear preference for arginine and polysorbate 80, with trehalose or sorbitol as stabilizers. The best scores are achieved with lower concentrations of sugar (14-23 mM) and moderate to high levels of arginine (11-14 mM). Polysorbate 80 at 0.1-0.7% also contributes positively, but higher concentrations do not necessarily improve the score. EDTA is not beneficial in these top formulations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.570804533995043,
+        0.6479885532917634,
+        0.6914382639145921,
+        0.9882292373430821
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a strong preference for arginine and polysorbate 80, with EDTA having a minor but positive impact. Trehalose and sorbitol are both effective sugars, but trehalose appears to perform slightly better at higher concentrations. Methionine is not prioritized due to the primary degradation pathway being aggregation rather than oxidation.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.625964019938903,
+        0.5853435318520913,
+        0.5103715320591053,
+        0.5960674432290942
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a strong preference for arginine and polysorbate 80, with EDTA showing a positive impact. Trehalose and sorbitol are both effective sugars, but trehalose appears to be more beneficial at higher concentrations. Methionine is not prioritized due to the primary degradation pathway being aggregation.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.7733971850753026,
+        0.5098200271890024,
+        0.865445964537742,
+        0.3893775184472109
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a strong preference for arginine and polysorbate 80, with EDTA having a mixed impact. Trehalose and sorbitol are both effective stabilisers, but trehalose at higher concentrations (45-100 mM) seems to perform better in the absence of EDTA. Given this, we will focus on arginine and polysorbate 80 while exploring different sugar types and concentrations, and testing the effect of EDTA.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.24813590537671568,
+        0.47806464952577477,
+        0.3273878093152329,
+        0.5833267650477536
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations indicate that a combination of arginine, a sugar (sorbitol or trehalose), and polysorbate 80 with EDTA can lead to high stability scores. The presence of EDTA seems beneficial in the top two formulations. Trehalose at higher concentrations appears less effective than sorbitol. We will explore variations around these successful combinations, slightly adjusting arginine and sugar concentrations while maintaining the use of polysorbate 80 and considering both with and without EDTA.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.45279518608503155,
+        0.7236112888419924,
+        0.6847793365610368,
+        0.5070721380688189
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations indicate that arginine and polysorbate80 are crucial for achieving high stability scores. Trehalose and sorbitol also play significant roles, with a slight preference towards trehalose in the higher scoring formulations. EDTA's presence is less consistent but appears to be beneficial when used with lower concentrations of sugar. The next set of candidates will explore variations around these top-performing components while slightly adjusting their concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.682176372587985,
+        0.8184317547377613,
+        0.6442178579076921,
+        0.6198482374654065
+      ]
+    }
+  ]
+}

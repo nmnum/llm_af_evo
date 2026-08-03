@@ -1,0 +1,61 @@
+{
+  "seed": 6,
+  "hv_trajectory": [
+    8983.33440415237,
+    10387.941337215269,
+    10427.166171039453,
+    10493.37516214074,
+    12905.97140137916,
+    13296.02079314861
+  ],
+  "decisions": [
+    {
+      "step": 10,
+      "n_obs": 15,
+      "pareto_size": 7,
+      "hypervolume": 8983.33440415237,
+      "pareto_local_size": 17,
+      "llm_tags": []
+    },
+    {
+      "step": 15,
+      "n_obs": 20,
+      "pareto_size": 9,
+      "hypervolume": 10387.941337215269,
+      "pareto_local_size": 19,
+      "llm_tags": []
+    },
+    {
+      "step": 20,
+      "n_obs": 25,
+      "pareto_size": 11,
+      "hypervolume": 10427.166171039453,
+      "pareto_local_size": 1,
+      "llm_tags": []
+    },
+    {
+      "step": 25,
+      "n_obs": 30,
+      "pareto_size": 12,
+      "hypervolume": 10493.37516214074,
+      "pareto_local_size": 26,
+      "llm_tags": []
+    },
+    {
+      "step": 30,
+      "n_obs": 35,
+      "pareto_size": 5,
+      "hypervolume": 12905.97140137916,
+      "pareto_local_size": 25,
+      "llm_tags": []
+    },
+    {
+      "step": 35,
+      "n_obs": 40,
+      "pareto_size": 6,
+      "hypervolume": 13296.02079314861,
+      "pareto_local_size": 12,
+      "llm_tags": []
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "baseline",
+  "condition": "random",
+  "seed": 7,
+  "auc": 0.7704788364645301,
+  "final": 0.958246668953566,
+  "decisions": []
+}

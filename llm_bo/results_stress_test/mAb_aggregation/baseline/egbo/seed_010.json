@@ -1,0 +1,9 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "baseline",
+  "condition": "egbo",
+  "seed": 10,
+  "auc": 0.7745221430396942,
+  "final": 1.0,
+  "decisions": []
+}

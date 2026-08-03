@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_oxidation",
+  "prior": "agg_L1",
+  "condition": "llm",
+  "seed": 5,
+  "auc": 0.8725480112713134,
+  "final": 0.8914896012093647,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top-performing formulation lacks arginine, which is known to be a strong anti-aggregation agent. However, it includes trehalose and polysorbate80, both of which are beneficial for stability. The second-best formulation uses arginine but with poloxamer188 instead of polysorbate80, which may not synergize as effectively. Methionine is present in the top two formulations, suggesting some benefit despite its primary role being anti-oxidation. EDTA's presence or absence does not seem to significantly impact stability scores based on these observations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.2578638821161207,
+        0.16610068243424975,
+        0.26264977825323826,
+        0.38698310655875034
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that methionine and trehalose are beneficial, but the highest scores also include polysorbate80. Arginine has shown some promise in combination with sucrose or trehalose, especially when paired with polysorbate80. EDTA seems to have a minimal impact on stability. The next set of formulations will focus on optimizing the concentrations of arginine and trehalose/sucrose while maintaining polysorbate80 and excluding EDTA.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "methionine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.18022793563025066,
+        0.1751579529262993,
+        0.5213337066737307,
+        0.2443084676564997
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a preference for trehalose and polysorbate80, with methionine present but not contributing significantly to aggregation prevention. Arginine is underrepresented in the top formulations, suggesting its potential has not been fully explored. EDTA's absence suggests it may not be beneficial for this specific degradation pathway.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2787821144894782,
+        0.31583351340197924,
+        0.2943855158574267,
+        0.06369493473368995
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations show that methionine and trehalose are beneficial, but the presence of EDTA seems to decrease stability. Arginine has a strong anti-aggregation effect when combined with polysorbate80. Therefore, we will explore combinations of arginine or methionine with trehalose and polysorbate80, while avoiding EDTA.",
+      "proposed_aa": [
+        "arginine",
+        "methionine",
+        "arginine",
+        "methionine"
+      ],
+      "queried_y": [
+        0.1444723587448576,
+        0.4745917017956229,
+        0.13846231404625126,
+        0.5366397969002493
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a trend of using trehalose, polysorbate80, and EDTA. Methionine is present in all top-5 but does not significantly impact aggregation as per the given information. Arginine should be introduced to enhance anti-aggregation properties. Sucrose can also be considered due to its similar stabilizing effect to trehalose. The concentration of polysorbate80 seems to have a positive correlation with stability, so we will explore higher concentrations within the safe range.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2877034186787767,
+        0.27045177763227873,
+        0.19193006564580434,
+        0.3006504687292406
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all include methionine, trehalose, and polysorbate80. However, since the primary degradation pathway is aggregation, we should focus on excipients that specifically address this issue: arginine, sucrose/trehalose, and polysorbate80. Methionine and EDTA have minimal to moderate benefits for oxidation but not for aggregation. Therefore, I will propose formulations with higher concentrations of arginine and trehalose, while maintaining a synergistic level of polysorbate80.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.2581727908999287,
+        0.2591493861332597,
+        0.2839459967738308,
+        0.24583447791554
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations show a trend of using trehalose and polysorbate80, with EDTA having a moderate benefit. Methionine is present in all top formulations but does not significantly impact aggregation. Arginine should be introduced to enhance anti-aggregation properties.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.24535117281212152,
+        0.24074655918181323,
+        0.1925520742226637,
+        0.1902604069099717
+      ]
+    }
+  ]
+}

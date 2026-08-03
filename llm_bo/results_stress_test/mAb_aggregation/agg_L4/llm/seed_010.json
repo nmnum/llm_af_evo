@@ -1,0 +1,129 @@
+{
+  "oracle": "mAb_aggregation",
+  "prior": "agg_L4",
+  "condition": "llm",
+  "seed": 10,
+  "auc": 0.7593587769386371,
+  "final": 0.9104262352348691,
+  "decisions": [
+    {
+      "step": 10,
+      "cache_hit": false,
+      "reasoning": "The top formulations suggest that arginine and trehalose, combined with poloxamer188 without EDTA, yield the highest stability scores. We will explore variations around these components to potentially improve the score further.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.5786043613684292,
+        0.682176372587985,
+        0.7236112888419924,
+        0.6019484556689663
+      ]
+    },
+    {
+      "step": 14,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and trehalose, suggesting these excipients are beneficial for stability. Poloxamer188 is also consistently used in the top formulations. EDTA's presence or absence does not seem to significantly impact the score. To explore further, we will vary the concentrations of arginine and trehalose around their current optimal values while keeping poloxamer188 constant. We will also test both conditions with and without EDTA.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.440207597315536,
+        0.6536996918579724,
+        0.5742776302481897,
+        0.3829426894199753
+      ]
+    },
+    {
+      "step": 18,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and trehalose, suggesting these excipients are beneficial for stability. Poloxamer188 is also common in the top formulations. EDTA presence or absence does not seem to significantly affect the score. We will explore variations around the concentrations of these components while introducing some diversity by testing other amino acids and sugars.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "proline",
+        "histidine"
+      ],
+      "queried_y": [
+        0.865445964537742,
+        0.6954514840505988,
+        0.4898729254045975,
+        0.23800316561005563
+      ]
+    },
+    {
+      "step": 22,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and trehalose, suggesting these excipients are beneficial for stability. Polysorbate20 and poloxamer188 appear to be more effective than polysorbate80. EDTA seems to have a negative impact when present. Exploring variations around the best formulation while slightly adjusting concentrations of amino acid, sugar, and surfactant could potentially yield better results.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.3273878093152329,
+        0.6198482374654065,
+        0.570804533995043,
+        0.3969949198976126
+      ]
+    },
+    {
+      "step": 26,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and trehalose, suggesting these excipients are beneficial for stability. Polysorbate20 at a concentration of 0.4% appears to be optimal when EDTA is not used. We will explore variations around the best formulation while also testing other surfactants and slightly different concentrations.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.43339942699653256,
+        0.4371336795792193,
+        0.835511913933914,
+        0.3741563528985716
+      ]
+    },
+    {
+      "step": 30,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and trehalose, suggesting these excipients are particularly effective. However, to explore the space further, we will test other amino acids with trehalose and polysorbate20, as well as varying surfactant concentrations and EDTA presence.",
+      "proposed_aa": [
+        "proline",
+        "arginine",
+        "glycine",
+        "histidine"
+      ],
+      "queried_y": [
+        0.4538709944979316,
+        0.7718083313802928,
+        0.3063949506645116,
+        0.30818613535020417
+      ]
+    },
+    {
+      "step": 34,
+      "cache_hit": false,
+      "reasoning": "The top formulations all use arginine and trehalose, suggesting these excipients are particularly effective. Polysorbate20 and polysorbate80 appear to be the most beneficial surfactants. EDTA seems to have a negative impact when present. Exploring concentrations around the best-performing values while slightly varying them could help find an even better formulation.",
+      "proposed_aa": [
+        "arginine",
+        "arginine",
+        "arginine",
+        "arginine"
+      ],
+      "queried_y": [
+        0.8997098241032881,
+        0.5103715320591053,
+        0.6914382639145921,
+        0.606551776540021
+      ]
+    }
+  ]
+}
