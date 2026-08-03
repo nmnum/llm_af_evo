@@ -1,0 +1,140 @@
+{
+  "approach_a": {
+    "fast_seeds": [
+      3,
+      19
+    ],
+    "slow_seeds": [
+      18,
+      10,
+      0,
+      1,
+      2,
+      4,
+      6,
+      7,
+      8,
+      11,
+      12,
+      13,
+      14,
+      16
+    ],
+    "beta_rules": [
+      {
+        "step": 5,
+        "progress": 0.07,
+        "fast_beta_mean": 12.5,
+        "slow_beta_mean": 47.86,
+        "recommendation": "exploit more"
+      },
+      {
+        "step": 10,
+        "progress": 0.14,
+        "fast_beta_mean": 15.0,
+        "slow_beta_mean": 19.64,
+        "recommendation": "exploit more"
+      },
+      {
+        "step": 15,
+        "progress": 0.21,
+        "fast_beta_mean": 3.75,
+        "slow_beta_mean": 13.57,
+        "recommendation": "exploit more"
+      },
+      {
+        "step": 20,
+        "progress": 0.28,
+        "fast_beta_mean": 13.75,
+        "slow_beta_mean": 11.82,
+        "recommendation": "similar"
+      },
+      {
+        "step": 25,
+        "progress": 0.35,
+        "fast_beta_mean": 4.25,
+        "slow_beta_mean": 13.07,
+        "recommendation": "exploit more"
+      },
+      {
+        "step": 30,
+        "progress": 0.42,
+        "fast_beta_mean": 2.75,
+        "slow_beta_mean": 3.61,
+        "recommendation": "exploit more"
+      },
+      {
+        "step": 35,
+        "progress": 0.49,
+        "fast_beta_mean": 2.25,
+        "slow_beta_mean": 2.64,
+        "recommendation": "similar"
+      },
+      {
+        "step": 40,
+        "progress": 0.56,
+        "fast_beta_mean": 2.25,
+        "slow_beta_mean": 2.21,
+        "recommendation": "similar"
+      },
+      {
+        "step": 45,
+        "progress": 0.63,
+        "fast_beta_mean": 1.25,
+        "slow_beta_mean": 2.07,
+        "recommendation": "exploit more"
+      },
+      {
+        "step": 50,
+        "progress": 0.7,
+        "fast_beta_mean": 2.0,
+        "slow_beta_mean": 2.07,
+        "recommendation": "similar"
+      },
+      {
+        "step": 55,
+        "progress": 0.77,
+        "fast_beta_mean": 0.35,
+        "slow_beta_mean": 1.25,
+        "recommendation": "exploit more"
+      },
+      {
+        "step": 60,
+        "progress": 0.85,
+        "fast_beta_mean": 1.5,
+        "slow_beta_mean": 1.13,
+        "recommendation": "explore more"
+      },
+      {
+        "step": 65,
+        "progress": 0.92,
+        "fast_beta_mean": 1.12,
+        "slow_beta_mean": 0.51,
+        "recommendation": "explore more"
+      },
+      {
+        "step": 70,
+        "progress": 0.99,
+        "fast_beta_mean": 0.35,
+        "slow_beta_mean": 0.24,
+        "recommendation": "explore more"
+      }
+    ]
+  },
+  "approach_b": {
+    "top_seeds": [
+      3,
+      19,
+      11,
+      10,
+      16
+    ],
+    "bot_seeds": [
+      13,
+      2,
+      18,
+      9,
+      1
+    ]
+  }
+}
