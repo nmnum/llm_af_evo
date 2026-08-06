@@ -12,6 +12,7 @@ A locked-down experiment spec for confirming "front-range-normalised sigma UCB (
 ## Decisions so far
 
 - [Primary endpoint metric](issues/01-primary-endpoint-metric.md) — log HV difference vs. true optimum, integrated over batches (AUC), is primary; batches-to-90%-of-optimum is secondary; final HV at budget=40 stays as tertiary (carries the existing null result).
+- [Statistical correction method](issues/05-statistical-correction-method.md) — Benjamini-Hochberg (per-beta, across batches) for multiplicity, domain-seed-level cluster bootstrap for CIs, and `statsmodels` MixedLM (domain-seed random effect) instead of repeated Wilcoxon tests once domain-seed replication is added.
 
 ## Not yet specified
 
