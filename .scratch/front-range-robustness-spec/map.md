@@ -15,6 +15,7 @@ A locked-down experiment spec for confirming "front-range-normalised sigma UCB (
 - [Statistical correction method](issues/05-statistical-correction-method.md) — Benjamini-Hochberg (per-beta, across batches) for multiplicity, domain-seed-level cluster bootstrap for CIs, and `statsmodels` MixedLM (domain-seed random effect) instead of repeated Wilcoxon tests once domain-seed replication is added.
 - [Domain-seed replication](issues/02-domain-seed-replication.md) — 8 independent domain seeds, domain params fixed across all of them, random-intercept MixedLM primary (random-slope reported as secondary/under-powered at n=8).
 - [Beta sweep grid](issues/03-beta-sweep-grid.md) — gen6_child0_tuned swept over beta∈{2,5,10,15,25}, hint_fixed_ucb fixed at beta=2.0, robustness = same-sign in ≥4/5 betas + BH-significant in ≥3/5.
+- [Mechanism isolation approach](issues/04-mechanism-isolation-approach.md) — phase_decaying_ucb comparison only (matched-exploration-weight deferred); "indistinguishable" = TOST equivalence test, δ=20% of the primary effect size.
 
 ## Not yet specified
 
