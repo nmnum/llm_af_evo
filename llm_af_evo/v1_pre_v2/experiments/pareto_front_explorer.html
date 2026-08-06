@@ -1,0 +1,715 @@
+<title>Pareto front explorer — 2/3/4 objectives</title>
+<style>
+.viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb;
+  --surface-2: #f0efec;
+  --surface-3: #e4e2dd;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --border: #d8d6d0;
+  --accent: #2a78d6;
+  --accent-fill: rgba(42,120,214,0.12);
+  --good: #0ca30c;
+  --dominated: #9a988f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --surface-2: #232320;
+    --surface-3: #2d2c29;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e85;
+    --border: #3a3935;
+    --accent: #3987e5;
+    --accent-fill: rgba(57,135,229,0.16);
+    --good: #0ca30c;
+    --dominated: #6f6e67;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --surface-1: #1a1a19;
+  --surface-2: #232320;
+  --surface-3: #2d2c29;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e85;
+  --border: #3a3935;
+  --accent: #3987e5;
+  --accent-fill: rgba(57,135,229,0.16);
+  --good: #0ca30c;
+  --dominated: #6f6e67;
+}
+:root[data-theme="light"] .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb;
+  --surface-2: #f0efec;
+  --surface-3: #e4e2dd;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --border: #d8d6d0;
+  --accent: #2a78d6;
+  --accent-fill: rgba(42,120,214,0.12);
+  --good: #0ca30c;
+  --dominated: #9a988f;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.viz-root {
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+}
+.shell {
+  display: grid;
+  grid-template-columns: 268px 1fr;
+  gap: 0;
+  max-width: 1180px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+@media (max-width: 800px) { .shell { grid-template-columns: 1fr; } }
+
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+.sidebar h1 { font-size: 17px; margin: 4px 0 0; letter-spacing: -0.005em; text-wrap: balance; }
+.sidebar .dek { font-size: 12.5px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 11.5px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.01em; }
+
+.seg { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.seg button {
+  flex: 1; padding: 7px 0; background: var(--surface-1); border: none; color: var(--text-secondary);
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+  border-right: 1px solid var(--border);
+}
+.seg button:last-child { border-right: none; }
+.seg button.active { background: var(--accent); color: #fff; }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.scale-row { display: flex; align-items: center; gap: 8px; }
+.scale-row .obj-tag {
+  width: 22px; height: 22px; border-radius: 5px; background: var(--surface-2); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+  font-family: ui-monospace, monospace; flex-shrink: 0;
+}
+.scale-row input[type="number"] {
+  width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 5px;
+  background: var(--surface-1); color: var(--text-primary); font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.scale-row input[type="number"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.slider-row { display: flex; flex-direction: column; gap: 4px; }
+.slider-row .slider-val { font-size: 12px; color: var(--text-primary); font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+.btn {
+  padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn:hover { background: var(--surface-3); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+
+.note-box {
+  font-size: 11.5px; color: var(--text-muted); line-height: 1.5; border-top: 1px solid var(--border); padding-top: 14px;
+}
+.note-box code { font-family: ui-monospace, monospace; background: var(--surface-2); padding: 1px 4px; border-radius: 3px; }
+
+.main {
+  padding: 24px 28px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.main-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.main-head h2 { font-size: 15px; margin: 0; }
+.stat-strip {
+  display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary);
+}
+.stat-strip b { color: var(--text-primary); font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.chart-card {
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 14px;
+  position: relative;
+}
+.chart-card svg, .chart-card canvas { display: block; width: 100%; height: auto; }
+.chart-card canvas { cursor: grab; touch-action: none; }
+.chart-card canvas:active { cursor: grabbing; }
+.axis-label { fill: var(--text-secondary); font-size: 10px; font-family: ui-monospace, monospace; }
+.gridline { stroke: var(--border); stroke-width: 1; }
+.hint-row { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-muted); }
+.hint-row .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+
+.tt {
+  position: absolute; pointer-events: none; background: var(--text-primary); color: var(--surface-1);
+  font-size: 11px; padding: 4px 7px; border-radius: 4px; opacity: 0; transform: translate(-50%,-120%);
+  white-space: pre; font-family: ui-monospace, monospace; z-index: 5; transition: opacity 0.08s;
+}
+</style>
+
+<div class="viz-root">
+  <div class="shell">
+    <aside class="sidebar">
+      <div>
+        <div class="eyebrow">Pareto front explorer</div>
+        <h1 id="page-title">Objectives, scales, and what the front looks like</h1>
+        <div class="dek" id="page-dek">DTLZ2 (minimise all objectives), the standard M-objective test function — set the objective count and per-objective scale, samples redraw live.</div>
+      </div>
+
+      <div class="field">
+        <label>Data source</label>
+        <div class="seg" id="seg-source" role="radiogroup" aria-label="Data source"></div>
+      </div>
+
+      <div id="synthetic-controls" style="display:flex; flex-direction:column; gap:22px;">
+        <div class="field">
+          <label>Objectives</label>
+          <div class="seg" id="seg-objectives" role="radiogroup" aria-label="Number of objectives"></div>
+        </div>
+
+        <div class="field">
+          <label>Objective scales</label>
+          <div id="scale-inputs" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+
+        <div class="field slider-row">
+          <label>Sample size <span class="slider-val" id="samples-val"></span></label>
+          <input type="range" id="samples-slider" min="80" max="1500" step="20" value="400">
+        </div>
+
+        <div class="field slider-row">
+          <label>g-exponent (front sharpness) <span class="slider-val" id="sharp-val"></span></label>
+          <input type="range" id="sharp-slider" min="50" max="300" step="10" value="100">
+        </div>
+
+        <div class="field" style="flex-direction:row; gap:8px;">
+          <button class="btn primary" id="regen-btn" style="flex:1;">Resample</button>
+          <button class="btn" id="seed-btn" title="New random seed">New seed</button>
+        </div>
+      </div>
+
+      <div id="loaded-controls" style="display:none; flex-direction:column; gap:22px;">
+        <div class="field">
+          <label>Campaign JSON</label>
+          <input type="file" id="file-input" accept="application/json,.json" style="font-size:12px; color:var(--text-secondary);">
+          <div id="load-status" style="font-size:11.5px; color:var(--text-muted);"></div>
+        </div>
+        <div class="field slider-row">
+          <label>Batch <span class="slider-val" id="batch-val"></span></label>
+          <input type="range" id="batch-slider" min="0" max="0" step="1" value="0">
+        </div>
+      </div>
+
+      <div class="note-box" id="note-box">
+        Minimisation convention throughout (matches this project's oracle interface). <code>g-exponent</code> raises <code>g(x)</code>'s driving term to a power &gt;1, flattening the mean-response surface near the optimum — same knob idea as <code>tunable_synthetic_oracle.py</code>'s <code>plateau_sharpness</code>, here applied to DTLZ2 so it works at any objective count.
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-head">
+        <h2 id="chart-title"></h2>
+        <div class="stat-strip" id="stat-strip"></div>
+      </div>
+      <div class="chart-card" id="chart-card">
+        <div id="chart-mount"></div>
+        <div class="tt" id="tt"></div>
+      </div>
+      <div class="hint-row" id="hint-row"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  const root = document.querySelector('.viz-root');
+  const cssVar = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+  const NS = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  const tt = document.getElementById('tt');
+  const chartCard = document.getElementById('chart-card');
+  function showTip(evt, text) {
+    const rect = chartCard.getBoundingClientRect();
+    tt.textContent = text;
+    tt.style.left = (evt.clientX - rect.left) + 'px';
+    tt.style.top = (evt.clientY - rect.top) + 'px';
+    tt.style.opacity = 1;
+  }
+  function hideTip() { tt.style.opacity = 0; }
+
+  // ---- seeded RNG ----
+  function mulberry32(a) {
+    return function() {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  let seed = 42;
+  let rng = mulberry32(seed);
+
+  // ---- state ----
+  const state = {
+    source: 'synthetic', // 'synthetic' | 'loaded'
+    M: 3,
+    scales: [1, 2, 4, 8],
+    nSamples: 400,
+    sharpness: 1.0,
+    yaw: 0.6, pitch: -0.35, // for 3D view
+    loaded: null,     // { names, directions, batches }
+    batchIdx: 0,
+  };
+
+  // ---- DTLZ2 generator, tunable sharpness on g(x) ----
+  function dtlz2Sample(M, sharpness) {
+    const k = 6; // trailing variables driving g(x)
+    const d = (M - 1) + k;
+    const x = Array.from({length: d}, () => rng());
+    let gsum = 0;
+    for (let i = M - 1; i < d; i++) gsum += (x[i] - 0.5) * (x[i] - 0.5);
+    const g = Math.pow(gsum, sharpness);
+    const f = new Array(M).fill(1 + g);
+    for (let i = 0; i < M - 1; i++) {
+      for (let j = 0; j <= M - 2 - i; j++) f[i] *= Math.cos(x[j] * Math.PI / 2);
+      if (i > 0) f[i] *= Math.sin(x[M - 1 - i] * Math.PI / 2);
+    }
+    f[M - 1] = (1 + g) * Math.sin(x[0] * Math.PI / 2);
+    return f;
+  }
+
+  function generateData() {
+    const pts = [];
+    for (let i = 0; i < state.nSamples; i++) {
+      const raw = dtlz2Sample(state.M, state.sharpness);
+      pts.push(raw.map((v, i) => v * state.scales[i]));
+    }
+    return pts;
+  }
+
+  function paretoMask(pts) {
+    const n = pts.length, M = pts[0].length;
+    const dominated = new Array(n).fill(false);
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        let le = true, lt = false;
+        for (let k = 0; k < M; k++) {
+          if (pts[j][k] > pts[i][k]) { le = false; break; }
+          if (pts[j][k] < pts[i][k]) lt = true;
+        }
+        if (le && lt) { dominated[i] = true; break; }
+      }
+    }
+    return dominated.map(d => !d);
+  }
+
+  // ---- sidebar: objective segmented control ----
+  const segWrap = document.getElementById('seg-objectives');
+  [2, 3, 4].forEach(m => {
+    const b = document.createElement('button');
+    b.textContent = m + ' obj';
+    b.setAttribute('role', 'radio');
+    b.addEventListener('click', () => { state.M = m; syncScaleInputs(); render(); });
+    segWrap.appendChild(b);
+  });
+  function syncSeg() {
+    [...segWrap.children].forEach((b, idx) => b.classList.toggle('active', [2,3,4][idx] === state.M));
+  }
+
+  // ---- sidebar: scale inputs ----
+  const scaleWrap = document.getElementById('scale-inputs');
+  function syncScaleInputs() {
+    scaleWrap.innerHTML = '';
+    for (let i = 0; i < state.M; i++) {
+      const row = document.createElement('div');
+      row.className = 'scale-row';
+      const tag = document.createElement('div');
+      tag.className = 'obj-tag';
+      tag.textContent = 'f' + (i + 1);
+      const input = document.createElement('input');
+      input.type = 'number'; input.min = '0.1'; input.step = '0.1';
+      input.value = state.scales[i];
+      input.addEventListener('input', () => {
+        const v = parseFloat(input.value);
+        state.scales[i] = isFinite(v) && v > 0 ? v : 1;
+        render();
+      });
+      row.appendChild(tag); row.appendChild(input);
+      scaleWrap.appendChild(row);
+    }
+    syncSeg();
+  }
+
+  // ---- sidebar: data source segmented control ----
+  const srcWrap = document.getElementById('seg-source');
+  const SOURCES = [['synthetic', 'Synthetic'], ['loaded', 'Loaded campaign']];
+  SOURCES.forEach(([key, label]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.setAttribute('role', 'radio');
+    b.addEventListener('click', () => {
+      if (key === 'loaded' && !state.loaded) return; // nothing loaded yet
+      state.source = key;
+      syncSourceUI();
+      render();
+    });
+    srcWrap.appendChild(b);
+  });
+  function syncSourceUI() {
+    [...srcWrap.children].forEach((b, idx) => {
+      b.classList.toggle('active', SOURCES[idx][0] === state.source);
+      if (SOURCES[idx][0] === 'loaded') b.disabled = !state.loaded;
+    });
+    const isLoaded = state.source === 'loaded';
+    document.getElementById('synthetic-controls').style.display = isLoaded ? 'none' : 'flex';
+    document.getElementById('loaded-controls').style.display = isLoaded ? 'flex' : 'none';
+    if (isLoaded) {
+      document.getElementById('page-title').textContent = 'A real AF run, one batch at a time';
+      document.getElementById('page-dek').textContent =
+        `${state.loaded.meta.oracle} oracle, "${state.loaded.meta.af}" AF — scrub through the campaign to see the observed front evolve.`;
+      document.getElementById('note-box').innerHTML =
+        'Pareto mask and objective directions come straight from the exported campaign JSON (computed by <code>export_campaign_for_viz.py</code> using the oracle\'s own <code>objective_directions()</code>) — not recomputed client-side, so mixed min/max objectives (e.g. the mAb oracle) render correctly.';
+    } else {
+      document.getElementById('page-title').textContent = 'Objectives, scales, and what the front looks like';
+      document.getElementById('page-dek').textContent =
+        'DTLZ2 (minimise all objectives), the standard M-objective test function — set the objective count and per-objective scale, samples redraw live.';
+      document.getElementById('note-box').innerHTML =
+        'Minimisation convention throughout (matches this project\'s oracle interface). <code>g-exponent</code> raises <code>g(x)</code>\'s driving term to a power &gt;1, flattening the mean-response surface near the optimum — same knob idea as <code>tunable_synthetic_oracle.py</code>\'s <code>plateau_sharpness</code>, here applied to DTLZ2 so it works at any objective count.';
+    }
+  }
+  syncSourceUI();
+
+  // ---- sidebar: campaign file loader ----
+  document.getElementById('file-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('load-status');
+    file.text().then(text => {
+      let data;
+      try { data = JSON.parse(text); } catch (err) { statusEl.textContent = 'Not valid JSON.'; return; }
+      const names = data.meta && data.meta.objective_names;
+      const directions = data.meta && data.meta.objective_directions;
+      const batches = data.batches;
+      if (!names || !Array.isArray(batches) || !batches.length) {
+        statusEl.textContent = 'Missing objective_names / batches — expected export_campaign_for_viz.py output.';
+        return;
+      }
+      if (names.length < 2 || names.length > 4) {
+        statusEl.textContent = `${names.length} objectives found — this viewer supports 2-4.`;
+        return;
+      }
+      state.loaded = { names, directions: directions || names.map(() => 'min'), meta: data.meta, batches };
+      state.batchIdx = batches.length - 1;
+      const slider = document.getElementById('batch-slider');
+      slider.max = batches.length - 1;
+      slider.value = state.batchIdx;
+      document.getElementById('batch-val').textContent = `${state.batchIdx} / ${batches.length - 1}`;
+      statusEl.textContent = `Loaded: ${data.meta.oracle}/${data.meta.af}, ${names.length} obj, ${batches.length} batches.`;
+      state.source = 'loaded';
+      syncSourceUI();
+      render();
+    });
+  });
+  document.getElementById('batch-slider').addEventListener('input', (e) => {
+    state.batchIdx = parseInt(e.target.value, 10);
+    document.getElementById('batch-val').textContent = `${state.batchIdx} / ${state.loaded.batches.length - 1}`;
+    render();
+  });
+
+  document.getElementById('samples-slider').addEventListener('input', (e) => {
+    state.nSamples = parseInt(e.target.value, 10);
+    document.getElementById('samples-val').textContent = state.nSamples;
+    render();
+  });
+  document.getElementById('sharp-slider').addEventListener('input', (e) => {
+    state.sharpness = parseInt(e.target.value, 10) / 100;
+    document.getElementById('sharp-val').textContent = state.sharpness.toFixed(2) + 'x';
+    render();
+  });
+  document.getElementById('regen-btn').addEventListener('click', render);
+  document.getElementById('seed-btn').addEventListener('click', () => {
+    seed = Math.floor(Math.random() * 1e9);
+    rng = mulberry32(seed);
+    render();
+  });
+
+  // ---- axis/tooltip labels: real objective names when loaded, f1/f2/.. + scale for synthetic ----
+  function shortLabel(i) {
+    return state.source === 'loaded' ? state.loaded.names[i] : `f${i + 1}`;
+  }
+  function axisLabel(i) {
+    if (state.source === 'loaded') {
+      const dir = (state.loaded.directions[i] === 'max') ? 'maximise →' : 'minimise →';
+      return `${state.loaded.names[i]} — ${dir}`;
+    }
+    return `f${i + 1} (scale ${state.scales[i]}) — minimise →`;
+  }
+  function shortAxisLabel(i) {
+    return state.source === 'loaded' ? state.loaded.names[i] : `f${i + 1} (×${state.scales[i]})`;
+  }
+  // padded [min,max] over one coordinate — real data isn't guaranteed to start at 0
+  function span(pts, k) {
+    const vals = pts.map(p => p[k]);
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    const pad = (hi - lo) * 0.08 || Math.abs(hi) * 0.1 || 1;
+    return [lo - pad, hi + pad];
+  }
+
+  // ================= 2D chart =================
+  function render2D(pts, mask) {
+    const mount = document.getElementById('chart-mount');
+    mount.innerHTML = '';
+    const W = 900, H = 460, Mg = { l: 58, r: 24, t: 20, b: 44 };
+    const iw = W - Mg.l - Mg.r, ih = H - Mg.t - Mg.b;
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}` });
+    const [x0, x1] = span(pts, 0), [y0, y1] = span(pts, 1);
+    const xScale = v => Mg.l + (v - x0) / (x1 - x0) * iw;
+    const yScale = v => Mg.t + ih - (v - y0) / (y1 - y0) * ih;
+
+    for (let k = 0; k <= 4; k++) {
+      const gx = Mg.l + iw * k / 4, gy = Mg.t + ih * k / 4;
+      svg.appendChild(svgEl('line', { x1: gx, x2: gx, y1: Mg.t, y2: Mg.t + ih, class: 'gridline' }));
+      svg.appendChild(svgEl('line', { x1: Mg.l, x2: Mg.l + iw, y1: gy, y2: gy, class: 'gridline' }));
+      const xt = svgEl('text', { x: gx, y: H - Mg.b + 16, class: 'axis-label', 'text-anchor': 'middle' });
+      xt.textContent = (x0 + (x1 - x0) * k / 4).toFixed(2); svg.appendChild(xt);
+      const yt = svgEl('text', { x: Mg.l - 8, y: gy + 3, class: 'axis-label', 'text-anchor': 'end' });
+      yt.textContent = (y0 + (y1 - y0) * (4 - k) / 4).toFixed(2); svg.appendChild(yt);
+    }
+    const xl = svgEl('text', { x: Mg.l + iw / 2, y: H - 6, class: 'axis-label', 'text-anchor': 'middle' });
+    xl.textContent = axisLabel(0); svg.appendChild(xl);
+    const yl = svgEl('text', { x: 14, y: Mg.t + ih / 2, class: 'axis-label', 'text-anchor': 'middle', transform: `rotate(-90 14 ${Mg.t + ih / 2})` });
+    yl.textContent = axisLabel(1); svg.appendChild(yl);
+
+    // front curve: sort front points by f1, connect
+    const frontIdx = pts.map((_, i) => i).filter(i => mask[i]).sort((a, b) => pts[a][0] - pts[b][0]);
+    if (frontIdx.length > 1) {
+      const line = frontIdx.map(i => `${xScale(pts[i][0])},${yScale(pts[i][1])}`).join(' ');
+      svg.appendChild(svgEl('polyline', { points: line, fill: 'none', stroke: cssVar('--good'), 'stroke-width': 1.5, opacity: 0.5 }));
+    }
+    pts.forEach((p, i) => {
+      const isPf = mask[i];
+      const c = svgEl('circle', {
+        cx: xScale(p[0]), cy: yScale(p[1]), r: isPf ? 4.5 : 2.6,
+        fill: isPf ? cssVar('--good') : cssVar('--dominated'), opacity: isPf ? 0.95 : 0.4,
+      });
+      c.addEventListener('mousemove', e => showTip(e, `${shortLabel(0)} ${p[0].toFixed(3)}\n${shortLabel(1)} ${p[1].toFixed(3)}${isPf ? '\non front' : ''}`));
+      c.addEventListener('mouseleave', hideTip);
+      svg.appendChild(c);
+    });
+    mount.appendChild(svg);
+  }
+
+  // ================= 3D chart (canvas, drag-to-rotate) =================
+  function render3D(pts, mask) {
+    const mount = document.getElementById('chart-mount');
+    mount.innerHTML = '';
+    const W = 900, H = 520;
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2; canvas.height = H * 2; // retina-ish
+    canvas.style.width = '100%';
+    canvas.style.aspectRatio = `${W}/${H}`;
+    mount.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+
+    const spans3 = [0, 1, 2].map(k => span(pts, k));
+    function norm(v, k) { const [lo, hi] = spans3[k]; return ((v - lo) / (hi - lo)) * 2 - 1; }
+    function project(p) {
+      // normalize to [-1,1]
+      const nx = norm(p[0], 0), ny = norm(p[1], 1), nz = norm(p[2], 2);
+      const cy = Math.cos(state.yaw), sy = Math.sin(state.yaw);
+      const cp = Math.cos(state.pitch), sp = Math.sin(state.pitch);
+      // rotate around Y then X
+      let x1 = nx * cy + nz * sy;
+      let z1 = -nx * sy + nz * cy;
+      let y1 = ny * cp - z1 * sp;
+      let z2 = ny * sp + z1 * cp;
+      const scale = 150;
+      const persp = 1 / (1 + (z2 + 2) * 0.08);
+      return { x: W / 2 + x1 * scale * persp, y: H / 2 - y1 * scale * persp, depth: z2 };
+    }
+    function drawFrame() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = cssVar('--surface-1');
+      ctx.fillRect(0, 0, W, H);
+      // bounding box wireframe (0..1 cube corners in normalized space)
+      const corners = [];
+      for (let a = -1; a <= 1; a += 2) for (let b = -1; b <= 1; b += 2) for (let c = -1; c <= 1; c += 2) corners.push([a, b, c]);
+      const projCorner = (c) => {
+        const cy = Math.cos(state.yaw), sy = Math.sin(state.yaw);
+        const cp = Math.cos(state.pitch), sp = Math.sin(state.pitch);
+        let x1 = c[0] * cy + c[2] * sy, z1 = -c[0] * sy + c[2] * cy;
+        let y1 = c[1] * cp - z1 * sp, z2 = c[1] * sp + z1 * cp;
+        const scale = 150, persp = 1 / (1 + (z2 + 2) * 0.08);
+        return { x: W / 2 + x1 * scale * persp, y: H / 2 - y1 * scale * persp };
+      };
+      const edges = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+      ctx.strokeStyle = cssVar('--border'); ctx.lineWidth = 1;
+      edges.forEach(([a,b]) => {
+        const pa = projCorner(corners[a]), pb = projCorner(corners[b]);
+        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      });
+      // axis labels at cube extremes
+      ctx.fillStyle = cssVar('--text-secondary');
+      ctx.font = '10px ui-monospace, monospace';
+      const axisEnds = [
+        [1.15,-1,-1, shortAxisLabel(0)],
+        [-1,1.15,-1, shortAxisLabel(1)],
+        [-1,-1,1.15, shortAxisLabel(2)],
+      ];
+      axisEnds.forEach(([a,b,c,label]) => { const p = projCorner([a,b,c]); ctx.fillText(label, p.x, p.y); });
+
+      const drawList = pts.map((p, i) => ({ p, i, proj: project(p) })).sort((a, b) => a.proj.depth - b.proj.depth);
+      drawList.forEach(({ p, i, proj }) => {
+        const isPf = mask[i];
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, isPf ? 4.2 : 2.4, 0, Math.PI * 2);
+        ctx.fillStyle = isPf ? cssVar('--good') : cssVar('--dominated');
+        ctx.globalAlpha = isPf ? 0.95 : 0.35;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+      canvas._drawList = drawList;
+    }
+    drawFrame();
+
+    let dragging = false, lastX = 0, lastY = 0;
+    canvas.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener('pointerup', () => dragging = false);
+    canvas.addEventListener('pointermove', e => {
+      const rect = canvas.getBoundingClientRect();
+      if (dragging) {
+        state.yaw += (e.clientX - lastX) * 0.008;
+        state.pitch += (e.clientY - lastY) * 0.008;
+        state.pitch = Math.max(-1.4, Math.min(1.4, state.pitch));
+        lastX = e.clientX; lastY = e.clientY;
+        drawFrame();
+        hideTip();
+      } else {
+        const mx = (e.clientX - rect.left) * (W / rect.width);
+        const my = (e.clientY - rect.top) * (H / rect.height);
+        const hit = (canvas._drawList || []).slice().reverse().find(d => Math.hypot(d.proj.x - mx, d.proj.y - my) < 6);
+        if (hit) {
+          showTip(e, `${shortLabel(0)} ${hit.p[0].toFixed(3)}\n${shortLabel(1)} ${hit.p[1].toFixed(3)}\n${shortLabel(2)} ${hit.p[2].toFixed(3)}${mask[hit.i] ? '\non front' : ''}`);
+        } else hideTip();
+      }
+    });
+  }
+
+  // ================= 4D+ parallel coordinates =================
+  function renderParallel(pts, mask) {
+    const mount = document.getElementById('chart-mount');
+    mount.innerHTML = '';
+    const M = state.M;
+    const W = 900, H = 460, Mg = { l: 50, r: 50, t: 30, b: 30 };
+    const iw = W - Mg.l - Mg.r, ih = H - Mg.t - Mg.b;
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}` });
+    const axisX = i => Mg.l + iw * i / (M - 1);
+    const spansP = Array.from({ length: M }, (_, k) => span(pts, k));
+    const yScale = (v, k) => { const [lo, hi] = spansP[k]; return Mg.t + ih - (v - lo) / (hi - lo) * ih; };
+
+    for (let i = 0; i < M; i++) {
+      const ax = axisX(i);
+      const [lo, hi] = spansP[i];
+      svg.appendChild(svgEl('line', { x1: ax, x2: ax, y1: Mg.t, y2: Mg.t + ih, class: 'gridline' }));
+      for (let k = 0; k <= 4; k++) {
+        const v = lo + (hi - lo) * (4 - k) / 4;
+        const t = svgEl('text', { x: ax, y: yScale(v, i) + (k===0?-6:4), class: 'axis-label', 'text-anchor': 'middle' });
+        t.textContent = v.toFixed(2);
+        svg.appendChild(t);
+      }
+      const lbl = svgEl('text', { x: ax, y: Mg.t - 12, class: 'axis-label', 'text-anchor': 'middle', style: 'font-weight:700' });
+      lbl.textContent = shortAxisLabel(i);
+      svg.appendChild(lbl);
+    }
+
+    // dominated first (behind), front on top
+    const order = pts.map((_, i) => i).sort((a, b) => (mask[a] ? 1 : 0) - (mask[b] ? 1 : 0));
+    order.forEach(i => {
+      const p = pts[i], isPf = mask[i];
+      const linePts = p.map((v, k) => `${axisX(k)},${yScale(v, k)}`).join(' ');
+      const poly = svgEl('polyline', {
+        points: linePts, fill: 'none',
+        stroke: isPf ? cssVar('--good') : cssVar('--dominated'),
+        'stroke-width': isPf ? 1.8 : 0.8,
+        opacity: isPf ? 0.85 : 0.22,
+      });
+      poly.addEventListener('mousemove', e => showTip(e, p.map((v, k) => `${shortLabel(k)} ${v.toFixed(3)}`).join('\n') + (isPf ? '\non front' : '')));
+      poly.addEventListener('mouseleave', hideTip);
+      svg.appendChild(poly);
+    });
+    mount.appendChild(svg);
+  }
+
+  // ================= driver =================
+  function updateHints() {
+    const good = cssVar('--good'), dom = cssVar('--dominated');
+    document.getElementById('hint-row').innerHTML =
+      `<span><span class="swatch" style="background:${good}"></span>on the Pareto front (non-dominated)</span>` +
+      `<span><span class="swatch" style="background:${dom}"></span>dominated</span>`;
+  }
+
+  function render() {
+    let pts, mask, M, titleExtra, statHead;
+
+    if (state.source === 'loaded') {
+      const batch = state.loaded.batches[state.batchIdx];
+      pts = batch.Y;
+      mask = batch.pareto_mask;
+      M = state.loaded.names.length;
+      state.M = M; // keep in sync so render2D/3D/Parallel's shared helpers agree
+      const m = state.loaded.meta;
+      titleExtra = `${m.oracle} / ${m.af} — batch ${batch.batch}`;
+      statHead = `<span>n_obs <b>${batch.n_obs}</b></span>`;
+    } else {
+      document.getElementById('samples-val').textContent = state.nSamples;
+      document.getElementById('sharp-val').textContent = state.sharpness.toFixed(2) + 'x';
+      pts = generateData();
+      mask = paretoMask(pts);
+      M = state.M;
+      const titles2 = { 2: 'f1 vs f2', 3: 'rotate to inspect (drag)', 4: 'parallel coordinates' };
+      titleExtra = `${M}-objective DTLZ2 — ${titles2[M]}`;
+      statHead = `<span>samples <b>${state.nSamples}</b></span>`;
+    }
+
+    const nFront = mask.filter(Boolean).length;
+    document.getElementById('chart-title').textContent = titleExtra;
+
+    const frontRanges = [];
+    for (let k = 0; k < M; k++) {
+      const vals = pts.filter((_, i) => mask[i]).map(p => p[k]);
+      frontRanges.push(vals.length ? Math.max(...vals) - Math.min(...vals) : 0);
+    }
+    document.getElementById('stat-strip').innerHTML =
+      statHead +
+      `<span>on front <b>${nFront}</b> (${(nFront / pts.length * 100).toFixed(1)}%)</span>` +
+      `<span>front_range <b>[${frontRanges.map(v => v.toFixed(2)).join(', ')}]</b></span>`;
+
+    if (M === 2) render2D(pts, mask);
+    else if (M === 3) render3D(pts, mask);
+    else renderParallel(pts, mask);
+    updateHints();
+  }
+
+  syncScaleInputs();
+  render();
+})();
+</script>
