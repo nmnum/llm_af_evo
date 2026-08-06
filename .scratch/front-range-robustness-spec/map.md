@@ -7,7 +7,7 @@ A locked-down experiment spec for confirming "front-range-normalised sigma UCB (
 - Domain: LLM-evolved multi-objective BO acquisition functions, MSc thesis extension. Prior work lives in `llm_af_evo/v1_pre_v2/` (tunable_synthetic_oracle.py, sweep_tunable_domain.py, run_tunable_domain_generalization.py, track_front_range.py, track_hv_trajectory.py).
 - Existing exploratory evidence (NOT confirmatory — found by scanning batches after the fact, single oracle seed=42, single hand-picked beta=15.0): at budget=20, gen6_child0_tuned beats hint_fixed_ucb head-to-head 15/20 (p=0.008); at budget=40 the lead spikes early (batch 1) then collapses toward statistical noise by the final batch (12/20, p=0.15). This is the pattern the confirmatory spec needs to test rigorously.
 - Consult `/grilling` for design-tradeoff tickets, `/research` subagent for literature/statistical-convention or local-codebase-fact tickets.
-- Real oracles referenced: `llm_af_evo/shared/ada_coatings_oracle.py` (coatings), mAb oracle (see repo root / shared dir) — sizes/budgets not yet confirmed, see ticket on real-domain tie-back feasibility.
+- Real oracles referenced: `llm_af_evo/shared/ada_coatings_oracle.py` (coatings, 253 real samples), `DiscreteMOExcipientOracle` ("mAb," pool=500, actually synthetic — not real data) — real-domain tie-back ruled out of scope, see map's Out of scope section.
 
 ## Decisions so far
 
@@ -21,3 +21,4 @@ A locked-down experiment spec for confirming "front-range-normalised sigma UCB (
 
 - Executing the confirmatory experiment itself — this map produces the spec only, not the run.
 - Paper/venue positioning, related-work section, write-up structure — destination is the experiment spec, not a publication plan.
+- [Real-domain tie-back](issues/06-real-domain-tieback-feasibility.md) — ruled out: coatings (253 real samples) is structurally blocked by mu_sum dominance at any budget; the "mAb" oracle is synthetic (not real data) with a CV=49.7% noise floor on top of an already budget-fragile effect.
