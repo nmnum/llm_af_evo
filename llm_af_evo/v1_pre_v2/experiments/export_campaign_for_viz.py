@@ -14,14 +14,23 @@ Oracles supported (--oracle):
     tunable   TunableSyntheticMOOracle  (2 obj, tunable scale/noise/plateau)
     zdt1      DiscreteSyntheticMOOracle.build_zdt1  (2 obj, fixed)
     dtlz2     DiscreteSyntheticMOOracle.build_dtlz2 (--n_obj objectives, 2-4)
-    coatings  DiscreteADACoatingsOracle  (2 obj, real ADA coatings data)
+    coatings  DiscreteADACoatingsOracle  (2 obj, real ADA coatings data —
+              needs coatings CSVs in llm_af_evo/shared/coatings_data/,
+              downloaded separately from github.com/berlinguette/ada; not
+              bundled in this repo, so this oracle will FileNotFoundError
+              on a fresh checkout until you add them)
     mab       DiscreteMOExcipientOracle  (3 obj: Tm/kD/viscosity, real mAb data)
 
-AFs supported (--af): any key in af_interface.SEED_PROGRAMS (trust_only,
-fixed_ucb, novelty_only, ucb_plus_novelty, phase_decaying_ucb, ehvi_approx,
-mc_hvi_approx), plus the two ad-hoc AFs from track_front_range.py
-(hint_fixed_ucb, gen6_child0_tuned) — or point --af_file at a .py file
-defining its own score_pool(context) function to run anything else.
+AFs supported (--af): trust_only, novelty_only, phase_decaying_ucb,
+ehvi_approx, mc_hvi_approx (all af_interface.SEED_PROGRAMS keys written
+generically over context["objective_names"], so they run on any oracle
+above), plus the two ad-hoc AFs from track_front_range.py (hint_fixed_ucb,
+gen6_child0_tuned, also objective-name-agnostic). fixed_ucb and
+ucb_plus_novelty are ALSO SEED_PROGRAMS keys but hardcode the mAb objective
+names (Tm/kD/viscosity) — they only run with --oracle mab; resolve_af_code()
+raises a clear error rather than letting them KeyError deep in the sandbox
+on any other oracle. Or point --af_file at a .py file defining its own
+score_pool(context) to run anything else.
 
 Requires torch/botorch/gpytorch (see repo requirements.txt) — this runs the
 real harness, not a lightweight stand-in.
@@ -29,8 +38,8 @@ real harness, not a lightweight stand-in.
 Usage:
     python export_campaign_for_viz.py --oracle dtlz2 --n_obj 3 \
         --af gen6_child0_tuned --out campaign_dtlz2_3obj.json
-    python export_campaign_for_viz.py --oracle coatings --af fixed_ucb \
-        --out campaign_coatings.json
+    python export_campaign_for_viz.py --oracle mab --af fixed_ucb \
+        --out campaign_mab.json
 """
 
 import argparse
@@ -118,9 +127,27 @@ def build_oracle(name: str, n_obj: int, seed: int,
     raise ValueError(f"unknown --oracle {name!r}")
 
 
-def resolve_af_code(af: str, af_file: str) -> str:
+# af_interface.SEED_FIXED_UCB and SEED_UCB_PLUS_NOVELTY hardcode gp["Tm"],
+# gp["kD"], gp["viscosity"] rather than iterating context["objective_names"]
+# (unlike trust_only/novelty_only/phase_decaying_ucb/ehvi_approx/
+# mc_hvi_approx, which are all objective-name-agnostic) — they were written
+# for the mAb domain specifically and KeyError on anything else's objective
+# names. Caught here with a clear message instead of letting it surface as
+# a cryptic "AF program exited nonzero: KeyError: 'Tm'" from deep inside
+# the sandbox subprocess.
+_MAB_ONLY_AFS = {"fixed_ucb", "ucb_plus_novelty"}
+
+
+def resolve_af_code(af: str, af_file: str, oracle_name: str) -> str:
     if af_file:
         return pathlib.Path(af_file).read_text()
+    if af in _MAB_ONLY_AFS and oracle_name != "mab":
+        raise ValueError(
+            f"--af {af!r} is hardcoded to the mAb objective names (Tm/kD/viscosity) "
+            f"and only runs with --oracle mab, not --oracle {oracle_name!r}. Use "
+            "trust_only, novelty_only, phase_decaying_ucb, ehvi_approx, "
+            "mc_hvi_approx, hint_fixed_ucb, or gen6_child0_tuned instead — those are "
+            "all written generically over context['objective_names'].")
     if af in SEED_PROGRAMS:
         return SEED_PROGRAMS[af]
     if af in _EXTRA_AFS:
@@ -190,7 +217,7 @@ def main():
     oracle = build_oracle(args.oracle, args.n_obj, args.seed,
                            args.plateau_sharpness, args.noise_level,
                            args.noise_mode, args.scale2)
-    af_code = resolve_af_code(args.af, args.af_file)
+    af_code = resolve_af_code(args.af, args.af_file, args.oracle)
     af_label = args.af_file or args.af
 
     names, directions, batches = run_campaign(
