@@ -11,7 +11,7 @@ A locked-down experiment spec for confirming "front-range-normalised sigma UCB (
 
 ## Decisions so far
 
-(none yet)
+- [Primary endpoint metric](issues/01-primary-endpoint-metric.md) — log HV difference vs. true optimum, integrated over batches (AUC), is primary; batches-to-90%-of-optimum is secondary; final HV at budget=40 stays as tertiary (carries the existing null result).
 
 ## Not yet specified
 
