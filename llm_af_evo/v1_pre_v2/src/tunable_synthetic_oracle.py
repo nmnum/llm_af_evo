@@ -141,6 +141,21 @@ class TunableSyntheticMOOracle:
         self._noise_mode = noise_mode
         self._boundary_gain = boundary_gain
         self._rng = np.random.default_rng(seed + 1)  # separate stream from X sampling
+        # _Y_raw: ONE noisy realisation per pool point, drawn once here —
+        # not resampled on every query_mo() call. Matches the semantics of
+        # the real oracles this is interface-compatible with (DiscreteADA-
+        # CoatingsOracle/DiscreteMOExcipientOracle's _Y_raw is fixed
+        # experimental data, not something that changes if you "look at it
+        # again"), and is REQUIRED for make_shared_inits() in
+        # excipient_campaign_mo.py, which indexes disc_oracle._Y_raw[idx]
+        # directly rather than going through query_mo() for a campaign's
+        # initial points. Before this fix, initial points bypassed the
+        # noise model entirely (AttributeError: no _Y_raw) and any later
+        # query_mo() call for the same point would silently return a
+        # DIFFERENT noisy value than a previous call — not a physical
+        # measurement's behaviour.
+        obs_stds = np.array([self._obs_std(i) for i in range(len(self._Y_true))])
+        self._Y_raw = self._Y_true + self._rng.normal(0.0, obs_stds)
 
     @classmethod
     def build(cls, d: int = 6, pool_size: int = POOL_SIZE,
@@ -198,9 +213,7 @@ class TunableSyntheticMOOracle:
         dists = np.linalg.norm(X_s[unqueried] - x_s, axis=1)
         chosen = unqueried[int(np.argmin(dists))]
         self._queried.add(chosen)
-        f_true = self._Y_true[chosen]
-        noise = self._rng.normal(0.0, self._obs_std(chosen))
-        return (f_true + noise), chosen
+        return self._Y_raw[chosen].copy(), chosen
 
 
 if __name__ == "__main__":
