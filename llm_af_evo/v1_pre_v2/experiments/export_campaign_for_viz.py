@@ -105,8 +105,16 @@ def build_oracle(name: str, n_obj: int, seed: int,
         from ada_coatings_oracle import DiscreteADACoatingsOracle
         return DiscreteADACoatingsOracle.build()
     if name == "mab":
-        from excipient_oracle_mo import DiscreteMOExcipientOracle
-        return DiscreteMOExcipientOracle.build(seed=seed)
+        # DiscreteMOExcipientOracle.build() takes a MultiObjectiveExcipientOracle
+        # instance, not a bare seed — same two-step construction every other
+        # caller in this repo uses (run_mock_subset.py, debug_generation.py,
+        # run_unsga3_pool_pilot.py, ...): build the continuous oracle first,
+        # then discretise it.
+        from excipient_oracle_mo import MultiObjectiveExcipientOracle
+        oracle_full = MultiObjectiveExcipientOracle(
+            protein="mAb_aggregation", tm_noise=0.013, kd_noise=0.096,
+            viscosity_noise=0.10, seed=seed)
+        return oracle_full.make_discrete_oracle(n_samples=500, seed=seed)
     raise ValueError(f"unknown --oracle {name!r}")
 
 
