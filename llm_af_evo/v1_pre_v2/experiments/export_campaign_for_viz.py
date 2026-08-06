@@ -35,11 +35,13 @@ score_pool(context) to run anything else.
 Requires torch/botorch/gpytorch (see repo requirements.txt) — this runs the
 real harness, not a lightweight stand-in.
 
+Output location: defaults to ../campaign_exports/<oracle>_<af>[_<n_obj>obj].json
+(sibling to experiments/, not inside it — see campaign_exports/README.md),
+created if missing. Pass --out to override.
+
 Usage:
-    python export_campaign_for_viz.py --oracle dtlz2 --n_obj 3 \
-        --af gen6_child0_tuned --out campaign_dtlz2_3obj.json
-    python export_campaign_for_viz.py --oracle mab --af fixed_ucb \
-        --out campaign_mab.json
+    python export_campaign_for_viz.py --oracle dtlz2 --n_obj 3 --af gen6_child0_tuned
+    python export_campaign_for_viz.py --oracle mab --af fixed_ucb
 """
 
 import argparse
@@ -52,6 +54,9 @@ import numpy as np
 _HERE = pathlib.Path(__file__).resolve().parent
 _V1 = _HERE.parent
 _LLM_AF_EVO = _V1.parent
+# Run outputs live beside experiments/, not inside it — pareto_front_explorer.html's
+# file picker points here by default (see campaign_exports/README.md).
+_EXPORTS_DIR = _V1 / "campaign_exports"
 _ROOT = _LLM_AF_EVO.parent
 for _p in (_ROOT, _LLM_AF_EVO / "shared", _V1 / "src", _V1 / "experiments"):
     sys.path.insert(0, str(_p))
@@ -211,8 +216,17 @@ def main():
     ap.add_argument("--noise_level", type=float, default=0.08, help="tunable oracle only")
     ap.add_argument("--noise_mode", default="proportional", help="tunable oracle only")
     ap.add_argument("--scale2", type=float, default=3.0, help="tunable oracle only")
-    ap.add_argument("--out", default=str(_HERE / "campaign_export.json"))
+    ap.add_argument("--out", default=None,
+                     help=f"defaults to {_EXPORTS_DIR}/<oracle>_<af>[_<n_obj>obj].json")
     args = ap.parse_args()
+
+    if args.out is None:
+        _EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+        af_slug = pathlib.Path(args.af_file).stem if args.af_file else args.af
+        obj_suffix = f"_{args.n_obj}obj" if args.oracle == "dtlz2" else ""
+        args.out = str(_EXPORTS_DIR / f"{args.oracle}_{af_slug}{obj_suffix}.json")
+    else:
+        pathlib.Path(args.out).parent.mkdir(parents=True, exist_ok=True)
 
     oracle = build_oracle(args.oracle, args.n_obj, args.seed,
                            args.plateau_sharpness, args.noise_level,

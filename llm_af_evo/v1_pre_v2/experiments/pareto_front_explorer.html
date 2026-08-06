@@ -116,6 +116,12 @@ body { margin: 0; }
 }
 .scale-row input[type="number"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
+#campaign-select {
+  width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: 5px;
+  background: var(--surface-1); color: var(--text-primary); font-size: 12.5px; font-family: inherit;
+}
+#campaign-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 .slider-row { display: flex; flex-direction: column; gap: 4px; }
 .slider-row .slider-val { font-size: 12px; color: var(--text-primary); font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 input[type="range"] { width: 100%; accent-color: var(--accent); }
@@ -183,9 +189,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
            into "loaded" mode in the first place (picking a file switches the
            toggle for you) — it must never be hidden behind the toggle it sets. -->
       <div class="field">
-        <label>Load a campaign JSON</label>
-        <input type="file" id="file-input" accept="application/json,.json" style="font-size:12px; color:var(--text-secondary);">
-        <div id="load-status" style="font-size:11.5px; color:var(--text-muted);">from <code>export_campaign_for_viz.py</code></div>
+        <label>Load campaign JSON(s)</label>
+        <input type="file" id="file-input" accept="application/json,.json" multiple style="font-size:12px; color:var(--text-secondary);">
+        <div id="load-status" style="font-size:11.5px; color:var(--text-muted);">from <code>campaign_exports/</code> — select several (ctrl/cmd-click) to compare</div>
       </div>
 
       <div id="synthetic-controls" style="display:flex; flex-direction:column; gap:22px;">
@@ -216,6 +222,10 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
       </div>
 
       <div id="loaded-controls" style="display:none; flex-direction:column; gap:22px;">
+        <div class="field">
+          <label>Campaign</label>
+          <select id="campaign-select"></select>
+        </div>
         <div class="field slider-row">
           <label>Batch <span class="slider-val" id="batch-val"></span></label>
           <input type="range" id="batch-slider" min="0" max="0" step="1" value="0">
@@ -278,7 +288,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
     nSamples: 400,
     sharpness: 1.0,
     yaw: 0.6, pitch: -0.35, // for 3D view
-    loaded: null,     // { names, directions, batches }
+    loaded: null,       // currently-active { names, directions, meta, batches }
+    loadedSet: new Map(), // label -> same shape, every file picked so far (multi-select)
     batchIdx: 0,
   };
 
@@ -401,36 +412,69 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   }
   syncSourceUI();
 
-  // ---- sidebar: campaign file loader ----
+  // ---- sidebar: campaign file loader (multi-select — pick a whole
+  // campaign_exports/ folder's worth at once, ctrl/cmd-click) ----
+  const selectEl = document.getElementById('campaign-select');
+  function labelFor(filename, meta) {
+    // prefer a human-readable oracle/af label; fall back to filename if meta is thin
+    return meta && meta.oracle && meta.af ? `${meta.oracle} / ${meta.af}  (${filename})` : filename;
+  }
+  function refreshCampaignSelect(activeLabel) {
+    selectEl.innerHTML = '';
+    [...state.loadedSet.keys()].forEach(label => {
+      const opt = document.createElement('option');
+      opt.value = label; opt.textContent = label;
+      selectEl.appendChild(opt);
+    });
+    selectEl.value = activeLabel;
+  }
+  function activateCampaign(label) {
+    const entry = state.loadedSet.get(label);
+    if (!entry) return;
+    state.loaded = entry;
+    state.batchIdx = entry.batches.length - 1;
+    const slider = document.getElementById('batch-slider');
+    slider.max = entry.batches.length - 1;
+    slider.value = state.batchIdx;
+    document.getElementById('batch-val').textContent = `${state.batchIdx} / ${entry.batches.length - 1}`;
+  }
   document.getElementById('file-input').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = [...e.target.files];
+    if (!files.length) return;
     const statusEl = document.getElementById('load-status');
-    file.text().then(text => {
+    let loadedCount = 0, lastLabel = null;
+    const errors = [];
+    Promise.all(files.map(file => file.text().then(text => {
       let data;
-      try { data = JSON.parse(text); } catch (err) { statusEl.textContent = 'Not valid JSON.'; return; }
+      try { data = JSON.parse(text); } catch (err) { errors.push(`${file.name}: not valid JSON`); return; }
       const names = data.meta && data.meta.objective_names;
       const directions = data.meta && data.meta.objective_directions;
       const batches = data.batches;
       if (!names || !Array.isArray(batches) || !batches.length) {
-        statusEl.textContent = 'Missing objective_names / batches — expected export_campaign_for_viz.py output.';
+        errors.push(`${file.name}: missing objective_names/batches — not an export_campaign_for_viz.py output`);
         return;
       }
       if (names.length < 2 || names.length > 4) {
-        statusEl.textContent = `${names.length} objectives found — this viewer supports 2-4.`;
+        errors.push(`${file.name}: ${names.length} objectives — this viewer supports 2-4`);
         return;
       }
-      state.loaded = { names, directions: directions || names.map(() => 'min'), meta: data.meta, batches };
-      state.batchIdx = batches.length - 1;
-      const slider = document.getElementById('batch-slider');
-      slider.max = batches.length - 1;
-      slider.value = state.batchIdx;
-      document.getElementById('batch-val').textContent = `${state.batchIdx} / ${batches.length - 1}`;
-      statusEl.textContent = `Loaded: ${data.meta.oracle}/${data.meta.af}, ${names.length} obj, ${batches.length} batches.`;
+      const label = labelFor(file.name, data.meta);
+      state.loadedSet.set(label, { names, directions: directions || names.map(() => 'min'), meta: data.meta, batches });
+      lastLabel = label;
+      loadedCount++;
+    }))).then(() => {
+      if (!loadedCount) { statusEl.textContent = errors.join(' · ') || 'Nothing loaded.'; return; }
+      refreshCampaignSelect(lastLabel);
+      activateCampaign(lastLabel);
+      statusEl.textContent = `Loaded ${loadedCount}/${files.length} file(s)` + (errors.length ? ` — skipped: ${errors.join(' · ')}` : '.');
       state.source = 'loaded';
       syncSourceUI();
       render();
     });
+  });
+  selectEl.addEventListener('change', (e) => {
+    activateCampaign(e.target.value);
+    render();
   });
   document.getElementById('batch-slider').addEventListener('input', (e) => {
     state.batchIdx = parseInt(e.target.value, 10);
