@@ -164,13 +164,18 @@ def main():
     ap.add_argument("--noise_mode", default="proportional",
                      choices=["homoscedastic", "proportional", "input_dependent"])
     ap.add_argument("--scale2", type=float, default=3.0)
+    ap.add_argument("--d", type=int, default=6,
+                     help="Input dimensionality. Default 6 matches the original "
+                          "sweep; raise to test whether a higher-dimensional pool "
+                          "(harder GP fitting, sparser coverage per batch) separates "
+                          "AFs that tie on the 6D domain.")
     ap.add_argument("--out_path", default=str(HERE / "tunable_domain_generalization_results.json"))
     args = ap.parse_args()
 
     oracle = TunableSyntheticMOOracle.build(
-        plateau_sharpness=args.plateau_sharpness, noise_level=args.noise_level,
+        d=args.d, plateau_sharpness=args.plateau_sharpness, noise_level=args.noise_level,
         noise_mode=args.noise_mode, scale2=args.scale2, seed=args.seed)
-    print(f"Oracle: {len(oracle)} pool points, {oracle.objective_names()} "
+    print(f"Oracle: {len(oracle)} pool points, d={args.d}, {oracle.objective_names()} "
           f"({oracle.objective_directions()}), plateau_sharpness={args.plateau_sharpness}, "
           f"noise_level={args.noise_level} ({args.noise_mode}), scale2={args.scale2}")
 
