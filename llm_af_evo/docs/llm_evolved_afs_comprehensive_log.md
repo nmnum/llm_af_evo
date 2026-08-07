@@ -1506,56 +1506,88 @@ design decision (full detail in each ticket file; map at
 Executed by `run_confirmatory_spec.py` (8 seeds × 20 campaigns × budget=40 ×
 7 conditions = 7,840 batch-rows; ~4.5hr wall time).
 
-### Result: robustness criterion NOT MET
+### Result: robustness criterion NOT MET — and the effect runs opposite to the pilot's direction at low β
 
-| β | effect (is_gen6 on AUC) | p |
-|---|---|---|
-| 2 | **+0.316** | **0.003** |
-| 5 | +0.159 | 0.11 |
-| 10 | −0.016 | 0.87 |
-| 15 | −0.047 | 0.63 |
-| 25 | −0.071 | 0.47 |
+**Sign convention** (stated explicitly here since an earlier draft of this
+entry misread it): `effect(is_gen6 on AUC)` is the `is_gen6` coefficient of
+`auc ~ condition + (1|domain_seed)`, where `auc` is the mean
+`log(HV_true − HV_observed)` — **lower is better** (closer to the true
+optimum). So **negative effect = gen6_child0 better; positive effect =
+gen6_child0 worse.**
 
-Same-sign favouring gen6_child0 in 3/5 betas (need ≥4/5); BH-significant in
-1/5 (need ≥3/5). **Criterion not met.** The pilot's calibrated β=15 does
-*not* replicate across 8 independent domain seeds — its bootstrap CI vs.
-`hint_fixed_ucb` spans [−0.15, +0.12], straddling zero. The TOST check
-against `phase_decaying_ucb` at β=15 also failed to show equivalence
-(p=0.9998 at δ=0.0094 — nowhere close). Only β=2 — numerically identical to
-`hint_fixed_ucb`'s own fixed β — shows a significant, sizeable effect.
+Ticket-03 grid (β∈{2,5,10,15,25}):
 
-### Interpretation and follow-up
+| β | effect (is_gen6 on AUC) | p | verdict |
+|---|---|---|---|
+| 2 | +0.316 | **0.003** | gen6 significantly **worse** |
+| 5 | +0.159 | 0.11 | trend worse, not sig |
+| 10 | −0.016 | 0.87 | null |
+| 15 | −0.047 | 0.63 | null |
+| 25 | −0.071 | 0.47 | null |
 
-β=15 (the pilot's hand-picked, dominance_ratio-motivated value) does not
-generalise; treating it as validated would have been exactly the p-hunting
-the confirmatory design exists to catch. That β=2 alone is significant is
-itself informative but ambiguous two ways: (a) front-range normalisation's
-real benefit doesn't require — and is in fact hurt by — scaling β up to
-compensate for a domain's `dominance_ratio`, since `sigma_norm` is already
-doing that scale-correction implicitly; or (b) the β=2 result is itself a
-seed-lucky false positive that a further replication (a tighter grid) would
-wash out.
+Same-sign favouring gen6_child0 (i.e. negative effect) in 3/5 betas (need
+≥4/5); BH-significant in 1/5 (need ≥3/5). **Criterion not met.**
 
-Two follow-ups launched to distinguish these, both committed on
-`add-tunable-synthetic-domain` and ready to run at the same 8×20×40 scale:
+A follow-up narrow low-β sweep (`run_confirmatory_spec.py --betas 1,2,3
+--calibrated_beta 2`, same 8×20×40 regime) sharpened this further:
 
-- **`run_confirmatory_spec.py --betas 1,2,3 --calibrated_beta 2`** — a
-  narrow low-β sweep (script generalised with `--betas`/`--calibrated_beta`
-  CLI overrides, robustness thresholds auto-scaled to grid size) to check
-  whether the β=2 effect is a plateau near baseline-β or a narrow, possibly
-  noisy peak at exactly β=2.
-- **`run_gpucb_schedule.py`** — removes β as a tuned parameter entirely.
-  Weights `sigma_norm` by the theoretically motivated GP-UCB confidence
-  schedule (Srinivas et al. 2010, finite-domain form:
-  `beta_t = 2*log(|pool|*t²*π²/(6δ))`, δ=0.1 fixed by convention, not fit
-  to this domain) instead of any fixed/swept multiplier. If this beats
-  `hint_fixed_ucb` with no tuning at all, that is a materially stronger and
-  cleaner claim than any beta-grid result could be — "front-range
-  normalisation + a standard confidence-bound schedule, no domain-specific
-  calibration, robustly outperforms fixed-β UCB" — and would be the
-  headline result to report rather than any single swept β.
+| β | effect | p | verdict |
+|---|---|---|---|
+| 1 | +0.416 | **0.00004** | gen6 significantly **worse** |
+| 2 | +0.315 | **0.003** | gen6 significantly **worse** (matches grid) |
+| 3 | +0.200 | 0.066 | trend worse, not sig |
 
-Neither has been run to completion as of this entry (§23); both are queued.
+The domain-seed cluster bootstrap CI for β=2 vs. `hint_fixed_ucb` is
+`+0.312, 95% CI [+0.170, +0.514]` — entirely on the "gen6 worse" side, not
+straddling zero. This is a **confirmed, not just non-significant**, negative
+result at low β.
+
+### Interpretation
+
+Putting the full swept range together (β=1,2,3,5,10,15,25): the effect is a
+monotonic trend from *confirmed significantly worse* at β≤2, through
+*trending worse but not significant* at β=3–5, to *statistically
+indistinguishable from baseline* (null, not confirmed better) at β≥10.
+**At no tested β does `gen6_child0` show a confirmed advantage over
+`hint_fixed_ucb` on this domain.** β=15 — the pilot's hand-picked,
+dominance_ratio-motivated value — sits in the null band, not a confirmed-win
+band; treating the original pilot result (15/20 wins, p=0.008 at budget=20,
+seed=42 only) as validated would have been exactly the kind of
+non-replicating, single-seed artifact the confirmatory design exists to
+catch. The TOST check against `phase_decaying_ucb` at β=15 also failed to
+show equivalence (p=0.9998 at δ=0.0094).
+
+High β (10–25) being merely *null* rather than *confirmed worse* is not
+itself evidence that high β "works" — it is an absence of a detected
+difference, which may reflect true parity or may just mean this design is
+underpowered for a small effect at high β. No claim of a high-β advantage
+is supported by this data.
+
+A no-free-hyperparameter follow-up, `run_gpucb_schedule.py`, weights
+`sigma_norm` by the theoretically motivated GP-UCB confidence schedule
+(Srinivas et al. 2010, finite-domain form:
+`beta_t = 2*log(|pool|*t²*π²/(6δ))`, δ=0.1 fixed by convention) instead of
+any fixed/swept multiplier — removing the discretion that produced the
+β-grid results above. Back-of-envelope, this schedule evaluates to β≈5–6
+across this domain's campaign (pool≈500, t∈[10,40]) — squarely in the
+"trending worse, not significant" band above, not the null band — so a
+null or negative result there would be the consistent, expected outcome
+given everything above, not a surprise. Deliberately re-tuning the
+schedule's constant to land in the β≥10 null band instead would reintroduce
+exactly the p-hunting problem this whole spec was designed to avoid, so
+that was ruled out; the schedule is run as theoretically specified and
+whatever it shows is reported as-is. Not yet run to completion as of this
+entry (§23).
+
+**Bottom line for the thesis as of this entry:** front-range normalisation
+is not confirmed to outperform a fixed-β UCB baseline anywhere in the design
+space tested on this domain — swept or principled-schedule β. The narrower,
+still-defensible claim is about mechanism, not performance: `gen6_child0`
+converges toward `hint_fixed_ucb`'s behaviour as β grows (consistent with
+§22's finding that `front_range` grows rather than shrinks over a campaign,
+which shrinks — not grows — the effective divergence between the two AFs'
+score functions over time), and at low β where the two AFs diverge most,
+the normalisation is confirmed to hurt, not help, on this domain.
 
 ---
 
