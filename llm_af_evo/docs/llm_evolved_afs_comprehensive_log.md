@@ -1607,12 +1607,88 @@ performance: `gen6_child0` converges toward `hint_fixed_ucb`'s behaviour as
 shrinks over a campaign, which shrinks — not grows — the effective
 divergence between the two AFs' score functions over time), and everywhere
 the two AFs diverge enough to be distinguishable, the normalisation is
-confirmed to hurt, not help, on this domain. Whether front-range
-normalisation performs differently on a domain where the self-annealing
-premise actually holds (§22's open question — front_range shrinking rather
-than growing, e.g. with a larger `n_init`) remains untested and is the
-most promising remaining thread if this mechanism is to be rescued as a
-positive result rather than reported as a negative one.
+confirmed to hurt, not help, on this domain.
+
+**Follow-up: does the self-annealing premise hold on coatings — the domain
+`gen6_child0` was actually evolved and selected on?** §22's open question
+(does `front_range` eventually shrink with a larger `n_init`, or is
+unbounded growth structural to sparse-init MOBO regardless of domain) was
+tested directly against the real answer that matters most: coatings, not a
+synthetic ablation. `track_front_range_coatings.py` (10 campaigns,
+`n_init=10`, `budget=40`, on `DiscreteADACoatingsOracle`'s real 253-sample
+pool) found:
+
+| objective | `hint_fixed_ucb` | `gen6_child0_tuned` |
+|---|---|---|
+| conductivity | 68.8 → 98.0 (**+42.5%**) | 68.8 → 97.3 (**+41.5%**) |
+| conductance_std | 0.087 → 0.107 (**+23.6%**) | 0.087 → 0.106 (**+22.6%**) |
+
+`front_range` **grows on coatings too**, at essentially the same magnitude
+as the tunable synthetic domain (§22: +16.5–29.0% real-harness growth) and
+for both conditions almost identically — the same pattern that explains
+gen6_child0 never separating from hint_fixed_ucb everywhere else in this
+spec. This rules out the one remaining rescue path: the self-annealing
+premise front-range normalisation needs does not hold even on its home
+domain, so there is no domain-selection argument left to make for it. The
+growth looks structural to sparse-init (`n_init=10`) MOBO campaigns in
+general — a small initial sample undersamples the true front's extremes,
+and any campaign that subsequently discovers more of the real front will
+show `front_range` growing, independent of which domain it's run on.
+
+**Flipped-direction variant (`run_growth_aware.py`).** Since `front_range`
+only ever grows within any tested budget on both domains, the natural
+follow-up question is whether the mechanism could be re-purposed to work
+*with* a growing front instead of needing it to shrink — up-weighting
+exploration on objectives where the observed front currently has room to
+expand, rather than down-weighting it. A literal "multiply by front_range
+instead of divide" would just reintroduce the raw cross-objective
+scale-domination problem the division exists to fix (coatings' conductivity
+σ and conductance_std σ differ by orders of magnitude), so the variant
+tested keeps the division for scale and adds a separate, unitless
+growth-potential weight:
+
+```
+growth_weight_i = 1 + max(0, pool_max_i − front_max_i) / front_range_i
+score = mu_sum + beta * Σ_i (std_i / front_range_i) * growth_weight_i
+```
+
+where `pool_max_i` is the current candidate pool's highest GP-predicted
+mean for objective i (all-maximise convention) and `front_max_i` is the
+observed front's current extreme — i.e. up-weight objectives where the
+model currently believes there's room to push the front further out.
+Verified correct in isolation (a synthetic context with `pool_max >
+front_max` for one objective produces different, and different-by-object,
+scores from plain `gen6_child0` — 8.1 vs. 7.6 and 3.6 vs. 3.4 in the test
+case). On the real harness (8-domain smoke check), however, this condition
+produced trajectories **byte-identical** to plain `gen6_child0_beta2` —
+`growth_weight` was exactly 1.0 in every batch of every campaign tested.
+Cause: `context["pool"]` is not the oracle's raw discrete pool but
+`optimize_acqf`(qLogNEHVI)-optimized candidates plus an evolutionary search
+seeded from the current Pareto front itself — both are built to fill
+hypervolume gaps *within* the observed trade-off region, not to propose
+points whose GP mean single-objectively exceeds anything already on the
+front, so `pool_max_i > front_max_i` essentially never occurs with this
+candidate-generation pipeline regardless of domain. The idea itself was not
+invalidated by this — the growth signal as sourced from this particular
+pool never gets a chance to activate. A different growth signal (e.g. GP
+uncertainty evaluated at the front's own boundary points, rather than pool
+extremes) was identified as the fix but not built or tested — this thread
+stops here for now, logged rather than pursued further at this point.
+
+**Final conclusion:** `gen6_child0` (front-range-normalised UCB) is a
+genuine, mechanistically distinct AF the evolution methodology discovered —
+but its core theoretical rationale (implicit self-annealing via a shrinking
+front) is empirically false on both the domain it was evolved on and the
+domain purpose-built to test it, and it shows no confirmed performance
+advantage over a plain fixed-β UCB baseline anywhere tested (β∈{1,2,3,5,
+10,15,25}, a no-tuning GP-UCB schedule, two domains, and a growth-aware
+variant that did not end up mechanistically distinguishable from the
+original in practice). This is reported as a rigorous, fully-investigated
+negative result: the confirmatory pipeline (wayfinder-planned,
+pre-specified, seed-replicated, multiplicity-corrected) did exactly what it
+was built to do — catch a plausible-looking exploratory finding that does
+not generalise, and pin down the specific mechanistic reason why, rather
+than leaving it as an unresolved null.
 
 ---
 
