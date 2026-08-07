@@ -1354,6 +1354,344 @@ tested everywhere else in this project.
 
 ---
 
+## 22. Tunable Synthetic Domain: Front-Range Growth, Not Shrinkage (2026-08-06)
+
+### Motivation
+
+`run_tunable_domain_generalization.py`'s paired-Wilcoxon comparison of
+`gen6_child0_tuned` (front-range-normalised UCB, β=15 on σ/front_range) vs.
+`hint_fixed_ucb` (raw UCB, β=2 on raw σ) on `TunableSyntheticMOOracle` — a
+domain purpose-built (per its module docstring) to give front-range
+normalisation something to bite on — came back non-significant (12/20,
+p=0.15) despite both individually beating `trust_only`. `track_front_range.py`
+was written to test one specific hypothesis for the wash: front-range
+normalisation's claimed edge over a fixed-β UCB is that it's *implicitly
+self-annealing* — σ/front_range should grow in relative weight as the
+Pareto front narrows over the campaign. If `front_range` barely moves, the
+two AFs are nearly the same function up to a constant, which would exactly
+explain a null result.
+
+### Setup
+
+Two passes, deliberately run both ways to separate "is this a real domain
+mechanism" from "is this a sklearn-vs-botorch GP artifact":
+
+1. A lightweight, dependency-free stand-in
+   (`generate_bo_diagnostics.py`, new this entry) — same oracle, same two AF
+   formulas, but sklearn `GaussianProcessRegressor` GPs and greedy top-k
+   batch selection instead of BoTorch/qLogNEHVI (torch unavailable in that
+   environment). 12 campaigns, `plateau_sharpness=5.0`, `noise_level=0.08`,
+   `noise_mode="proportional"`, `scale2=3.0`, `budget=40`, `n_init=10`,
+   `batch_size=5` — the same operating point `sweep_tunable_domain.py`
+   selected.
+2. The real harness: `track_front_range.py` unmodified, same params, 12
+   campaigns, run against the actual `full_replay.strategy_evolved_af` /
+   BoTorch GP campaign loop.
+
+Both log `pareto_front_range` per objective, per batch — the same
+`context["pareto_front_range"]` field `score_pool` divides by.
+
+### Result
+
+Per-batch mean `front_range`, batch 0 → batch 6 (init-only → final):
+
+| | f1, sklearn stand-in | f1, real BoTorch harness | f2, sklearn stand-in | f2, real BoTorch harness |
+|---|---|---|---|---|
+| `hint_fixed_ucb` | 0.731 → 0.978 (+34%) | 0.755 → 0.974 (+29.0%) | 2.192 → 3.160 (+44%) | 2.869 → 3.344 (+16.5%) |
+| `gen6_child0_tuned` | 0.731 → 1.002 (+37%) | 0.755 → 0.952 (+26.1%) | 2.192 → 3.517 (+60%) | 2.869 → 3.616 (+26.0%) |
+
+`front_range` **grows monotonically for both conditions, on both harnesses** —
+it never shrinks over the campaign. The growth rate and absolute values
+differ somewhat between the sklearn stand-in and the real harness (expected,
+given the cruder GP fit and greedy — not joint — batch selection in the
+stand-in), but the direction and the "both conditions nearly identical"
+pattern replicate exactly.
+
+Hypervolume (sklearn stand-in only — the real harness's HV comes from
+`run_tunable_domain_generalization.py`'s existing non-significant result):
+raw UCB 12.76→13.70, front-range-norm 12.76→13.84 across the same 6 batches —
+consistent with the two AFs tracking each other closely throughout, not just
+at the final HV comparison.
+
+A rendered comparison (HV convergence, front-range trace with both harnesses
+overlaid, derived effective-β trace, campaign-0 objective-space fill, and the
+`sweep_tunable_domain.py` dominance_ratio grid) is at
+`generate_bo_diagnostics.py`'s output artifact — see that script's docstring
+for regeneration instructions.
+
+### Interpretation
+
+The self-annealing premise front-range normalisation needs — "the front
+narrows as the campaign converges, increasing σ/front_range's relative
+weight" — **does not hold on this domain at `n_init=10`**. The mechanism runs
+backward: with only 10 initial points, the *observed* non-dominated front
+starts artificially small (a sparse sample rarely contains the true extremes
+of a 500-point pool), then widens monotonically as the campaign discovers
+more of the actual Pareto set. So `effective_beta = 15/front_range` *falls*
+over the campaign instead of rising — the opposite of the intended annealing
+direction — for both conditions almost identically, which is consistent with
+why the two AFs are statistically indistinguishable on this domain despite
+both being real, if modest, improvements over `trust_only`.
+
+This is a **harness-independent** finding (confirmed on both the sklearn
+stand-in and the real BoTorch/qLogNEHVI harness) and does not depend on
+`sweep_tunable_domain.py`'s noise/dominance_ratio tuning — it's a property of
+how the observed front's extent evolves with campaign progress on this
+domain, not a symptom of the wrong `(plateau_sharpness, noise_level)` cell.
+
+### Open question
+
+Whether `front_range` eventually turns over and shrinks with a larger
+`n_init` (a bigger initial sample would capture more of the true front's
+extremes up front, leaving less room to grow) or longer budget, or whether
+unbounded growth is structural to this ZDT1-family oracle's 500-point finite
+pool regardless of budget, is untested as of this entry — a sweep over
+`n_init` (holding `budget` fixed) would resolve it directly.
+
+---
+
+## 23. Confirmatory Robustness Spec for Front-Range Normalisation (2026-08-07)
+
+### Motivation
+
+§22 explained *why* `gen6_child0_tuned` (β=15) vs. `hint_fixed_ucb` (β=2) came
+back non-significant on the tunable domain, but a paired-Wilcoxon head-to-head
+on a single hand-picked β and a single oracle seed was never more than
+exploratory. Before treating the tunable domain's earlier positive signals
+(15/20 wins, p=0.008 at budget=20; §21-adjacent sweep results) as evidence
+for the thesis, the claim needed a properly powered, pre-specified
+confirmatory test — designed so a null result would be as informative as a
+positive one, and so a positive result couldn't be read as p-hunting over an
+unprincipled hyperparameter.
+
+### Spec design (wayfinder map, `.scratch/front-range-robustness-spec/`)
+
+Planned via the wayfinder skill as seven resolved tickets, each a locked-down
+design decision (full detail in each ticket file; map at
+`.scratch/front-range-robustness-spec/map.md`):
+
+1. **Primary endpoint** — `log(HV_true − HV_observed)` AUC over batches
+   (matches BoTorch's own MOBO benchmarking convention), vs. the true-optimum
+   HV computed from the oracle's noiseless pool. Secondary: batches-to-90%-
+   of-optimum. Tertiary: final HV at budget=40 (carries §21's existing null).
+2. **Domain-seed replication** — 8 independent domain seeds
+   (`{42..49}`, same `plateau_sharpness/noise_level/noise_mode/scale2` fixed
+   across all of them), random-intercept `statsmodels.MixedLM`
+   (`auc ~ condition + (1|domain_seed)`) as the primary test instead of
+   per-campaign Wilcoxon — collapses the pseudoreplication problem of
+   treating 20 campaigns on one oracle draw as 20 independent trials.
+3. **Beta sweep grid** — `gen6_child0_tuned` swept over
+   β∈{2, 5, 10, 15, 25}; `hint_fixed_ucb` fixed at β=2 (not swept).
+   Robustness = same-sign favouring gen6_child0 in ≥4/5 betas **and**
+   Benjamini-Hochberg-significant in ≥3/5.
+4. **Mechanism isolation** — compare against `phase_decaying_ucb` (existing
+   `SEED_PROGRAMS` entry, explicit hand-tuned exploration decay) via TOST
+   equivalence testing (δ = 20% of the primary effect size — the FDA/EMA
+   bioequivalence and Lakens Cohen's-d=0.2 conventions both land near this),
+   not ordinary non-significance.
+5. **Statistical correction** — Benjamini-Hochberg per-beta across batches
+   (not Bonferroni over the whole grid), domain-seed-level cluster bootstrap
+   for CIs (never a flat pooled bootstrap, which would pseudoreplicate the
+   same way per-campaign Wilcoxon did).
+6. **Real-domain tie-back — ruled out of scope.** Coatings (253 real
+   samples) is structurally blocked by `mu_sum` dominance at any budget
+   (7/8 AFs rank-equivalent in the original thesis diagnosis); the "mAb"
+   oracle (`DiscreteMOExcipientOracle`) is synthetic, not real data, and
+   carries a CV≈49.7% noise floor on top of an already budget-fragile effect.
+7. **Pre-registration boundary** — the exploratory pilot (seed=42, β=15.0
+   only) is hypothesis-generating/parameter-calibrating only; its own
+   p-values are never cited as confirmatory, shown explicitly in write-ups
+   as a labelled non-confirmatory preamble.
+
+Executed by `run_confirmatory_spec.py` (8 seeds × 20 campaigns × budget=40 ×
+7 conditions = 7,840 batch-rows; ~4.5hr wall time).
+
+### Result: robustness criterion NOT MET — and the effect runs opposite to the pilot's direction at low β
+
+**Sign convention** (stated explicitly here since an earlier draft of this
+entry misread it): `effect(is_gen6 on AUC)` is the `is_gen6` coefficient of
+`auc ~ condition + (1|domain_seed)`, where `auc` is the mean
+`log(HV_true − HV_observed)` — **lower is better** (closer to the true
+optimum). So **negative effect = gen6_child0 better; positive effect =
+gen6_child0 worse.**
+
+Ticket-03 grid (β∈{2,5,10,15,25}):
+
+| β | effect (is_gen6 on AUC) | p | verdict |
+|---|---|---|---|
+| 2 | +0.316 | **0.003** | gen6 significantly **worse** |
+| 5 | +0.159 | 0.11 | trend worse, not sig |
+| 10 | −0.016 | 0.87 | null |
+| 15 | −0.047 | 0.63 | null |
+| 25 | −0.071 | 0.47 | null |
+
+Same-sign favouring gen6_child0 (i.e. negative effect) in 3/5 betas (need
+≥4/5); BH-significant in 1/5 (need ≥3/5). **Criterion not met.**
+
+A follow-up narrow low-β sweep (`run_confirmatory_spec.py --betas 1,2,3
+--calibrated_beta 2`, same 8×20×40 regime) sharpened this further:
+
+| β | effect | p | verdict |
+|---|---|---|---|
+| 1 | +0.416 | **0.00004** | gen6 significantly **worse** |
+| 2 | +0.315 | **0.003** | gen6 significantly **worse** (matches grid) |
+| 3 | +0.200 | 0.066 | trend worse, not sig |
+
+The domain-seed cluster bootstrap CI for β=2 vs. `hint_fixed_ucb` is
+`+0.312, 95% CI [+0.170, +0.514]` — entirely on the "gen6 worse" side, not
+straddling zero. This is a **confirmed, not just non-significant**, negative
+result at low β.
+
+### Interpretation
+
+Putting the full swept range together (β=1,2,3,5,10,15,25): the effect is a
+monotonic trend from *confirmed significantly worse* at β≤2, through
+*trending worse but not significant* at β=3–5, to *statistically
+indistinguishable from baseline* (null, not confirmed better) at β≥10.
+**At no tested β does `gen6_child0` show a confirmed advantage over
+`hint_fixed_ucb` on this domain.** β=15 — the pilot's hand-picked,
+dominance_ratio-motivated value — sits in the null band, not a confirmed-win
+band; treating the original pilot result (15/20 wins, p=0.008 at budget=20,
+seed=42 only) as validated would have been exactly the kind of
+non-replicating, single-seed artifact the confirmatory design exists to
+catch. The TOST check against `phase_decaying_ucb` at β=15 also failed to
+show equivalence (p=0.9998 at δ=0.0094).
+
+High β (10–25) being merely *null* rather than *confirmed worse* is not
+itself evidence that high β "works" — it is an absence of a detected
+difference, which may reflect true parity or may just mean this design is
+underpowered for a small effect at high β. No claim of a high-β advantage
+is supported by this data.
+
+A no-free-hyperparameter follow-up, `run_gpucb_schedule.py`, weights
+`sigma_norm` by the theoretically motivated GP-UCB confidence schedule
+(Srinivas et al. 2010, finite-domain form:
+`beta_t = 2*log(|pool|*t²*π²/(6δ))`, δ=0.1 fixed by convention) instead of
+any fixed/swept multiplier — removing the discretion that produced the
+β-grid results above. Back-of-envelope, this schedule evaluates to β≈5–6
+across this domain's campaign (pool≈500, t∈[10,40]) — squarely in the
+"trending worse, not significant" band above, not the null band — so a
+null or negative result there would be the consistent, expected outcome
+given everything above, not a surprise. Deliberately re-tuning the
+schedule's constant to land in the β≥10 null band instead would reintroduce
+exactly the p-hunting problem this whole spec was designed to avoid, so
+that was ruled out; the schedule is run as theoretically specified and
+whatever it shows is reported as-is.
+
+**Result (`run_gpucb_schedule.py`, same 8×20×40 regime):**
+
+| Condition | effect (is_gen6 on AUC) | p | Cluster bootstrap CI |
+|---|---|---|---|
+| `gen6_child0_beta2` | +0.316 | 0.003 | — (reconfirms the grid result on this identical harness) |
+| `gen6_child0_gpucb` (no tuned β) | +0.146 | 0.140 | **[+0.020, +0.359]** |
+
+Matches the prediction: not significant by the MixedLM test (p=0.14), but
+the domain-seed cluster bootstrap CI is entirely on the "gen6 worse" side —
+does not cross zero. Even with zero discretion over β anywhere in the
+pipeline, `gen6_child0` still trends worse than `hint_fixed_ucb` on this
+domain.
+
+**Bottom line for the thesis:** across the full β-grid {1,2,3,5,10,15,25}
+*and* the no-tuning GP-UCB-schedule condition, `gen6_child0` (front-range
+normalisation) **never shows a confirmed advantage over the fixed-β UCB
+baseline on this domain.** At low/moderate β (≤5, including the
+theoretically motivated schedule) it is confirmed or trending worse
+(bootstrap CIs excluding zero on the worse side at β∈{1,2} and for the
+GP-UCB schedule); at high β (≥10) it is statistically indistinguishable
+from baseline — a null result, not a demonstrated win, and not something
+to build a "high β works" claim on.
+
+The defensible claim left for the thesis is about mechanism, not
+performance: `gen6_child0` converges toward `hint_fixed_ucb`'s behaviour as
+β grows (consistent with §22's finding that `front_range` grows rather than
+shrinks over a campaign, which shrinks — not grows — the effective
+divergence between the two AFs' score functions over time), and everywhere
+the two AFs diverge enough to be distinguishable, the normalisation is
+confirmed to hurt, not help, on this domain.
+
+**Follow-up: does the self-annealing premise hold on coatings — the domain
+`gen6_child0` was actually evolved and selected on?** §22's open question
+(does `front_range` eventually shrink with a larger `n_init`, or is
+unbounded growth structural to sparse-init MOBO regardless of domain) was
+tested directly against the real answer that matters most: coatings, not a
+synthetic ablation. `track_front_range_coatings.py` (10 campaigns,
+`n_init=10`, `budget=40`, on `DiscreteADACoatingsOracle`'s real 253-sample
+pool) found:
+
+| objective | `hint_fixed_ucb` | `gen6_child0_tuned` |
+|---|---|---|
+| conductivity | 68.8 → 98.0 (**+42.5%**) | 68.8 → 97.3 (**+41.5%**) |
+| conductance_std | 0.087 → 0.107 (**+23.6%**) | 0.087 → 0.106 (**+22.6%**) |
+
+`front_range` **grows on coatings too**, at essentially the same magnitude
+as the tunable synthetic domain (§22: +16.5–29.0% real-harness growth) and
+for both conditions almost identically — the same pattern that explains
+gen6_child0 never separating from hint_fixed_ucb everywhere else in this
+spec. This rules out the one remaining rescue path: the self-annealing
+premise front-range normalisation needs does not hold even on its home
+domain, so there is no domain-selection argument left to make for it. The
+growth looks structural to sparse-init (`n_init=10`) MOBO campaigns in
+general — a small initial sample undersamples the true front's extremes,
+and any campaign that subsequently discovers more of the real front will
+show `front_range` growing, independent of which domain it's run on.
+
+**Flipped-direction variant (`run_growth_aware.py`).** Since `front_range`
+only ever grows within any tested budget on both domains, the natural
+follow-up question is whether the mechanism could be re-purposed to work
+*with* a growing front instead of needing it to shrink — up-weighting
+exploration on objectives where the observed front currently has room to
+expand, rather than down-weighting it. A literal "multiply by front_range
+instead of divide" would just reintroduce the raw cross-objective
+scale-domination problem the division exists to fix (coatings' conductivity
+σ and conductance_std σ differ by orders of magnitude), so the variant
+tested keeps the division for scale and adds a separate, unitless
+growth-potential weight:
+
+```
+growth_weight_i = 1 + max(0, pool_max_i − front_max_i) / front_range_i
+score = mu_sum + beta * Σ_i (std_i / front_range_i) * growth_weight_i
+```
+
+where `pool_max_i` is the current candidate pool's highest GP-predicted
+mean for objective i (all-maximise convention) and `front_max_i` is the
+observed front's current extreme — i.e. up-weight objectives where the
+model currently believes there's room to push the front further out.
+Verified correct in isolation (a synthetic context with `pool_max >
+front_max` for one objective produces different, and different-by-object,
+scores from plain `gen6_child0` — 8.1 vs. 7.6 and 3.6 vs. 3.4 in the test
+case). On the real harness (8-domain smoke check), however, this condition
+produced trajectories **byte-identical** to plain `gen6_child0_beta2` —
+`growth_weight` was exactly 1.0 in every batch of every campaign tested.
+Cause: `context["pool"]` is not the oracle's raw discrete pool but
+`optimize_acqf`(qLogNEHVI)-optimized candidates plus an evolutionary search
+seeded from the current Pareto front itself — both are built to fill
+hypervolume gaps *within* the observed trade-off region, not to propose
+points whose GP mean single-objectively exceeds anything already on the
+front, so `pool_max_i > front_max_i` essentially never occurs with this
+candidate-generation pipeline regardless of domain. The idea itself was not
+invalidated by this — the growth signal as sourced from this particular
+pool never gets a chance to activate. A different growth signal (e.g. GP
+uncertainty evaluated at the front's own boundary points, rather than pool
+extremes) was identified as the fix but not built or tested — this thread
+stops here for now, logged rather than pursued further at this point.
+
+**Final conclusion:** `gen6_child0` (front-range-normalised UCB) is a
+genuine, mechanistically distinct AF the evolution methodology discovered —
+but its core theoretical rationale (implicit self-annealing via a shrinking
+front) is empirically false on both the domain it was evolved on and the
+domain purpose-built to test it, and it shows no confirmed performance
+advantage over a plain fixed-β UCB baseline anywhere tested (β∈{1,2,3,5,
+10,15,25}, a no-tuning GP-UCB schedule, two domains, and a growth-aware
+variant that did not end up mechanistically distinguishable from the
+original in practice). This is reported as a rigorous, fully-investigated
+negative result: the confirmatory pipeline (wayfinder-planned,
+pre-specified, seed-replicated, multiplicity-corrected) did exactly what it
+was built to do — catch a plausible-looking exploratory finding that does
+not generalise, and pin down the specific mechanistic reason why, rather
+than leaving it as an unresolved null.
+
+---
+
 ## Appendix A: Key Citations
 
 | Ref | Paper | Relevance |
