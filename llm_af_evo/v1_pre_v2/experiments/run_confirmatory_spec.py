@@ -77,6 +77,7 @@ os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 import argparse
 import itertools
 import json
+import math
 import pathlib
 import sys
 import time
@@ -117,6 +118,9 @@ SCALE2 = 3.0
 # ── Beta grid (ticket 03) ────────────────────────────────────────────────────
 BETA_GRID = [2, 5, 10, 15, 25]
 HINT_BETA = 2.0  # fixed, not swept
+# Which beta in BETA_GRID gets the bootstrap-CI + TOST follow-up treatment
+# (originally the pilot-calibrated beta=15; overridable via --calibrated_beta).
+CALIBRATED_BETA = 15
 
 # ── Campaign shape (unchanged convention) ────────────────────────────────────
 N_CAMPAIGNS = 20
@@ -242,7 +246,22 @@ def main():
     ap.add_argument("--n_campaigns", type=int, default=N_CAMPAIGNS)
     ap.add_argument("--out_path", default=str(HERE / "confirmatory_spec_results.json"))
     ap.add_argument("--raw_out_path", default=str(HERE / "confirmatory_spec_raw.parquet"))
+    ap.add_argument("--betas", type=str, default=None,
+                     help="Comma-separated beta grid override, e.g. '1,2,3'. "
+                          "Defaults to the ticket-03 grid {2,5,10,15,25}.")
+    ap.add_argument("--calibrated_beta", type=float, default=None,
+                     help="Which beta (must be in the grid) gets the bootstrap-CI "
+                          "+ TOST follow-up. Defaults to CALIBRATED_BETA (15), or "
+                          "the middle of --betas if that's not in the override grid.")
     args = ap.parse_args()
+
+    global BETA_GRID, CALIBRATED_BETA
+    if args.betas is not None:
+        BETA_GRID = [float(b) if "." in b else int(b) for b in args.betas.split(",")]
+    if args.calibrated_beta is not None:
+        CALIBRATED_BETA = args.calibrated_beta
+    elif CALIBRATED_BETA not in BETA_GRID:
+        CALIBRATED_BETA = BETA_GRID[len(BETA_GRID) // 2]
 
     domain_seeds = DOMAIN_SEEDS[:args.n_domains]
     conditions = build_conditions()
@@ -342,16 +361,19 @@ def main():
     same_sign = [e < 0 for e in beta_effects if not np.isnan(e)]  # negative = favors gen6
     n_same_sign = sum(same_sign)
     n_bh_sig = sum(bh_flags)
-    print(f"\nRobustness (ticket 03): same-sign favoring gen6_child0 in "
-          f"{n_same_sign}/{len(BETA_GRID)} betas (need >=4/5); "
-          f"BH-significant in {n_bh_sig}/{len(BETA_GRID)} betas (need >=3/5).")
-    robust = (n_same_sign >= 4) and (n_bh_sig >= 3)
+    n_grid = len(BETA_GRID)
+    need_same_sign = math.ceil(0.8 * n_grid)
+    need_bh_sig = math.ceil(0.6 * n_grid)
+    print(f"\nRobustness (ticket 03 criterion, scaled to this grid): same-sign favoring "
+          f"gen6_child0 in {n_same_sign}/{n_grid} betas (need >={need_same_sign}); "
+          f"BH-significant in {n_bh_sig}/{n_grid} betas (need >={need_bh_sig}).")
+    robust = (n_same_sign >= need_same_sign) and (n_bh_sig >= need_bh_sig)
     print(f"ROBUSTNESS CRITERION: {'MET' if robust else 'NOT MET'}")
 
-    # ── Cluster bootstrap CI (domain-seed resampling) for the calibrated beta=15 ──
-    print(f"\n{'='*70}\nCluster bootstrap CI (ticket 05), gen6_child0_beta15 vs hint_fixed_ucb")
+    # ── Cluster bootstrap CI (domain-seed resampling) for the calibrated beta ──
+    print(f"\n{'='*70}\nCluster bootstrap CI (ticket 05), gen6_child0_beta{CALIBRATED_BETA:g} vs hint_fixed_ucb")
     rng = np.random.default_rng(0)
-    calibrated = "gen6_child0_beta15"
+    calibrated = f"gen6_child0_beta{CALIBRATED_BETA:g}"
     a = auc[auc["condition"] == calibrated]
     h = auc[auc["condition"] == "hint_fixed_ucb"]
     seeds_present = sorted(auc["domain_seed"].unique())
@@ -363,14 +385,14 @@ def main():
         boot_diffs.append(a_mean - h_mean)
     boot_diffs = np.array(boot_diffs)
     ci_lo, ci_hi = np.percentile(boot_diffs, [2.5, 97.5])
-    print(f"  AUC diff (gen6_beta15 - hint_fixed_ucb): mean={boot_diffs.mean():+.4f}  "
+    print(f"  AUC diff ({calibrated} - hint_fixed_ucb): mean={boot_diffs.mean():+.4f}  "
           f"95% CI [{ci_lo:+.4f}, {ci_hi:+.4f}]  (negative = gen6 better)")
 
-    # ── TOST equivalence: gen6_child0_beta15 vs phase_decaying_ucb (ticket 04) ──
-    print(f"\n{'='*70}\nMechanism isolation (ticket 04): TOST gen6_child0_beta15 vs phase_decaying_ucb")
+    # ── TOST equivalence: calibrated gen6_child0 vs phase_decaying_ucb (ticket 04) ──
+    print(f"\n{'='*70}\nMechanism isolation (ticket 04): TOST {calibrated} vs phase_decaying_ucb")
     primary_effect = float(a["auc"].mean() - h["auc"].mean())
     delta = 0.2 * abs(primary_effect)
-    print(f"  Primary effect (gen6_beta15 vs hint_fixed_ucb) = {primary_effect:+.4f}; "
+    print(f"  Primary effect ({calibrated} vs hint_fixed_ucb) = {primary_effect:+.4f}; "
           f"TOST margin delta = 20% of |effect| = {delta:.4f}")
     p_decay = auc[auc["condition"] == "phase_decaying_ucb"]
     diff_vals = (a.groupby("domain_seed")["auc"].mean().values -
