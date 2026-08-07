@@ -1576,18 +1576,43 @@ given everything above, not a surprise. Deliberately re-tuning the
 schedule's constant to land in the β≥10 null band instead would reintroduce
 exactly the p-hunting problem this whole spec was designed to avoid, so
 that was ruled out; the schedule is run as theoretically specified and
-whatever it shows is reported as-is. Not yet run to completion as of this
-entry (§23).
+whatever it shows is reported as-is.
 
-**Bottom line for the thesis as of this entry:** front-range normalisation
-is not confirmed to outperform a fixed-β UCB baseline anywhere in the design
-space tested on this domain — swept or principled-schedule β. The narrower,
-still-defensible claim is about mechanism, not performance: `gen6_child0`
-converges toward `hint_fixed_ucb`'s behaviour as β grows (consistent with
-§22's finding that `front_range` grows rather than shrinks over a campaign,
-which shrinks — not grows — the effective divergence between the two AFs'
-score functions over time), and at low β where the two AFs diverge most,
-the normalisation is confirmed to hurt, not help, on this domain.
+**Result (`run_gpucb_schedule.py`, same 8×20×40 regime):**
+
+| Condition | effect (is_gen6 on AUC) | p | Cluster bootstrap CI |
+|---|---|---|---|
+| `gen6_child0_beta2` | +0.316 | 0.003 | — (reconfirms the grid result on this identical harness) |
+| `gen6_child0_gpucb` (no tuned β) | +0.146 | 0.140 | **[+0.020, +0.359]** |
+
+Matches the prediction: not significant by the MixedLM test (p=0.14), but
+the domain-seed cluster bootstrap CI is entirely on the "gen6 worse" side —
+does not cross zero. Even with zero discretion over β anywhere in the
+pipeline, `gen6_child0` still trends worse than `hint_fixed_ucb` on this
+domain.
+
+**Bottom line for the thesis:** across the full β-grid {1,2,3,5,10,15,25}
+*and* the no-tuning GP-UCB-schedule condition, `gen6_child0` (front-range
+normalisation) **never shows a confirmed advantage over the fixed-β UCB
+baseline on this domain.** At low/moderate β (≤5, including the
+theoretically motivated schedule) it is confirmed or trending worse
+(bootstrap CIs excluding zero on the worse side at β∈{1,2} and for the
+GP-UCB schedule); at high β (≥10) it is statistically indistinguishable
+from baseline — a null result, not a demonstrated win, and not something
+to build a "high β works" claim on.
+
+The defensible claim left for the thesis is about mechanism, not
+performance: `gen6_child0` converges toward `hint_fixed_ucb`'s behaviour as
+β grows (consistent with §22's finding that `front_range` grows rather than
+shrinks over a campaign, which shrinks — not grows — the effective
+divergence between the two AFs' score functions over time), and everywhere
+the two AFs diverge enough to be distinguishable, the normalisation is
+confirmed to hurt, not help, on this domain. Whether front-range
+normalisation performs differently on a domain where the self-annealing
+premise actually holds (§22's open question — front_range shrinking rather
+than growing, e.g. with a larger `n_init`) remains untested and is the
+most promising remaining thread if this mechanism is to be rescued as a
+positive result rather than reported as a negative one.
 
 ---
 
