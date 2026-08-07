@@ -1450,6 +1450,115 @@ pool regardless of budget, is untested as of this entry — a sweep over
 
 ---
 
+## 23. Confirmatory Robustness Spec for Front-Range Normalisation (2026-08-07)
+
+### Motivation
+
+§22 explained *why* `gen6_child0_tuned` (β=15) vs. `hint_fixed_ucb` (β=2) came
+back non-significant on the tunable domain, but a paired-Wilcoxon head-to-head
+on a single hand-picked β and a single oracle seed was never more than
+exploratory. Before treating the tunable domain's earlier positive signals
+(15/20 wins, p=0.008 at budget=20; §21-adjacent sweep results) as evidence
+for the thesis, the claim needed a properly powered, pre-specified
+confirmatory test — designed so a null result would be as informative as a
+positive one, and so a positive result couldn't be read as p-hunting over an
+unprincipled hyperparameter.
+
+### Spec design (wayfinder map, `.scratch/front-range-robustness-spec/`)
+
+Planned via the wayfinder skill as seven resolved tickets, each a locked-down
+design decision (full detail in each ticket file; map at
+`.scratch/front-range-robustness-spec/map.md`):
+
+1. **Primary endpoint** — `log(HV_true − HV_observed)` AUC over batches
+   (matches BoTorch's own MOBO benchmarking convention), vs. the true-optimum
+   HV computed from the oracle's noiseless pool. Secondary: batches-to-90%-
+   of-optimum. Tertiary: final HV at budget=40 (carries §21's existing null).
+2. **Domain-seed replication** — 8 independent domain seeds
+   (`{42..49}`, same `plateau_sharpness/noise_level/noise_mode/scale2` fixed
+   across all of them), random-intercept `statsmodels.MixedLM`
+   (`auc ~ condition + (1|domain_seed)`) as the primary test instead of
+   per-campaign Wilcoxon — collapses the pseudoreplication problem of
+   treating 20 campaigns on one oracle draw as 20 independent trials.
+3. **Beta sweep grid** — `gen6_child0_tuned` swept over
+   β∈{2, 5, 10, 15, 25}; `hint_fixed_ucb` fixed at β=2 (not swept).
+   Robustness = same-sign favouring gen6_child0 in ≥4/5 betas **and**
+   Benjamini-Hochberg-significant in ≥3/5.
+4. **Mechanism isolation** — compare against `phase_decaying_ucb` (existing
+   `SEED_PROGRAMS` entry, explicit hand-tuned exploration decay) via TOST
+   equivalence testing (δ = 20% of the primary effect size — the FDA/EMA
+   bioequivalence and Lakens Cohen's-d=0.2 conventions both land near this),
+   not ordinary non-significance.
+5. **Statistical correction** — Benjamini-Hochberg per-beta across batches
+   (not Bonferroni over the whole grid), domain-seed-level cluster bootstrap
+   for CIs (never a flat pooled bootstrap, which would pseudoreplicate the
+   same way per-campaign Wilcoxon did).
+6. **Real-domain tie-back — ruled out of scope.** Coatings (253 real
+   samples) is structurally blocked by `mu_sum` dominance at any budget
+   (7/8 AFs rank-equivalent in the original thesis diagnosis); the "mAb"
+   oracle (`DiscreteMOExcipientOracle`) is synthetic, not real data, and
+   carries a CV≈49.7% noise floor on top of an already budget-fragile effect.
+7. **Pre-registration boundary** — the exploratory pilot (seed=42, β=15.0
+   only) is hypothesis-generating/parameter-calibrating only; its own
+   p-values are never cited as confirmatory, shown explicitly in write-ups
+   as a labelled non-confirmatory preamble.
+
+Executed by `run_confirmatory_spec.py` (8 seeds × 20 campaigns × budget=40 ×
+7 conditions = 7,840 batch-rows; ~4.5hr wall time).
+
+### Result: robustness criterion NOT MET
+
+| β | effect (is_gen6 on AUC) | p |
+|---|---|---|
+| 2 | **+0.316** | **0.003** |
+| 5 | +0.159 | 0.11 |
+| 10 | −0.016 | 0.87 |
+| 15 | −0.047 | 0.63 |
+| 25 | −0.071 | 0.47 |
+
+Same-sign favouring gen6_child0 in 3/5 betas (need ≥4/5); BH-significant in
+1/5 (need ≥3/5). **Criterion not met.** The pilot's calibrated β=15 does
+*not* replicate across 8 independent domain seeds — its bootstrap CI vs.
+`hint_fixed_ucb` spans [−0.15, +0.12], straddling zero. The TOST check
+against `phase_decaying_ucb` at β=15 also failed to show equivalence
+(p=0.9998 at δ=0.0094 — nowhere close). Only β=2 — numerically identical to
+`hint_fixed_ucb`'s own fixed β — shows a significant, sizeable effect.
+
+### Interpretation and follow-up
+
+β=15 (the pilot's hand-picked, dominance_ratio-motivated value) does not
+generalise; treating it as validated would have been exactly the p-hunting
+the confirmatory design exists to catch. That β=2 alone is significant is
+itself informative but ambiguous two ways: (a) front-range normalisation's
+real benefit doesn't require — and is in fact hurt by — scaling β up to
+compensate for a domain's `dominance_ratio`, since `sigma_norm` is already
+doing that scale-correction implicitly; or (b) the β=2 result is itself a
+seed-lucky false positive that a further replication (a tighter grid) would
+wash out.
+
+Two follow-ups launched to distinguish these, both committed on
+`add-tunable-synthetic-domain` and ready to run at the same 8×20×40 scale:
+
+- **`run_confirmatory_spec.py --betas 1,2,3 --calibrated_beta 2`** — a
+  narrow low-β sweep (script generalised with `--betas`/`--calibrated_beta`
+  CLI overrides, robustness thresholds auto-scaled to grid size) to check
+  whether the β=2 effect is a plateau near baseline-β or a narrow, possibly
+  noisy peak at exactly β=2.
+- **`run_gpucb_schedule.py`** — removes β as a tuned parameter entirely.
+  Weights `sigma_norm` by the theoretically motivated GP-UCB confidence
+  schedule (Srinivas et al. 2010, finite-domain form:
+  `beta_t = 2*log(|pool|*t²*π²/(6δ))`, δ=0.1 fixed by convention, not fit
+  to this domain) instead of any fixed/swept multiplier. If this beats
+  `hint_fixed_ucb` with no tuning at all, that is a materially stronger and
+  cleaner claim than any beta-grid result could be — "front-range
+  normalisation + a standard confidence-bound schedule, no domain-specific
+  calibration, robustly outperforms fixed-β UCB" — and would be the
+  headline result to report rather than any single swept β.
+
+Neither has been run to completion as of this entry (§23); both are queued.
+
+---
+
 ## Appendix A: Key Citations
 
 | Ref | Paper | Relevance |
