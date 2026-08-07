@@ -1354,6 +1354,102 @@ tested everywhere else in this project.
 
 ---
 
+## 22. Tunable Synthetic Domain: Front-Range Growth, Not Shrinkage (2026-08-06)
+
+### Motivation
+
+`run_tunable_domain_generalization.py`'s paired-Wilcoxon comparison of
+`gen6_child0_tuned` (front-range-normalised UCB, β=15 on σ/front_range) vs.
+`hint_fixed_ucb` (raw UCB, β=2 on raw σ) on `TunableSyntheticMOOracle` — a
+domain purpose-built (per its module docstring) to give front-range
+normalisation something to bite on — came back non-significant (12/20,
+p=0.15) despite both individually beating `trust_only`. `track_front_range.py`
+was written to test one specific hypothesis for the wash: front-range
+normalisation's claimed edge over a fixed-β UCB is that it's *implicitly
+self-annealing* — σ/front_range should grow in relative weight as the
+Pareto front narrows over the campaign. If `front_range` barely moves, the
+two AFs are nearly the same function up to a constant, which would exactly
+explain a null result.
+
+### Setup
+
+Two passes, deliberately run both ways to separate "is this a real domain
+mechanism" from "is this a sklearn-vs-botorch GP artifact":
+
+1. A lightweight, dependency-free stand-in
+   (`generate_bo_diagnostics.py`, new this entry) — same oracle, same two AF
+   formulas, but sklearn `GaussianProcessRegressor` GPs and greedy top-k
+   batch selection instead of BoTorch/qLogNEHVI (torch unavailable in that
+   environment). 12 campaigns, `plateau_sharpness=5.0`, `noise_level=0.08`,
+   `noise_mode="proportional"`, `scale2=3.0`, `budget=40`, `n_init=10`,
+   `batch_size=5` — the same operating point `sweep_tunable_domain.py`
+   selected.
+2. The real harness: `track_front_range.py` unmodified, same params, 12
+   campaigns, run against the actual `full_replay.strategy_evolved_af` /
+   BoTorch GP campaign loop.
+
+Both log `pareto_front_range` per objective, per batch — the same
+`context["pareto_front_range"]` field `score_pool` divides by.
+
+### Result
+
+Per-batch mean `front_range`, batch 0 → batch 6 (init-only → final):
+
+| | f1, sklearn stand-in | f1, real BoTorch harness | f2, sklearn stand-in | f2, real BoTorch harness |
+|---|---|---|---|---|
+| `hint_fixed_ucb` | 0.731 → 0.978 (+34%) | 0.755 → 0.974 (+29.0%) | 2.192 → 3.160 (+44%) | 2.869 → 3.344 (+16.5%) |
+| `gen6_child0_tuned` | 0.731 → 1.002 (+37%) | 0.755 → 0.952 (+26.1%) | 2.192 → 3.517 (+60%) | 2.869 → 3.616 (+26.0%) |
+
+`front_range` **grows monotonically for both conditions, on both harnesses** —
+it never shrinks over the campaign. The growth rate and absolute values
+differ somewhat between the sklearn stand-in and the real harness (expected,
+given the cruder GP fit and greedy — not joint — batch selection in the
+stand-in), but the direction and the "both conditions nearly identical"
+pattern replicate exactly.
+
+Hypervolume (sklearn stand-in only — the real harness's HV comes from
+`run_tunable_domain_generalization.py`'s existing non-significant result):
+raw UCB 12.76→13.70, front-range-norm 12.76→13.84 across the same 6 batches —
+consistent with the two AFs tracking each other closely throughout, not just
+at the final HV comparison.
+
+A rendered comparison (HV convergence, front-range trace with both harnesses
+overlaid, derived effective-β trace, campaign-0 objective-space fill, and the
+`sweep_tunable_domain.py` dominance_ratio grid) is at
+`generate_bo_diagnostics.py`'s output artifact — see that script's docstring
+for regeneration instructions.
+
+### Interpretation
+
+The self-annealing premise front-range normalisation needs — "the front
+narrows as the campaign converges, increasing σ/front_range's relative
+weight" — **does not hold on this domain at `n_init=10`**. The mechanism runs
+backward: with only 10 initial points, the *observed* non-dominated front
+starts artificially small (a sparse sample rarely contains the true extremes
+of a 500-point pool), then widens monotonically as the campaign discovers
+more of the actual Pareto set. So `effective_beta = 15/front_range` *falls*
+over the campaign instead of rising — the opposite of the intended annealing
+direction — for both conditions almost identically, which is consistent with
+why the two AFs are statistically indistinguishable on this domain despite
+both being real, if modest, improvements over `trust_only`.
+
+This is a **harness-independent** finding (confirmed on both the sklearn
+stand-in and the real BoTorch/qLogNEHVI harness) and does not depend on
+`sweep_tunable_domain.py`'s noise/dominance_ratio tuning — it's a property of
+how the observed front's extent evolves with campaign progress on this
+domain, not a symptom of the wrong `(plateau_sharpness, noise_level)` cell.
+
+### Open question
+
+Whether `front_range` eventually turns over and shrinks with a larger
+`n_init` (a bigger initial sample would capture more of the true front's
+extremes up front, leaving less room to grow) or longer budget, or whether
+unbounded growth is structural to this ZDT1-family oracle's 500-point finite
+pool regardless of budget, is untested as of this entry — a sweep over
+`n_init` (holding `budget` fixed) would resolve it directly.
+
+---
+
 ## Appendix A: Key Citations
 
 | Ref | Paper | Relevance |
