@@ -1363,6 +1363,31 @@ DA-COREG is viable specifically in evolved-AF / score_pool-style pipelines
 the qLogNEHVI-based baseline/ablation-cell pipelines tested everywhere else in
 this project.
 
+### mAb Domain Cross-Check (2026-08-08)
+
+DTLZ2's objectives are close to independent by construction — not the
+regime DA-COREG's cross-objective coregionalization is meant to help with.
+`run_da_coreg_no_qnehvi_pilot.py --domain mab` reruns the same no-qLogNEHVI
+ablation on the real 3-objective mAb formulation oracle (`Tm`, `kD`,
+`viscosity` — `max`/`max`/`min`, correlated by protein chemistry), at the
+same protocol (3 replicates × 20 campaigns × `n_fitness_seeds=3`). Data file:
+`da_coreg_no_qnehvi_mab_results.json`.
+
+| Replicate | pct_diff (DA-COREG vs indep) | Wins | p | Fallback |
+|---|---|---|---|---|
+| 0 | +0.3% | 11/20 | 0.84 | 1/360 batches (1 campaign) |
+| 1 | +0.3% | 10/20 | 0.96 | 0/360 batches |
+| 2 | −2.0% | 12/20 | 0.65 | 0/360 batches |
+
+Mean diff −0.5% (std 1.1), 0/3 replicates significant either direction, win
+rates at chance (11/20, 10/20, 12/20). Same tie as DTLZ2 — DA-COREG's
+cross-objective correlation modeling produced no measurable edge over
+independent per-objective GPs even on the correlated-objective domain it
+was hypothesized to favor, under this no-qLogNEHVI pipeline. Combined with
+the DTLZ2 result above: DA-COREG-without-qLogNEHVI is a consistent tie
+across both an independent-objective and a correlated-objective benchmark,
+not domain-dependent.
+
 ---
 
 ## Appendix A: Key Citations
