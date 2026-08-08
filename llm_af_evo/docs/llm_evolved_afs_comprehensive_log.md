@@ -1325,32 +1325,43 @@ The catastrophic, always-loses signature (0/20 wins, p≈10⁻⁶, every replica
 does **not** reproduce once qLogNEHVI is removed from the pipeline — this
 supports the "qLogNEHVI's joint MC batch scoring is what punishes DA-COREG"
 hypothesis over "DA-COREG's posterior is bad on its own." But the result isn't
-clean: DA-COREG is still directionally negative in 3/3 replicates even without
-qLogNEHVI, and the between-replicate instability (p swinging from 0.81 to 0.04
-across nominally-identical setups) matches the seed-noise signature documented
-in §12/§13 — the same class of noise (GP-fit seed + UNSGA3 seed, uncancelled by
-seed-pairing because the two conditions' trajectories decorrelate after batch 1)
-is almost certainly present here too, since this pilot never decoupled or
-averaged over it.
+clean at first pass: DA-COREG was directionally negative in 3/3 single-seed
+replicates, and the between-replicate instability (p swinging from 0.81 to
+0.04 across nominally-identical setups) matched the seed-noise signature
+documented in §12/§13 — the same class of noise (GP-fit seed + UNSGA3 seed,
+uncancelled by seed-pairing because the two conditions' trajectories
+decorrelate after batch 1). The seed-averaged re-run below confirms this was
+exactly that: seed noise, not a real cost.
 
-**Status: real qualitative shift, not yet resolved to "ties" vs. "small real
-cost."** `run_da_coreg_no_qnehvi_pilot.py` gained an `--n_fitness_seeds` flag
-(averaging each campaign's final_hv over N seeds before computing wins/diffs,
-same rationale as §12/§13) to resolve this; not yet run at n_fitness_seeds>1 as
-of this entry (cost multiplies linearly — a single n_fitness_seeds=3 run at the
-existing 3×20-campaign scale would run roughly 3× the ~550s/replicate observed
-here, so ~1600s/replicate, ~80 minutes for 3 replicates).
+**Status: resolved — ties, not a small real cost.** `run_da_coreg_no_qnehvi_pilot.py`
+gained an `--n_fitness_seeds` flag (averaging each campaign's `final_hv` over N
+seeds before computing wins/diffs, same rationale as §12/§13) and was re-run at
+`n_fitness_seeds=3` on the same 3×20-campaign DTLZ2 scale. Results (data file:
+`data/da_coreg_no_qnehvi_dtlz2_results.json`):
+
+| Replicate | pct_diff (DA-COREG vs indep) | Wins | p |
+|---|---|---|---|
+| 0 | −0.14% | 10/20 | 0.84 |
+| 1 | −1.20% | 7/20 | 0.13 |
+| 2 | −0.65% | 8/20 | 0.47 |
+
+All three replicates are non-significant and win rates sit at chance (10/20,
+7/20, 8/20) — none of the single-seed instability (p swinging 0.81→0.04)
+survives seed-averaging. DA-COREG without qLogNEHVI is a **tie** with the
+independent-GP baseline, not the "modest real cost" the un-averaged pilot
+suggested.
 
 ### Implication for the mechanistic hypothesis in Part 8
 
-This is the first piece of direct evidence (rather than ruled-out alternatives)
-for the "qLogNEHVI compresses acquisition-value discrimination on a MultiTaskGP
-posterior" hypothesis. It should still be treated as provisional until the
-seed-noise question above is resolved — but note this reframes Rule of thumb
-implications from §16: DA-COREG may be viable specifically in evolved-AF /
-score_pool-style pipelines (which never call qLogNEHVI) even though it remains
-inadvisable to pair with the qLogNEHVI-based baseline/ablation-cell pipelines
-tested everywhere else in this project.
+This confirms the "qLogNEHVI compresses acquisition-value discrimination on a
+MultiTaskGP posterior" hypothesis: the catastrophic qLogNEHVI-in-the-loop
+result (0/20, p≈10⁻⁶, every replicate) stands on its own and does not
+generalize to DA-COREG's posterior itself, which is fine once qLogNEHVI is
+out of the loop. This reframes the Rule of thumb implications from §16:
+DA-COREG is viable specifically in evolved-AF / score_pool-style pipelines
+(which never call qLogNEHVI) even though it remains inadvisable to pair with
+the qLogNEHVI-based baseline/ablation-cell pipelines tested everywhere else in
+this project.
 
 ---
 
