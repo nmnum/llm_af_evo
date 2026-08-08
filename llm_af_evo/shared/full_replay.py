@@ -95,6 +95,47 @@ from ada_coatings_oracle import (
     OBJECTIVE_NAMES as _COATINGS_OBJECTIVE_NAMES,
 )
 
+# Opt-in diagnostic log for the growth-aware modification (1)'s
+# boundary_std / front_range / growth_weight per batch — off (None) by
+# default so ordinary callers pay zero cost. Enable via
+# enable_boundary_debug_log(), tag each campaign via
+# set_boundary_debug_tag(...) so rows can be traced back to
+# (domain_seed, campaign) by a caller that only sees campaign-level
+# granularity, then read back via get_boundary_debug_log().
+_BOUNDARY_DEBUG_LOG = None
+_BOUNDARY_DEBUG_TAG = None
+
+
+def enable_boundary_debug_log():
+    global _BOUNDARY_DEBUG_LOG
+    _BOUNDARY_DEBUG_LOG = []
+
+
+def set_boundary_debug_tag(tag):
+    global _BOUNDARY_DEBUG_TAG
+    _BOUNDARY_DEBUG_TAG = tag
+
+
+def get_boundary_debug_log():
+    return _BOUNDARY_DEBUG_LOG
+
+
+# Same pattern, for modification (1b)/v3's pool-based growth signal: the
+# std of whichever pool candidate currently has the highest predicted
+# mean for each objective (an unobserved point, unlike v1's boundary
+# point) — see run_growth_aware_v3.py's module docstring.
+_POOL_TOP_DEBUG_LOG = None
+
+
+def enable_pool_top_debug_log():
+    global _POOL_TOP_DEBUG_LOG
+    _POOL_TOP_DEBUG_LOG = []
+
+
+def get_pool_top_debug_log():
+    return _POOL_TOP_DEBUG_LOG
+
+
 # Expected oracle_X_raw/oracle_Y_raw column counts per oracle_family — used
 # only to fail loudly (ValueError) instead of silently misbehaving when a
 # training log from the wrong oracle family gets reconstructed as if it
@@ -267,6 +308,51 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             seed_x = np.vstack([seed_x, pad])
         seed_x = seed_x[:max(evo_candidates, 2)]
 
+        # Growth-aware modification (1): GP posterior std at each
+        # objective's own front boundary point (the observed pareto-front
+        # point that currently maximises that objective, in all-maximise
+        # convention). Unlike "does the candidate pool contain a point
+        # exceeding front_max" (which qLogNEHVI's own candidate pipeline
+        # essentially never produces, since it fills hypervolume gaps
+        # within the observed front rather than proposing single-
+        # objective extrapolations — see run_growth_aware.py's module
+        # docstring), this signal is a continuous quantity available
+        # every batch: how uncertain the GP still is right at the edge of
+        # what's been explored for that objective. High uncertainty there
+        # means the GP hasn't ruled out further extension, so it fires
+        # during real exploration instead of being gated by a candidate-
+        # pipeline behaviour.
+        front_boundary_std = {}
+        with warnings.catch_warnings(), torch.no_grad():
+            warnings.simplefilter("ignore")
+            pf_x_np = train_x[seed_pool_idx].cpu().numpy()
+            pf_y_int = Y_int[seed_pool_idx]
+            for j, name in enumerate(oracle.objective_names()):
+                j_boundary_local = int(np.argmax(pf_y_int[:, j]))
+                x_boundary = torch.tensor(
+                    pf_x_np[j_boundary_local:j_boundary_local + 1], **tkwargs)
+                post_b = model.posterior(x_boundary)
+                std_b = post_b.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
+                front_boundary_std[name] = float(std_b[0, j])
+
+        if _BOUNDARY_DEBUG_LOG is not None:
+            # front_range as the sandbox itself computes it (range over ALL
+            # observed points in all-maximise convention, not just the
+            # non-dominated subset — matches sandbox.py's pareto_front_range,
+            # which is keyed off front_allmax = to_allmax(Y_obs)).
+            for j, name in enumerate(oracle.objective_names()):
+                front_range_j = max(
+                    float(Y_int[:, j].max() - Y_int[:, j].min()), 1e-6)
+                b_std = front_boundary_std[name]
+                _BOUNDARY_DEBUG_LOG.append({
+                    "tag": _BOUNDARY_DEBUG_TAG,
+                    "n_obs": len(X_obs),
+                    "objective": name,
+                    "boundary_std": b_std,
+                    "front_range": front_range_j,
+                    "growth_weight": 1.0 + b_std / front_range_j,
+                })
+
         try:
             ref_dirs = get_reference_directions("energy", M, evo_candidates,
                                                  seed=int(rng.integers(1e6)))
@@ -299,6 +385,21 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             post = model.posterior(candidates)
             pool_mu = post.mean.detach().cpu().numpy()
             pool_sigma = post.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
+
+        if _POOL_TOP_DEBUG_LOG is not None:
+            for j, name in enumerate(oracle.objective_names()):
+                front_range_j = max(
+                    float(Y_int[:, j].max() - Y_int[:, j].min()), 1e-6)
+                top_idx = int(np.argmax(pool_mu[:, j]))
+                top_std = float(pool_sigma[top_idx, j])
+                _POOL_TOP_DEBUG_LOG.append({
+                    "tag": _BOUNDARY_DEBUG_TAG,
+                    "n_obs": len(X_obs),
+                    "objective": name,
+                    "top_candidate_std": top_std,
+                    "front_range": front_range_j,
+                    "growth_weight": 1.0 + top_std / front_range_j,
+                })
 
         front_allmax = to_allmax(Y_obs.copy(), directions=directions)
         ref_point_allmax = ref_point.cpu().numpy()
@@ -333,6 +434,7 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             front_allmax,
             objective_names=oracle.objective_names(),
             log_dir=sandbox_log_dir,
+            front_boundary_std=front_boundary_std,
         )
         selected_idx = select_batch(scores, batch_size)
 

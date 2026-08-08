@@ -100,6 +100,16 @@ if __name__ == "__main__":
     stagnant_batches = json.loads(sys.argv[10])
     OBJECTIVE_NAMES = json.loads(sys.argv[11])
     Y_obs = np.array(json.loads(sys.argv[12]))
+    # Optional (argv[13]): GP posterior std at each objective's own front
+    # boundary point (the observed point that currently maximises that
+    # objective), keyed by name — {} when the caller doesn't compute it.
+    # Added for the growth-aware AF's modification (1): a growth signal
+    # that fires on GP uncertainty at the frontier itself, not on whether
+    # the candidate pool happens to contain a point exceeding front_max
+    # (which qLogNEHVI's own candidate pipeline essentially never
+    # produces — see run_growth_aware_v2.py's module docstring).
+    pareto_front_boundary_std = (
+        json.loads(sys.argv[13]) if len(sys.argv) > 13 else {})
 
     # Translate flat, positional arrays into the self-documenting nested
     # context dict per af_interface.py's contract, BEFORE candidate code
@@ -130,6 +140,7 @@ if __name__ == "__main__":
         "objective_names": OBJECTIVE_NAMES,
         "pareto_front": front_allmax,
         "pareto_front_range": pareto_front_range,
+        "pareto_front_boundary_std": pareto_front_boundary_std,
         "ref_point": ref_point_allmax,
         "ref_point_by_name": {name: float(ref_point_allmax[j])
                                for j, name in enumerate(OBJECTIVE_NAMES)},
@@ -171,7 +182,8 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
                        Y_obs: np.ndarray,
                        objective_names=None,
                        log_dir: pathlib.Path = None,
-                       fail_log_dir: pathlib.Path = None) -> np.ndarray:
+                       fail_log_dir: pathlib.Path = None,
+                       front_boundary_std: dict = None) -> np.ndarray:
     """
     Execute af_code (must define score_pool per af_interface.py's contract)
     in a subprocess and return the resulting (N,) score array. Raises
@@ -194,9 +206,18 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
     front), already in all-maximise convention like pool_mu/front_allmax —
     pass front_allmax itself if the caller doesn't separately track a
     filtered front, since both are derived from the same running Y array.
+
+    front_boundary_std: optional {objective_name: float} of GP posterior
+    std evaluated at that objective's own front boundary point (the
+    observed point currently maximising it) — exposed to af_code as
+    context["pareto_front_boundary_std"]. Defaults to {} (existing
+    callers are unaffected; only af_code that explicitly reads this new
+    key changes behaviour).
     """
     if objective_names is None:
         objective_names = ["Tm", "kD", "viscosity"]
+    if front_boundary_std is None:
+        front_boundary_std = {}
 
     # Explainability-line enforcement: reject before ever spawning the
     # subprocess (no point burning the 10s timeout budget on code that's
@@ -232,7 +253,8 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
              json.dumps(front_allmax.tolist()), json.dumps(ref_point_allmax.tolist()),
              json.dumps(int(step)), json.dumps(int(budget)),
              json.dumps(int(n_obs)), json.dumps(int(stagnant_batches)),
-             json.dumps(list(objective_names)), json.dumps(Y_obs.tolist())],
+             json.dumps(list(objective_names)), json.dumps(Y_obs.tolist()),
+             json.dumps({k: float(v) for k, v in front_boundary_std.items()})],
             capture_output=True, text=True, timeout=SANDBOX_TIMEOUT,
         )
 
