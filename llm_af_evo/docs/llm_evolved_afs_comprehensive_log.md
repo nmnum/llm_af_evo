@@ -1404,6 +1404,93 @@ not domain-dependent.
 
 ---
 
+## 22. Design Discussion: Has DA-COREG Been Tried the "Right" Way? (2026-08-09)
+
+### Motivation
+
+§21's finding (tie under `trust_only`/top-k score_pool, no advantage even on
+the correlated mAb domain) leaves open a question distinct from "does
+DA-COREG help": *has it actually been paired with an acquisition function it
+was ever suited to?* Every pipeline tested so far (`qLogNEHVI`-in-the-loop in
+Part 8, `trust_only`/top-k in §21) was designed around independent
+per-objective posteriors, not built to exploit a coregionalized one. A
+literature check (2026-08-09) was done before proposing a next experiment,
+rather than assuming a pairing is standard.
+
+### What the literature check found
+
+- Independent per-objective GPs remain the default in MOBO for simplicity and
+  scalability; multi-task/coregionalized surrogates are a deliberate
+  minority choice made specifically to exploit objective correlation, not a
+  drop-in upgrade.
+- When the literature does pair a correlated joint surrogate with an
+  acquisition function, it tends to **redesign the acquisition around the
+  joint posterior** rather than reuse an independence-assuming batch
+  acquisition unmodified — e.g. cPoI [31] builds a pointwise/greedy
+  acquisition directly from a multi-task GP's posterior covariance matrix,
+  in contrast to `qLogNEHVI`'s joint-batch-MC hypervolume estimate.
+- ParEGO's "multi-surrogate" variant already separates surrogate from
+  scalarization: it fits per-objective GPs, computes the Chebyshev-scalarized
+  objective from the posterior predictions, then runs ordinary (pointwise)
+  EI on that scalar [32]. This is a natural slot to substitute a
+  coregionalized posterior into, since the acquisition step is scalar and
+  pointwise — never a joint MC draw across a q-batch — which structurally
+  sidesteps the mechanism identified in Part 8 (correlated joint MC samples
+  compressing per-candidate acquisition-value discrimination).
+- No published result pairing DA-COREG (or an equivalent ICM/LMC-style
+  coregionalized GP) specifically with ParEGO-style scalarization was found.
+  This should be treated as a plausible, literature-motivated synthesis of
+  existing pieces, **not** an established or previously-validated
+  combination — flagged explicitly so it isn't mistaken for a literature
+  replication.
+- ["Pitfalls and Remedies for Multi-Task Bayesian Optimization" (2026,
+  arXiv 2607.09073)](https://arxiv.org/html/2607.09073) [33] is directly
+  relevant to a second, previously untested variable: it identifies
+  per-task mean/scale normalization as a necessary model parameter for
+  multi-task GPs, because a jointly-fit task-covariance kernel can have its
+  learned correlation structure distorted or dominated by whichever task
+  has the largest raw output scale.
+
+### Proposed next experiment
+
+1. **Acquisition:** ParEGO-style scalarized EI (random Chebyshev weight
+   vector per iteration, pointwise EI on the scalarized posterior) instead
+   of `qLogNEHVI` or `trust_only`/top-k score_pool — the literature-motivated
+   pairing for a coregionalized surrogate.
+2. **Front-range normalization of the surrogate inputs, not just the AF's
+   sigma term.** `pareto_front_range`-style normalization (already used
+   downstream for AF sigma, e.g. `gen6_child0`'s `sigma_norm`) should be
+   applied to `Tm`/`kD`/`viscosity` **before fitting DA-COREG**, not only at
+   the acquisition-normalization step. This is motivated directly by [33]'s
+   pitfall: DA-COREG's task-covariance kernel is jointly fit across
+   objectives on raw scale, and `viscosity` differing from `Tm`/`kD` by
+   orders of magnitude could bias the learned cross-task correlation before
+   any acquisition function ever sees it. This was never tested in Part 8 or
+   §21 — both used DA-COREG on unnormalized objective scales.
+3. **Hybrid marginals + correlation:** §21's held-out NLL/RMSE check (Part 8)
+   already showed DA-COREG's *marginal* fit is as good or better than
+   independent GPs — so what DA-COREG uniquely contributes isn't better
+   per-objective calibration, it's the off-diagonal cross-objective
+   covariance terms independent GPs can't produce at all. A more holistic
+   design: keep the independent per-objective GPs for marginal mean/variance
+   (simple, already validated, no shared-kernel scale-distortion risk), and
+   use DA-COREG only to populate the cross-objective covariance terms of a
+   joint covariance matrix for the scalarization/EI step. This isolates
+   DA-COREG's actual unique contribution (correlation) from its one
+   identified risk (a jointly-fit kernel's sensitivity to scale and
+   data-starvation) — untested, not literature-verified as a named method,
+   but a direct decomposition of what the NLL check already showed.
+
+### Status
+
+Design proposal only — not yet run. This is intended as the next DA-COREG
+pilot if the project continues down this line: it changes two variables at
+once relative to everything tested so far (acquisition function and
+input normalization), both independently motivated by the literature check
+above rather than by further blind ablation.
+
+---
+
 ## Appendix A: Key Citations
 
 | Ref | Paper | Relevance |
@@ -1421,6 +1508,8 @@ not domain-dependent.
 | [20] | Radford et al. 2026 (Advanced Science, DOI: 10.1002/advs.76551) | Real mAb formulation BO dataset, GitHub: GormleyLab/AL-for-Bioformulation |
 | [30] | Waibel et al. 2025 (Mol. Pharm., DOI: 10.1021/acs.molpharmaceut.5c00591) | 33-sample mAb dataset used as the excipient oracle |
 | [31] | cPoI (GECCO 2023 Companion, DOI: 10.1145/3583133.3596374) | Correlated Probability of Improvement — pairs a multi-task GP's posterior covariance with a pointwise/greedy acquisition rather than joint-batch EHVI, cited in §21's literature discussion of why DA-COREG+qLogNEHVI is an unusual pairing |
+| [32] | Surrogate Strategies for Scalarisation-Based MOBO (Springer, DOI: 10.1007/978-981-96-3538-2_10) | ParEGO's multi-surrogate variant — per-objective GPs, scalarize the posterior, pointwise EI; motivates §22's proposed DA-COREG+ParEGO pairing |
+| [33] | Pitfalls and Remedies for Multi-Task Bayesian Optimization (Hvarfner et al., 2026, arXiv 2607.09073) | Identifies per-task mean/scale normalization as a necessary MTGP model parameter; motivates §22's front-range-normalization-before-fitting proposal |
 
 ## Appendix B: File Inventory
 
