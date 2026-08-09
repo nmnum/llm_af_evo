@@ -267,7 +267,9 @@ def _egbo_module():
             import logging
             logging.getLogger(__name__).warning(
                 f"EGBO dependencies unavailable ({e}) — 'egbo'/'novelty_egbo' "
-                f"strategies will fall back to random for the rest of this run. "
+                f"strategy calls will now raise instead of silently degrading "
+                f"to random (previously this happened invisibly, uncounted in "
+                f"switch_logs.json's failures list). "
                 f"Install with: pip install botorch gpytorch torch pymoo"
             )
             _egbo_import_warned = True
@@ -277,28 +279,46 @@ def _egbo_module():
 def egbo(X_obs, y_obs, bounds, **kwargs):
     mod = _egbo_module()
     if mod is None:
-        return random_search(X_obs, y_obs, bounds, **kwargs)
+        # Don't silently substitute random_search here — that would hide a
+        # real strategy failure as if it never happened. Raise instead so
+        # callers (e.g. simulator.py's per-step try/except) catch it, fall
+        # back to random themselves, AND record the step in `failures` —
+        # the fallback becomes visible in switch_logs.json instead of an
+        # invisible confound in the AUC/final-value numbers.
+        raise RuntimeError(
+            "EGBO dependencies (botorch/gpytorch/torch/pymoo) unavailable — "
+            "'egbo' strategy cannot run in this interpreter."
+        )
     return mod.egbo(X_obs, y_obs, bounds, **kwargs)
 
 
 def novelty_egbo(X_obs, y_obs, bounds, **kwargs):
     mod = _egbo_module()
     if mod is None:
-        return random_search(X_obs, y_obs, bounds, **kwargs)
+        raise RuntimeError(
+            "EGBO dependencies (botorch/gpytorch/torch/pymoo) unavailable — "
+            "'novelty_egbo' strategy cannot run in this interpreter."
+        )
     return mod.novelty_egbo(X_obs, y_obs, bounds, **kwargs)
 
 
 def egbo_discrete(X_obs, y_obs, X_pool, **kwargs):
     mod = _egbo_module()
     if mod is None:
-        return random_discrete(X_obs, y_obs, X_pool, **kwargs)
+        raise RuntimeError(
+            "EGBO dependencies (botorch/gpytorch/torch/pymoo) unavailable — "
+            "'egbo' strategy cannot run in this interpreter."
+        )
     return mod.egbo_discrete(X_obs, y_obs, X_pool, **kwargs)
 
 
 def novelty_egbo_discrete(X_obs, y_obs, X_pool, **kwargs):
     mod = _egbo_module()
     if mod is None:
-        return random_discrete(X_obs, y_obs, X_pool, **kwargs)
+        raise RuntimeError(
+            "EGBO dependencies (botorch/gpytorch/torch/pymoo) unavailable — "
+            "'novelty_egbo' strategy cannot run in this interpreter."
+        )
     return mod.novelty_egbo_discrete(X_obs, y_obs, X_pool, **kwargs)
 
 
