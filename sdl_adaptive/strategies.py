@@ -233,6 +233,75 @@ def lhs_discrete(X_obs, y_obs, X_pool, **_):
     return np.argmax(min_dists)
 
 
+# ---------------------------------------------------------------------------
+# EGBO (Aqeeli et al. 2026): botorch/pymoo/gpytorch are heavy optional deps,
+# so these wrappers import egbo_strategy lazily on first call rather than at
+# module import time — strategies.py must still import fine in envs that
+# don't have those packages installed. If they're missing, fall back to
+# random and log once (this is the "egbo silently degrades to random"
+# situation flagged earlier for approach_d — the difference is now it's an
+# environment problem you can fix by installing deps, not a missing
+# implementation).
+# ---------------------------------------------------------------------------
+
+_egbo_import_warned = False
+
+
+def _egbo_module():
+    """Return egbo_strategy iff its actual dependencies (botorch/gpytorch/
+    torch/pymoo) are importable, else None + a one-time warning.
+
+    Note: `import egbo_strategy` alone always succeeds (it imports those
+    packages lazily inside its functions, not at module level) — checking
+    only that would make an unavailable-deps case silently fall through to
+    egbo_strategy's own internal `except Exception: return random`, which
+    is exactly the invisible-fallback failure mode this was meant to fix.
+    """
+    global _egbo_import_warned
+    try:
+        import torch, botorch, gpytorch, pymoo  # noqa: F401
+        import egbo_strategy
+        return egbo_strategy
+    except ImportError as e:
+        if not _egbo_import_warned:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"EGBO dependencies unavailable ({e}) — 'egbo'/'novelty_egbo' "
+                f"strategies will fall back to random for the rest of this run. "
+                f"Install with: pip install botorch gpytorch torch pymoo"
+            )
+            _egbo_import_warned = True
+        return None
+
+
+def egbo(X_obs, y_obs, bounds, **kwargs):
+    mod = _egbo_module()
+    if mod is None:
+        return random_search(X_obs, y_obs, bounds, **kwargs)
+    return mod.egbo(X_obs, y_obs, bounds, **kwargs)
+
+
+def novelty_egbo(X_obs, y_obs, bounds, **kwargs):
+    mod = _egbo_module()
+    if mod is None:
+        return random_search(X_obs, y_obs, bounds, **kwargs)
+    return mod.novelty_egbo(X_obs, y_obs, bounds, **kwargs)
+
+
+def egbo_discrete(X_obs, y_obs, X_pool, **kwargs):
+    mod = _egbo_module()
+    if mod is None:
+        return random_discrete(X_obs, y_obs, X_pool, **kwargs)
+    return mod.egbo_discrete(X_obs, y_obs, X_pool, **kwargs)
+
+
+def novelty_egbo_discrete(X_obs, y_obs, X_pool, **kwargs):
+    mod = _egbo_module()
+    if mod is None:
+        return random_discrete(X_obs, y_obs, X_pool, **kwargs)
+    return mod.novelty_egbo_discrete(X_obs, y_obs, X_pool, **kwargs)
+
+
 DISCRETE_STRATEGY_MAP = {
     "ucb":    ucb_discrete,
     "ei":     ei_discrete,
@@ -240,6 +309,8 @@ DISCRETE_STRATEGY_MAP = {
     "thompson": thompson_discrete,
     "random": random_discrete,
     "lhs":    lhs_discrete,
+    "egbo":   egbo_discrete,
+    "novelty_egbo": novelty_egbo_discrete,
 }
 
 
@@ -254,4 +325,6 @@ STRATEGY_MAP = {
     "thompson": thompson,
     "random": random_search,
     "lhs": lhs,
+    "egbo": egbo,
+    "novelty_egbo": novelty_egbo,
 }
