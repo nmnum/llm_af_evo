@@ -1481,13 +1481,47 @@ rather than assuming a pairing is standard.
    data-starvation) — untested, not literature-verified as a named method,
    but a direct decomposition of what the NLL check already showed.
 
+### Execution plan (2026-08-09)
+
+The three proposed changes above should **not** be run together — that would
+change two-to-three variables at once relative to the already-resolved tie,
+making a positive or negative result undiagnosable. Sequenced cheapest and
+most diagnostic first:
+
+1. **Front-range normalization of DA-COREG's fit inputs, isolated.** Reuse
+   the existing `trust_only`/top-k pipeline exactly as in §21 (the run
+   already trusted as a clean tie) and change only the input scale to
+   DA-COREG's fit — independent-GP baseline untouched. Single-variable
+   change against a known-good comparison point. DTLZ2 first, 3 replicates,
+   `n_fitness_seeds=3` (same rigor as the resolved runs, since a subtle
+   normalization effect is exactly the kind of thing seed noise could mask
+   or manufacture).
+2. **ParEGO-scalarized EI + DA-COREG, smoke-tested before any seed-averaging
+   spend.** Swap `trust_only`/top-k scoring for random-Chebyshev-scalarized
+   posterior + pointwise EI, DTLZ2 only, 1 replicate, `n_fitness_seeds=1`,
+   small `n_campaigns` (~5). Purely to confirm it runs and check for a
+   directional signal before paying for a seed-averaged run. If flat, treat
+   the acquisition swap as not worth pursuing further before touching mAb.
+3. **Combine #1 + #2 only if either shows a directional effect alone.**
+   Combining unproven changes before knowing which one (if either) moves the
+   needle would reintroduce the same confound this plan exists to avoid.
+4. **Hybrid marginals + DA-COREG-covariance-only — held for last.** Largest
+   implementation lift (needs a custom joint-covariance assembly, not a
+   flag). Only worth building if #1 or #2 shows DA-COREG can help somewhere;
+   otherwise it's solving a problem that may not exist in this acquisition
+   regime. If pursued, DTLZ2 first as the positive-control gate before any
+   mAb-domain compute, exactly as in the original DA-COREG work.
+5. **mAb domain only for whichever variant clears its DTLZ2 gate.** DTLZ2
+   stays the cheap filter; mAb is the confirm-on-real-data step, not the
+   first move — mirroring the discipline already used for the base DA-COREG
+   result and its §21 cross-check.
+
 ### Status
 
-Design proposal only — not yet run. This is intended as the next DA-COREG
-pilot if the project continues down this line: it changes two variables at
-once relative to everything tested so far (acquisition function and
-input normalization), both independently motivated by the literature check
-above rather than by further blind ablation.
+Design proposal only — not yet run. Step 1 (front-range normalization,
+isolated, `trust_only` pipeline) is the recommended starting point: smallest
+code change, reuses an already-validated comparison baseline, and tests the
+literature-motivated pitfall from [33] directly.
 
 ---
 

@@ -24,6 +24,17 @@ loses just as badly here too, that's evidence for (a).
 Usage:
     python run_da_coreg_no_qnehvi_pilot.py --n_replicates 1 --n_campaigns 3   # timing check
     python run_da_coreg_no_qnehvi_pilot.py --n_replicates 3 --n_campaigns 20  # real run
+
+--frn adds a third condition (unsga3_pool_af_da_coreg_frn): DA-COREG with
+§22 step-1 front-range normalization applied to its fit inputs only, still
+compared against the same unsga3_pool_af_indep baseline. This is the
+concrete pilot for docs/llm_evolved_afs_comprehensive_log.md §22's
+"Execution plan" step 1 — a single-variable change (input scale to
+DA-COREG's fit) against the already-resolved indep-vs-da_coreg tie, not a
+combination with the (separately proposed, not-yet-built) ParEGO-
+scalarization or hybrid-marginals changes from the rest of §22.
+    python run_da_coreg_no_qnehvi_pilot.py --frn --n_replicates 1 --n_campaigns 3   # timing check
+    python run_da_coreg_no_qnehvi_pilot.py --frn --n_replicates 3 --n_campaigns 20 --n_fitness_seeds 3  # real run
 """
 
 import os
@@ -74,6 +85,13 @@ CONDITIONS = {
     "unsga3_pool_af_da_coreg": (strategy_unsga3_pool_af,
                                  {"af_code": TRUST_ONLY, "use_da_coreg": True}),
 }
+# §22 step 1 (front-range norm, isolated): only added when --frn is passed,
+# so the original 2-condition indep-vs-da_coreg tie this script already
+# established stays the default comparison and this extra condition's cost
+# is opt-in.
+CONDITION_FRN = ("unsga3_pool_af_da_coreg_frn", (strategy_unsga3_pool_af,
+                  {"af_code": TRUST_ONLY, "use_da_coreg": True,
+                   "use_front_range_norm": True}))
 
 
 def build_oracle(domain: str):
@@ -156,16 +174,21 @@ def run_one_replicate(oracle, n_campaigns, budget, n_init, batch_size, replicate
 
 def summarize(results, n_campaigns):
     baseline = np.array(results["unsga3_pool_af_indep"])
-    af_hv = np.array(results["unsga3_pool_af_da_coreg"])
-    diffs = af_hv - baseline
-    pct = 100 * (af_hv.mean() - baseline.mean()) / baseline.mean()
-    n_wins = int(np.sum(diffs > 0))
-    try:
-        _, pval = wilcoxon(diffs)
-    except ValueError:
-        pval = 1.0
-    return {"unsga3_pool_af_da_coreg": {"pct_diff": float(pct), "n_wins": n_wins,
-                                         "n_campaigns": n_campaigns, "p": float(pval)}}
+    summary = {}
+    for cond_name, hv in results.items():
+        if cond_name == "unsga3_pool_af_indep":
+            continue
+        af_hv = np.array(hv)
+        diffs = af_hv - baseline
+        pct = 100 * (af_hv.mean() - baseline.mean()) / baseline.mean()
+        n_wins = int(np.sum(diffs > 0))
+        try:
+            _, pval = wilcoxon(diffs)
+        except ValueError:
+            pval = 1.0
+        summary[cond_name] = {"pct_diff": float(pct), "n_wins": n_wins,
+                               "n_campaigns": n_campaigns, "p": float(pval)}
+    return summary
 
 
 def main():
@@ -185,7 +208,16 @@ def main():
                           "noise-dominated rather than clean — see mab_noise_"
                           "diagnostic.py for the precedent.")
     ap.add_argument("--out_path", default=None)
+    ap.add_argument("--frn", action="store_true",
+                     help="Add a third condition (unsga3_pool_af_da_coreg_frn): "
+                          "DA-COREG with §22 step-1 front-range normalization of "
+                          "its fit inputs, compared against the same indep-GP "
+                          "baseline as unsga3_pool_af_da_coreg. Opt-in — doubles "
+                          "the DA-COREG-side cost of the run.")
     args = ap.parse_args()
+
+    if args.frn:
+        CONDITIONS[CONDITION_FRN[0]] = CONDITION_FRN[1]
 
     out_path = args.out_path or str(HERE / f"da_coreg_no_qnehvi_{args.domain}_results.json")
 
@@ -195,9 +227,10 @@ def main():
     print("Both conditions: UNSGA3-only candidates, trust_only score_pool scoring, "
           "top-k select — no qLogNEHVI/optimize_acqf call anywhere. Only the "
           "surrogate (independent GPs vs DA-COREG) differs.\n")
+    af_conditions = [c for c in CONDITIONS if c != "unsga3_pool_af_indep"]
     print(f"Running {args.n_replicates} independent replicates of "
-          f"{args.n_campaigns} campaigns x 2 conditions x {args.n_fitness_seeds} "
-          f"fitness seed(s) each "
+          f"{args.n_campaigns} campaigns x {len(CONDITIONS)} conditions x "
+          f"{args.n_fitness_seeds} fitness seed(s) each "
           f"(replicate_idx {args.replicate_start}..{args.replicate_start + args.n_replicates - 1})...\n")
 
     if args.n_campaigns < 20:
@@ -212,42 +245,54 @@ def main():
             r, args.base_seed, n_fitness_seeds=args.n_fitness_seeds)
         summary = summarize(results, args.n_campaigns)
         elapsed = time.perf_counter() - t0
-        s = summary["unsga3_pool_af_da_coreg"]
-        da_fallback = fallback_info["unsga3_pool_af_da_coreg"]
-        total_fallback_batches = sum(c["n_fallback"] for c in da_fallback)
-        total_batches = sum(c["n_total"] for c in da_fallback)
-        n_campaigns_with_any_fallback = sum(1 for c in da_fallback if c["n_fallback"] > 0)
-        # :.4g, not :.4f — see run_da_coreg_pilot.py's identical comment:
-        # small p-values (e.g. ~1.9e-6 at n=20) print as a misleading
-        # "0.0000" under :.4f instead of their actual scientific-notation
-        # value.
-        p_str = f"{s['p']:.4g}"
-        print(f"Replicate {r} ({elapsed:.0f}s): diff={s['pct_diff']:+.1f}%  "
-              f"wins={s['n_wins']}/{s['n_campaigns']}  p={p_str}  "
-              f"| DA-COREG fallback: {total_fallback_batches}/{total_batches} batches, "
-              f"{n_campaigns_with_any_fallback}/{args.n_campaigns} campaigns affected")
-        if total_fallback_batches > 0:
-            reasons = [r_ for c in da_fallback for r_ in c["reasons"]]
-            print(f"  Sample fallback reasons: {reasons[:3]}")
+        for cond_name in af_conditions:
+            s = summary[cond_name]
+            cond_fallback = fallback_info[cond_name]
+            total_fallback_batches = sum(c["n_fallback"] for c in cond_fallback)
+            total_batches = sum(c["n_total"] for c in cond_fallback)
+            n_campaigns_with_any_fallback = sum(1 for c in cond_fallback if c["n_fallback"] > 0)
+            # :.4g, not :.4f — see run_da_coreg_pilot.py's identical comment:
+            # small p-values (e.g. ~1.9e-6 at n=20) print as a misleading
+            # "0.0000" under :.4f instead of their actual scientific-notation
+            # value.
+            p_str = f"{s['p']:.4g}"
+            print(f"Replicate {r} [{cond_name}] ({elapsed:.0f}s): diff={s['pct_diff']:+.1f}%  "
+                  f"wins={s['n_wins']}/{s['n_campaigns']}  p={p_str}  "
+                  f"| fallback: {total_fallback_batches}/{total_batches} batches, "
+                  f"{n_campaigns_with_any_fallback}/{args.n_campaigns} campaigns affected")
+            if total_fallback_batches > 0:
+                reasons = [r_ for c in cond_fallback for r_ in c["reasons"]]
+                print(f"  Sample fallback reasons: {reasons[:3]}")
         all_replicates.append({"replicate": r, "per_campaign_final_hv": results,
                                 "summary": summary, "fallback_info": fallback_info})
 
-    pcts = [rep["summary"]["unsga3_pool_af_da_coreg"]["pct_diff"] for rep in all_replicates]
-    wins = [rep["summary"]["unsga3_pool_af_da_coreg"]["n_wins"] for rep in all_replicates]
-    ps = [rep["summary"]["unsga3_pool_af_da_coreg"]["p"] for rep in all_replicates]
-    n_sig_positive = sum(1 for i in range(len(pcts)) if ps[i] < 0.05 and pcts[i] > 0)
-    n_sig_negative = sum(1 for i in range(len(pcts)) if ps[i] < 0.05 and pcts[i] < 0)
-    n_positive = sum(1 for p in pcts if p > 0)
+    for cond_name in af_conditions:
+        pcts = [rep["summary"][cond_name]["pct_diff"] for rep in all_replicates]
+        wins = [rep["summary"][cond_name]["n_wins"] for rep in all_replicates]
+        ps = [rep["summary"][cond_name]["p"] for rep in all_replicates]
+        n_sig_positive = sum(1 for i in range(len(pcts)) if ps[i] < 0.05 and pcts[i] > 0)
+        n_sig_negative = sum(1 for i in range(len(pcts)) if ps[i] < 0.05 and pcts[i] < 0)
+        n_positive = sum(1 for p in pcts if p > 0)
 
-    print(f"\n{'='*60}")
-    print(f"ACROSS-REPLICATE PATTERN ({args.domain}, no-qLogNEHVI pipeline):")
-    print(f"  % diff per replicate: {[f'{p:+.1f}%' for p in pcts]}")
-    print(f"  wins per replicate:   {wins}")
-    print(f"  p per replicate:      {[f'{p:.3g}' for p in ps]}")
-    print(f"  mean % diff across replicates: {np.mean(pcts):+.1f}% (std {np.std(pcts):.1f})")
-    print(f"  directionally positive in {n_positive}/{len(pcts)} replicates")
-    print(f"  significant (p<0.05) POSITIVE in {n_sig_positive}/{len(pcts)} replicates")
-    print(f"  significant (p<0.05) NEGATIVE in {n_sig_negative}/{len(pcts)} replicates")
+        print(f"\n{'='*60}")
+        print(f"ACROSS-REPLICATE PATTERN ({args.domain}, {cond_name}, no-qLogNEHVI pipeline):")
+        print(f"  % diff per replicate: {[f'{p:+.1f}%' for p in pcts]}")
+        print(f"  wins per replicate:   {wins}")
+        print(f"  p per replicate:      {[f'{p:.3g}' for p in ps]}")
+        print(f"  mean % diff across replicates: {np.mean(pcts):+.1f}% (std {np.std(pcts):.1f})")
+        print(f"  directionally positive in {n_positive}/{len(pcts)} replicates")
+        print(f"  significant (p<0.05) POSITIVE in {n_sig_positive}/{len(pcts)} replicates")
+        print(f"  significant (p<0.05) NEGATIVE in {n_sig_negative}/{len(pcts)} replicates")
+
+    if "unsga3_pool_af_da_coreg_frn" in af_conditions:
+        base_pcts = [rep["summary"]["unsga3_pool_af_da_coreg"]["pct_diff"] for rep in all_replicates]
+        frn_pcts = [rep["summary"]["unsga3_pool_af_da_coreg_frn"]["pct_diff"] for rep in all_replicates]
+        print(f"\n§22 step 1 check: unnormalized DA-COREG mean diff "
+              f"{np.mean(base_pcts):+.1f}% vs front-range-normalized "
+              f"{np.mean(frn_pcts):+.1f}%. If these are close, the [33] "
+              f"scale-distortion pitfall isn't a real factor here (still a "
+              f"tie either way). If FRN is meaningfully closer to/above 0%, "
+              f"input scale was masking real cross-objective structure.")
     print(f"\nCompare to run_da_coreg_pilot.py's --domain dtlz2 result "
           f"(qLogNEHVI-in-the-loop): -3.8%, 0/20 wins, p=1.9e-6.")
     print("If this run's numbers are close to that, DA-COREG's posterior is bad on "
