@@ -49,7 +49,7 @@ import pandas as pd
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 
 from oracle import NNOracle
-from simulator import CampaignSimulator
+from simulator import CampaignSimulator, generate_init_points
 from baselines import FixedStrategyBaseline, ADAOriginalBaseline
 from evaluate import compute_metrics, aggregate_across_seeds
 from controllers.mock_controller import (
@@ -58,6 +58,10 @@ from controllers.mock_controller import (
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
+
+# Conditions that don't go through make_controller()/CampaignSimulator at all
+# — see the EGBO branch inside run_experiment()'s seed loop below.
+EGBO_CONDITIONS = {"egbo": 1.0, "novelty_egbo": 0.7}  # -> merit_weight
 
 # ── Dataset registry ─────────────────────────────────────────────────────────
 ALL_DATASETS = [
@@ -99,15 +103,19 @@ def make_controller(condition: str, seed: int, ds_name: str,
         # model/max_retries/timeout — not the full OllamaController kwarg set.
         return ApproachDController(model=model)
 
-    # Fixed-strategy EGBO conditions (always egbo / always novelty_egbo, no
-    # adaptive switching) — mirrors shared_seed_experiment.py's "egbo" and
-    # "novelty_egbo" conditions. Requires botorch/gpytorch/torch/pymoo; if
-    # missing, strategies.py logs one warning and falls back to random rather
-    # than raising (see strategies.py's _egbo_module()).
-    if condition == "egbo":
-        return FixedStrategyBaseline("egbo", {})
-    if condition == "novelty_egbo":
-        return FixedStrategyBaseline("novelty_egbo", {})
+    # NOTE: "egbo"/"novelty_egbo" are NOT handled here. They don't go through
+    # make_controller()/CampaignSimulator at all — see run_experiment()'s main
+    # loop, which calls shared_seed_experiment.py's run_egbo_campaign()
+    # directly. That's the real Aqeeli et al. (2026) batch protocol
+    # (batch_size=4, one GP fit + acquisition + evolutionary search per
+    # 4-point batch). strategies.py also has an "egbo" entry (egbo_strategy.py)
+    # but that's a *different*, stateless single-point-per-call adapter built
+    # so approach_d can select "egbo" mid-campaign one step at a time — it
+    # trades protocol fidelity for fitting the per-step controller interface,
+    # and was never validated against run_egbo_campaign's numbers. Routing
+    # this condition through make_controller()+FixedStrategyBaseline would
+    # have silently used that different, unvalidated implementation instead
+    # of the one everything else compares against.
 
     raise ValueError(f"Unknown condition: {condition!r}")
 
@@ -159,18 +167,42 @@ def run_experiment(
             seed_metrics, seed_curves, seed_logs = [], [], []
 
             for seed in range(n_seeds):
-                try:
-                    ctrl = make_controller(condition, seed, ds_name, ada_csv, model)
-                except Exception as e:
-                    logger.warning(f"Skipping {condition} seed {seed}: {e}")
-                    continue
+                if condition in EGBO_CONDITIONS:
+                    try:
+                        # Bypasses make_controller()/CampaignSimulator entirely:
+                        # run_egbo_campaign() owns its own batch loop (see
+                        # make_controller()'s docstring note on why this isn't
+                        # wrapped as a per-step controller). Draw the SAME shared
+                        # init points every other condition sees at this seed
+                        # (generate_init_points is the single source of truth
+                        # CampaignSimulator.run() itself uses) so this condition
+                        # stays comparable to the rest of the run.
+                        from shared_seed_experiment import run_egbo_campaign
+                        X_init, y_init, _ = generate_init_points(
+                            oracle, n_init=5, seed=seed, discrete=discrete
+                        )
+                        res = run_egbo_campaign(
+                            oracle, X_init, y_init, budget,
+                            merit_weight=EGBO_CONDITIONS[condition],
+                            random_state=seed,
+                        )
+                    except Exception as e:
+                        logger.warning(f"Skipping {condition} seed {seed}: {e}")
+                        continue
+                else:
+                    try:
+                        ctrl = make_controller(condition, seed, ds_name, ada_csv, model)
+                    except Exception as e:
+                        logger.warning(f"Skipping {condition} seed {seed}: {e}")
+                        continue
 
-                sim = CampaignSimulator(
-                    oracle, ds_name, n_init=5, budget=budget,
-                    controller_interval=5, seed=seed,
-                    discrete=discrete,
-                )
-                res = sim.run(ctrl)
+                    sim = CampaignSimulator(
+                        oracle, ds_name, n_init=5, budget=budget,
+                        controller_interval=5, seed=seed,
+                        discrete=discrete,
+                    )
+                    res = sim.run(ctrl)
+
                 m = compute_metrics(res, gb, budget=budget, oracle_global_min=gmin)
                 seed_metrics.append(m)
                 seed_curves.append(np.array(res["running_best"]))

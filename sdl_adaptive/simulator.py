@@ -25,6 +25,55 @@ logger = logging.getLogger(__name__)
 _warned_unmapped_strategies: set = set()
 
 
+def generate_init_points(oracle: NNOracle, n_init: int, seed: int, discrete: bool = False,
+                          rng: Optional[np.random.Generator] = None):
+    """Draw the n_init initialisation points CampaignSimulator.run() would draw
+    for this (oracle, seed, discrete) combination, without running a campaign.
+
+    Factored out of CampaignSimulator.run() so any caller that needs to run a
+    *different* campaign loop against the identical shared init points that
+    run_experiment.py's other conditions see at the same seed — e.g. handing
+    off to shared_seed_experiment.py's run_egbo_campaign(), which owns its own
+    batch loop rather than going through CampaignSimulator — can do so without
+    duplicating (and risking drifting from) this logic.
+
+    Pass `rng` when the caller already has a `np.random.default_rng(seed)` it
+    needs to keep drawing from afterwards (this is exactly what
+    CampaignSimulator.run() does — its post-init random fallbacks must
+    continue the *same* generator's sequence, not restart it, or every
+    existing seed's downstream results would silently change). Omit `rng`
+    for a standalone call (e.g. from run_experiment.py before handing off to
+    run_egbo_campaign, which owns its own separate rng thereafter) — a fresh
+    `np.random.default_rng(seed)` is created and used once, matching what
+    CampaignSimulator.run() draws at the very start of a campaign for the
+    same seed.
+
+    Returns
+    -------
+    (X_obs, y_obs, queried_indices) — queried_indices is None in continuous mode.
+    """
+    if rng is None:
+        rng = np.random.default_rng(seed)
+    bounds = oracle.bounds()
+    d = bounds.shape[0]
+
+    if discrete:
+        N = len(oracle._X_raw)
+        init_indices = rng.choice(N, size=n_init, replace=False).tolist()
+        queried_indices = set(init_indices)
+        X_obs = oracle._X_raw[init_indices].copy()
+        y_obs = oracle._y_raw[init_indices].copy()
+    else:
+        queried_indices = None
+        X_obs = np.array([
+            [rng.uniform(bounds[i, 0], bounds[i, 1]) for i in range(d)]
+            for _ in range(n_init)
+        ])
+        y_obs = np.array([oracle.query(x) for x in X_obs])
+
+    return X_obs, y_obs, queried_indices
+
+
 class CampaignSimulator:
     """
     Parameters
@@ -82,20 +131,17 @@ class CampaignSimulator:
         d = bounds.shape[0]
 
         # ── Initialisation ──────────────────────────────────────────────
-        if self.discrete:
-            # Pick n_init rows from the dataset without replacement
-            N = len(self.oracle._X_raw)
-            init_indices = rng.choice(N, size=self.n_init, replace=False).tolist()
-            queried_indices = set(init_indices)
-            X_obs = self.oracle._X_raw[init_indices].copy()
-            y_obs = self.oracle._y_raw[init_indices].copy()
-        else:
-            queried_indices = None  # unused in continuous mode
-            X_obs = np.array([
-                [rng.uniform(bounds[i, 0], bounds[i, 1]) for i in range(d)]
-                for _ in range(self.n_init)
-            ])
-            y_obs = np.array([self.oracle.query(x) for x in X_obs])
+        # (module-level generate_init_points(), not inlined here, so other
+        # campaign loops — e.g. run_egbo_campaign() invoked from
+        # run_experiment.py — draw the identical shared init points at a
+        # given seed. `rng` is passed through explicitly so it keeps
+        # advancing from the same generator the post-init code below reads
+        # from — creating a second independent generator here would replay
+        # the same draws twice and silently change every existing seed's
+        # downstream random fallbacks.)
+        X_obs, y_obs, queried_indices = generate_init_points(
+            self.oracle, self.n_init, self.seed, self.discrete, rng=rng
+        )
 
         running_best = [float(y_obs.max())] * self.n_init
         decisions: List[Tuple] = []
