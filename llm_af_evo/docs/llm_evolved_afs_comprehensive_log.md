@@ -1363,6 +1363,20 @@ DA-COREG is viable specifically in evolved-AF / score_pool-style pipelines
 the qLogNEHVI-based baseline/ablation-cell pipelines tested everywhere else in
 this project.
 
+A literature check (2026-08-09) supports this framing rather than undercutting
+the original DA-COREG motivation: independent per-objective GPs remain the
+default in MOBO for simplicity/scalability, and multi-task/coregionalized
+surrogates are a deliberate minority choice specifically to exploit objective
+correlation. When the literature does pair a correlated joint surrogate with
+an acquisition function, it tends to redesign the acquisition around the
+joint posterior rather than reuse an independence-assuming batch acquisition
+unmodified — e.g. cPoI [31] explicitly builds a pointwise/greedy acquisition
+from a multi-task GP's posterior covariance matrix, in contrast to
+`qLogNEHVI`'s joint-batch-MC hypervolume estimate. That is consistent with
+this project's own finding that DA-COREG's posterior is fine on its own
+(§21's held-out NLL/RMSE check) but loses specifically once paired with
+`qLogNEHVI`'s batch acquisition machinery.
+
 ### mAb Domain Cross-Check (2026-08-08)
 
 DTLZ2's objectives are close to independent by construction — not the
@@ -1406,6 +1420,7 @@ not domain-dependent.
 | [19] | EGBO (Low et al., 2024, npj Computational Materials, DOI: 10.1038/s41524-024-01274-x) | EGBO with novelty selection, the baseline |
 | [20] | Radford et al. 2026 (Advanced Science, DOI: 10.1002/advs.76551) | Real mAb formulation BO dataset, GitHub: GormleyLab/AL-for-Bioformulation |
 | [30] | Waibel et al. 2025 (Mol. Pharm., DOI: 10.1021/acs.molpharmaceut.5c00591) | 33-sample mAb dataset used as the excipient oracle |
+| [31] | cPoI (GECCO 2023 Companion, DOI: 10.1145/3583133.3596374) | Correlated Probability of Improvement — pairs a multi-task GP's posterior covariance with a pointwise/greedy acquisition rather than joint-batch EHVI, cited in §21's literature discussion of why DA-COREG+qLogNEHVI is an unusual pairing |
 
 ## Appendix B: File Inventory
 
