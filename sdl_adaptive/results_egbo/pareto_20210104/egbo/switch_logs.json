@@ -1,0 +1,2022 @@
+[
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "egbo",
+        {
+          "merit_weight": 1.0,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  }
+]
