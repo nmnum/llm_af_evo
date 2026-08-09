@@ -183,12 +183,16 @@ class CampaignSimulator:
                     current_params = params
                     custom_fn = None
                 else:
-                    # Controller chose a strategy name this simulator doesn't
-                    # implement (e.g. approach_d selecting "egbo", which only
-                    # exists in shared_seed_experiment.py's batch runner). This
-                    # was previously a silent no-op: the decision is discarded
-                    # and the *previous* strategy keeps running, which can read
-                    # in results as "random" even though nothing chose random.
+                    # Controller chose a strategy name that isn't in
+                    # STRATEGY_MAP/DISCRETE_STRATEGY_MAP at all (this is
+                    # separate from "egbo"/"novelty_egbo" — those ARE mapped,
+                    # but degrade to a raised RuntimeError, caught below and
+                    # logged in `failures`, when EGBO's deps aren't importable
+                    # in this interpreter — see strategies.py::_egbo_module).
+                    # An unmapped name here is a silent no-op: the decision is
+                    # discarded and the *previous* strategy keeps running,
+                    # which can read in results as e.g. "random" even though
+                    # nothing chose random.
                     self._warn_unmapped_strategy(strategy_name)
 
                 decisions.append((step, current_strategy, {**current_params}))
