@@ -37,11 +37,13 @@ class OllamaController:
         temperature: float = 0.7,
         repeat_penalty: float = 1.3,
         num_predict: int = 2048,
+        stop: Optional[list] = None,
     ):
         self.model = model
         self.system_prompt = system_prompt
         self.max_retries = max_retries
         self.timeout = timeout
+        self.stop = stop
         # temperature 0.1 makes code-generation converge to whatever the
         # prompt already shows (i.e. the current code, verbatim) — there's
         # no genuine variation to select on. 0.7 + a repeat_penalty gives
@@ -60,17 +62,20 @@ class OllamaController:
 
         for attempt in range(self.max_retries):
             try:
+                options = {
+                    "temperature": self.temperature,
+                    "repeat_penalty": self.repeat_penalty,
+                    "num_predict": self.num_predict,
+                }
+                if self.stop:
+                    options["stop"] = self.stop
                 response = ollama.chat(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": self.system_prompt},
                         {"role": "user", "content": prompt},
                     ],
-                    options={
-                        "temperature": self.temperature,
-                        "repeat_penalty": self.repeat_penalty,
-                        "num_predict": self.num_predict,
-                    },
+                    options=options,
                 )
                 text = response["message"]["content"]
                 decision = self._parse_response(text, context)

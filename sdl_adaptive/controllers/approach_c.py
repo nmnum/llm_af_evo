@@ -15,10 +15,12 @@ Safety constraints:
 
 import json
 import logging
+import os
 import pathlib
 import subprocess
 import sys
 import tempfile
+import uuid
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -97,10 +99,14 @@ def _run_in_sandbox(
                 logger.warning(f"Sandbox output wrong shape or non-finite: {x_next}")
         #else:
         if result.returncode != 0:
-            # Save failing code for inspection
-            with open("./sdl_failed_code.py", "w") as f:
+            # Save failing code for inspection. Filename includes pid + a random
+            # suffix so parallel seeds/processes don't clobber each other's dumps
+            # (previously a fixed "./sdl_failed_code.py" path — a race under any
+            # concurrent run).
+            tag = f"{os.getpid()}_{uuid.uuid4().hex[:8]}"
+            with open(f"./sdl_failed_code_{tag}.py", "w") as f:
                 f.write(optimiser_code)
-            with open("./sdl_failed_stderr.txt", "w") as f:
+            with open(f"./sdl_failed_stderr_{tag}.txt", "w") as f:
                 f.write(result.stderr)
             logger.warning(f"Sandbox error: {result.stderr[:300]}")
     except subprocess.TimeoutExpired:
@@ -130,11 +136,25 @@ class ApproachCController(OllamaController):
         system = _SYSTEM_PROMPT.read_text() if _SYSTEM_PROMPT.exists() else _DEFAULT_SYSTEM
         kwargs.setdefault("max_retries", 3)
         kwargs.setdefault("timeout", 120)
+        # A generated optimiser file is ~200-300 tokens. 2048 gave the model room to
+        # keep writing docstrings/explanations after the function body, which is
+        # wasted latency and occasionally confuses the fence-stripping in
+        # _parse_response. 1024 is generous headroom without inviting that.
+        kwargs.setdefault("num_predict", 1024)
+        # Anything after the function body is wasted tokens and sometimes trailing
+        # prose that breaks the fence-stripping in _parse_response.
+        kwargs.setdefault("stop", ["if __name__", "\n# End", "\nExplanation:"])
         super().__init__(model=model, system_prompt=system, **kwargs)
         self._current_code = _TEMPLATE.read_text() if _TEMPLATE.exists() else _DEFAULT_TEMPLATE
         self._code_log_dir = pathlib.Path(code_log_dir)
         self._code_log_dir.mkdir(parents=True, exist_ok=True)
         self._call_count = 0
+        # Fallback-chain visibility: previously you could not tell, from the results
+        # alone, whether approach_c was running the LLM's code 80% of the time or 5%
+        # of the time. These counters make that auditable after a run.
+        self._n_llm_code_accepted = 0
+        self._n_llm_code_rejected = 0   # new code failed sandbox, fell back to prior code
+        self._n_both_failed = 0         # prior code also failed, fell back to random
         # Delta-pressure bookkeeping: what happened since the code was last
         # revised, so the prompt can say "this is/isn't working" instead of
         # just showing the code with no signal about whether to change it.
@@ -191,6 +211,7 @@ class ApproachCController(OllamaController):
         step it's live for, rather than one step in five."""
         x_next = _run_in_sandbox(self._current_code, X_obs, y_obs, bounds)
         if x_next is None:
+            self._n_both_failed += 1  # counted the same as a full fallback-to-random
             return None
         return np.clip(x_next, bounds[:, 0], bounds[:, 1])
 
@@ -227,6 +248,7 @@ class ApproachCController(OllamaController):
         bounds = context["bounds"]
 
         x_next = _run_in_sandbox(code, X_obs, y_obs, bounds)
+        rejected_new_code = x_next is None
         if x_next is None:
             # New code failed or timed out — try last known-good code before falling back
             self._last_outcome = (
@@ -238,9 +260,14 @@ class ApproachCController(OllamaController):
         if x_next is not None:
             # Clip to bounds
             x_next = np.clip(x_next, bounds[:, 0], bounds[:, 1])
-            if code != self._current_code.strip():
+            if rejected_new_code:
+                self._n_llm_code_rejected += 1
+            elif code != self._current_code.strip():
                 self._current_code = code
                 self._last_outcome = "The LLM's new code was accepted and is now live."
+                self._n_llm_code_accepted += 1
+            else:
+                self._n_llm_code_accepted += 1  # unchanged code still ran fine
             # Save every accepted code version for later analysis
             try:
                 log_path = self._code_log_dir / f"call_{self._call_count:04d}.py"
@@ -248,10 +275,19 @@ class ApproachCController(OllamaController):
             except Exception:
                 pass
             self._call_count += 1
+            logger.info(
+                f"ApproachC call {self._call_count}: accepted={self._n_llm_code_accepted} "
+                f"rejected(reverted-to-prior)={self._n_llm_code_rejected} "
+                f"both-failed(random)={self._n_both_failed}"
+            )
             return {"strategy": "_custom", "params": {}, "x_next": x_next}
 
         # Sandbox failed even for the last known-good code — keep it, return random
-        logger.warning("Sandbox failed — falling back to random")
+        self._n_both_failed += 1
+        logger.warning(
+            f"Sandbox failed for both new and prior code — falling back to random "
+            f"(both-failed count: {self._n_both_failed})"
+        )
         self._last_outcome = (
             "Both the new code AND the previous known-good code failed in the "
             "sandbox this round; the simulator fell back to a random point."

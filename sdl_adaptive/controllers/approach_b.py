@@ -24,10 +24,13 @@ This makes approach_b meaningfully different from approach_a:
   - approach_c: LLM rewrites the entire optimiser function
 """
 
+import logging
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from controllers.base import OllamaController
+
+logger = logging.getLogger(__name__)
 
 _SYSTEM_PROMPT = pathlib.Path(__file__).parent.parent / "prompts" / "system_b.txt"
 
@@ -64,24 +67,41 @@ class ApproachBController(OllamaController):
 
     _needs_gp_uncertainty = True
 
-    def __init__(self, model: str = "qwen2.5-coder:7b", **kwargs):
+    def __init__(self, model: str = "qwen3-coder:30b", **kwargs):
         system = _SYSTEM_PROMPT.read_text() if _SYSTEM_PROMPT.exists() else _DEFAULT_SYSTEM
+        kwargs.setdefault("num_predict", 64)  # answer is ~10 tokens: {"score": 0.42}
         super().__init__(model=model, system_prompt=system, **kwargs)
         self._current_score = 0.8   # start with exploration
         self._current_strategy = "lhs"
         self._current_params: Dict = {}
+        # Outcome feedback: what did the currently-active strategy actually achieve
+        # since it was chosen? Without this the LLM never learns whether its picks work.
+        self._strategy_set_at_best: Optional[float] = None
+        self._strategy_set_at_step: Optional[int] = None
 
     def _build_prompt(self, context: Dict[str, Any]) -> str:
         progress = context["step"] / context["budget"]
+        best_now = context["best_normalised"]
+
+        if self._strategy_set_at_best is not None:
+            delta = best_now - self._strategy_set_at_best
+            n_steps = context["step"] - self._strategy_set_at_step
+            feedback = (
+                f"  Last strategy '{self._current_strategy}' ran for {n_steps} step(s); "
+                f"best_normalised changed by {delta:+.4f} during that time.\n"
+            )
+        else:
+            feedback = "  This is the first decision — no strategy feedback yet.\n"
 
         # Show the LLM how scores map to strategies as a reference
         return (
             f"Campaign state:\n"
             f"  Progress: {100*progress:.0f}% (step {context['step']} / {context['budget']})\n"
-            f"  Best found (normalised 0–1): {context['best_normalised']:.3f}\n"
+            f"  Best found (normalised 0–1): {best_now:.3f}\n"
             f"  Improvement rate (last 10 steps): {context['improvement_rate']:.2f}\n"
             f"  GP uncertainty (mean posterior std): {context['gp_uncertainty']:.4f}\n"
-            f"  Current score: {self._current_score:.2f} → {self._current_strategy}\n\n"
+            f"  Current score: {self._current_score:.2f} → {self._current_strategy}\n"
+            f"{feedback}\n"
             f"Score → strategy mapping:\n"
             f"  0.75 – 1.00 : lhs        (space-filling, maximum exploration)\n"
             f"  0.45 – 0.75 : ucb        (GP-based, beta scales with score)\n"
@@ -92,7 +112,9 @@ class ApproachBController(OllamaController):
             f"  - Mid campaign, moderate progress → score near 0.5–0.6\n"
             f"  - Late campaign, good best found → score near 0.2–0.3\n"
             f"  - Stagnating (improvement_rate < 0.1) → increase score by 0.2\n"
-            f"  - best_normalised > 0.95 → score near 0.1\n\n"
+            f"  - best_normalised > 0.95 → score near 0.1\n"
+            f"  - If the feedback above shows the current strategy produced little/no "
+            f"improvement over several steps, don't just repeat the same score — move it.\n\n"
             f"Return a single exploration score in [0.0, 1.0] that reflects the "
             f"current campaign state. The score should decrease as the campaign matures.\n\n"
             f"Respond with JSON only: {{\"score\": <float between 0.0 and 1.0>}}"
@@ -106,20 +128,30 @@ class ApproachBController(OllamaController):
                 score = max(0.0, min(1.0, score))
                 self._current_score = score
                 decision = _score_to_strategy(score)
-                self._current_strategy = decision["strategy"]
-                self._current_params = decision["params"]
+                self._set_strategy(decision, context)
                 return decision
             except (ValueError, TypeError):
                 pass
 
-        # Fallback: decay score based on progress
+        # Fallback: decay score based on progress. This is a reasonable decision on
+        # its own, but it means a parse failure is invisible in the results — log it
+        # so a run's LLM-success-rate can be checked after the fact.
+        logger.warning(
+            f"ApproachB: LLM response unparseable ({text[:100]!r}) — "
+            f"using progress-decay fallback score."
+        )
         progress = context["step"] / context["budget"]
         fallback_score = max(0.1, 1.0 - progress)
         self._current_score = fallback_score
         decision = _score_to_strategy(fallback_score)
+        self._set_strategy(decision, context)
+        return decision
+
+    def _set_strategy(self, decision: Dict[str, Any], context: Dict[str, Any]) -> None:
         self._current_strategy = decision["strategy"]
         self._current_params = decision["params"]
-        return decision
+        self._strategy_set_at_best = context["best_normalised"]
+        self._strategy_set_at_step = context["step"]
 
 
 _DEFAULT_SYSTEM = """You are an autonomous optimisation controller for a self-driving laboratory.

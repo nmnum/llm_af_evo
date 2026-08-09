@@ -109,7 +109,10 @@ class ApproachDController:
             f"lengthscale_norm: {ls:.3f}\n"
             f"obs_per_dim:      {obs_per_dim:.1f}\n"
             f"progress:         {progress:.2f}\n"
-            f"current_strategy: {self._current_strategy}\n\n"
+            f"current_strategy: {self._current_strategy}"
+            + (f" (selected {self._consecutive_same} times in a row — "
+               f"consider whether it's still appropriate)" if self._consecutive_same >= 3 else "")
+            + "\n\n"
             f"Select the best strategy. Output JSON only."
         )
 

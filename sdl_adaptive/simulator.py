@@ -13,11 +13,16 @@ _needs_gp_uncertainty = True (real LLM controllers). Mock/fixed baselines
 use a cheap proxy (normalised y std) to avoid the GP fitting overhead.
 """
 
+import logging
+
 import numpy as np
 from typing import Any, Dict, List, Optional, Tuple
 
 from oracle import NNOracle
 from strategies import STRATEGY_MAP, DISCRETE_STRATEGY_MAP
+
+logger = logging.getLogger(__name__)
+_warned_unmapped_strategies: set = set()
 
 
 class CampaignSimulator:
@@ -62,6 +67,15 @@ class CampaignSimulator:
           failures      : list[int]  (steps where strategy raised an exception)
         """
         rng = np.random.default_rng(self.seed)
+        # NOTE — thread-safety caveat, not fixed here: strategies.py's strategy
+        # functions (ucb/ei/pi/thompson/random/lhs) call the numpy global RNG
+        # directly rather than accepting `rng`, so this global seed call is a
+        # race condition if multiple seeds/conditions run concurrently in threads
+        # within one process. It is safe across separate OS processes (each gets
+        # its own global numpy state), which is the lowest-effort way to
+        # parallelise runs today — see run_experiment.py's --conditions flag for
+        # backgrounding multiple single-condition runs. Threading this rng through
+        # every strategy function is the real fix but touches all of strategies.py.
         np.random.seed(self.seed)
 
         bounds = self.oracle.bounds()
@@ -122,7 +136,14 @@ class CampaignSimulator:
                     current_strategy = strategy_name
                     current_params = params
                     custom_fn = None
-                # else: keep previous strategy
+                else:
+                    # Controller chose a strategy name this simulator doesn't
+                    # implement (e.g. approach_d selecting "egbo", which only
+                    # exists in shared_seed_experiment.py's batch runner). This
+                    # was previously a silent no-op: the decision is discarded
+                    # and the *previous* strategy keeps running, which can read
+                    # in results as "random" even though nothing chose random.
+                    self._warn_unmapped_strategy(strategy_name)
 
                 decisions.append((step, current_strategy, {**current_params}))
 
@@ -136,6 +157,8 @@ class CampaignSimulator:
                         # Exhausted dataset — fall back to random from full set
                         unqueried = list(all_indices)
                     X_pool = self.oracle._X_raw[unqueried]
+                    if current_strategy not in DISCRETE_STRATEGY_MAP:
+                        self._warn_unmapped_strategy(current_strategy)
                     strategy_fn = DISCRETE_STRATEGY_MAP.get(
                         current_strategy, DISCRETE_STRATEGY_MAP["random"]
                     )
@@ -185,6 +208,8 @@ class CampaignSimulator:
                         y_next = self.oracle.query(x_next)
 
                 else:
+                    if current_strategy not in STRATEGY_MAP:
+                        self._warn_unmapped_strategy(current_strategy)
                     strategy_fn = STRATEGY_MAP.get(current_strategy, STRATEGY_MAP["random"])
                     x_next = strategy_fn(X_obs, y_obs, bounds, **current_params)
                     y_next = self.oracle.query(x_next)
@@ -258,6 +283,26 @@ class CampaignSimulator:
             "y_obs": y_obs,
             "bounds": bounds,
         }
+
+    @staticmethod
+    def _warn_unmapped_strategy(name: str) -> None:
+        """A controller (e.g. approach_d) chose a strategy name that isn't in
+        STRATEGY_MAP/DISCRETE_STRATEGY_MAP — e.g. 'egbo', which is only implemented
+        in shared_seed_experiment.py's batch runner, not here. This silently falls
+        back to random, which is a real confound if it happens a lot: previously
+        there was no log signal to distinguish "controller chose random" from
+        "controller chose something unimplemented that became random". Logged once
+        per distinct name per process to avoid spamming a long campaign.
+        """
+        if name in _warned_unmapped_strategies:
+            return
+        _warned_unmapped_strategies.add(name)
+        logger.warning(
+            f"Strategy '{name}' is not implemented in this simulator's "
+            f"STRATEGY_MAP/DISCRETE_STRATEGY_MAP — every step choosing it silently "
+            f"falls back to random. If a controller can select '{name}', either "
+            f"implement it here or remove it from that controller's valid strategies."
+        )
 
     @staticmethod
     def _improvement_rate(y_obs: np.ndarray, window: int = 10) -> float:
