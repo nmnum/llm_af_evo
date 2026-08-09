@@ -31,7 +31,7 @@ _SYSTEM_PROMPT = pathlib.Path(__file__).parent.parent / "prompts" / "system_c.tx
 _TEMPLATE = pathlib.Path(__file__).parent.parent / "optimiser_template.py"
 
 ALLOWED_IMPORTS = {"numpy", "scipy", "sklearn", "math", "random", "json", "itertools", "np"}
-SANDBOX_TIMEOUT = 10  # seconds
+SANDBOX_TIMEOUT = 30  # seconds — must match the figure quoted to the LLM in prompts/system_c.txt
 
 
 # Project root — where evolutionary_candidates.py lives
@@ -125,7 +125,7 @@ class ApproachCController(OllamaController):
 
     _needs_gp_uncertainty = True
 
-    def __init__(self, model: str = "qwen2.5-coder:7b",
+    def __init__(self, model: str = "qwen3-coder:30b",
                  code_log_dir: str = "./approach_c_code_logs", **kwargs):
         system = _SYSTEM_PROMPT.read_text() if _SYSTEM_PROMPT.exists() else _DEFAULT_SYSTEM
         kwargs.setdefault("max_retries", 3)
@@ -135,22 +135,64 @@ class ApproachCController(OllamaController):
         self._code_log_dir = pathlib.Path(code_log_dir)
         self._code_log_dir.mkdir(parents=True, exist_ok=True)
         self._call_count = 0
+        # Delta-pressure bookkeeping: what happened since the code was last
+        # revised, so the prompt can say "this is/isn't working" instead of
+        # just showing the code with no signal about whether to change it.
+        self._last_best_normalised: Optional[float] = None
+        self._last_outcome: str = "This is the starting template — no revision has been made yet."
+        self._steps_since_revision = 0
+        self._last_call_step = 0
 
     def _build_prompt(self, context: Dict[str, Any]) -> str:
+        self._steps_since_revision = context["step"] - self._last_call_step
+        self._last_call_step = context["step"]
         progress = context["step"] / context["budget"]
+        best_now = context["best_normalised"]
+
+        if self._last_best_normalised is not None:
+            delta = best_now - self._last_best_normalised
+            if delta > 1e-6:
+                trend = f"IMPROVED by {delta:.4f} since the last code revision."
+            elif delta < -1e-6:
+                trend = f"got WORSE by {abs(delta):.4f} since the last code revision (regression!)."
+            else:
+                trend = "has NOT moved since the last code revision — the current strategy is stagnating."
+        else:
+            trend = "N/A (first call)."
+
         return (
             f"Campaign status:\n"
             f"  Step: {context['step']} / {context['budget']} ({100*progress:.0f}% complete)\n"
-            f"  Best found (normalised): {context['best_normalised']:.3f}\n"
+            f"  Best found (normalised): {best_now:.3f}\n"
+            f"  Best-value trend: {trend}\n"
             f"  Improvement rate (last 10 steps): {context['improvement_rate']:.2f}\n"
             f"  GP uncertainty: {context['gp_uncertainty']:.4f}\n"
             f"  Dimensions: {context['bounds'].shape[0]}\n"
             f"  Observations so far: {context['n_obs']}\n\n"
+            f"Outcome of the code's last {self._steps_since_revision} step(s) in the sandbox:\n"
+            f"  {self._last_outcome}\n\n"
             f"Current optimiser code:\n```python\n{self._current_code}\n```\n\n"
+            f"Do NOT return this code unchanged. Make a specific, deliberate change "
+            f"to the acquisition/exploration logic that responds to the status above "
+            f"(e.g. if stagnating, increase exploration/diversity; if GP uncertainty is "
+            f"high, exploit less; if it just regressed, revert that change and try a "
+            f"different one). State-preserving no-ops (renaming variables, reformatting, "
+            f"reordering imports) do not count as a change.\n"
             f"Return a complete Python file with a suggest(X_obs, y_obs, bounds) function.\n"
             f"Allowed imports: numpy, scipy, sklearn, math, random.\n"
             f"Return ONLY the Python code, no markdown fences."
         )
+
+    def suggest_point(self, X_obs: np.ndarray, y_obs: np.ndarray,
+                       bounds: np.ndarray) -> Optional[np.ndarray]:
+        """Re-run the current accepted code in the sandbox against the
+        latest observations. Called once per simulator step (not just once
+        per controller_interval) so the LLM's code actually governs every
+        step it's live for, rather than one step in five."""
+        x_next = _run_in_sandbox(self._current_code, X_obs, y_obs, bounds)
+        if x_next is None:
+            return None
+        return np.clip(x_next, bounds[:, 0], bounds[:, 1])
 
     def _parse_response(self, text: str, context: Dict[str, Any]) -> Dict[str, Any]:
         # Strip markdown fences if present
@@ -162,9 +204,22 @@ class ApproachCController(OllamaController):
             code = code[:-3]
         code = code.strip()
 
+        self._last_best_normalised = context["best_normalised"]
+
         if "def suggest" not in code:
             logger.warning("LLM response missing suggest() function — keeping current code")
+            self._last_outcome = (
+                "The LLM's last response did not contain a suggest() function "
+                "(likely explanatory prose instead of code) — it was discarded "
+                "and the previous code kept."
+            )
             return {"strategy": "_custom", "params": {}, "x_next": None}
+
+        if code == self._current_code.strip():
+            self._last_outcome = (
+                "The LLM returned the CURRENT code unchanged. That is not useful — "
+                "next time make a concrete edit."
+            )
 
         # Try running in sandbox
         X_obs = context["X_obs"]
@@ -173,12 +228,19 @@ class ApproachCController(OllamaController):
 
         x_next = _run_in_sandbox(code, X_obs, y_obs, bounds)
         if x_next is None:
-            # New code failed — try last known-good code before falling back
+            # New code failed or timed out — try last known-good code before falling back
+            self._last_outcome = (
+                f"The LLM's new code failed in the sandbox (error, wrong output shape, "
+                f"or exceeded the {SANDBOX_TIMEOUT}s timeout) and was rejected. "
+                f"The previous code is still in use — try a simpler/cheaper approach."
+            )
             x_next = _run_in_sandbox(self._current_code, X_obs, y_obs, bounds)
         if x_next is not None:
             # Clip to bounds
             x_next = np.clip(x_next, bounds[:, 0], bounds[:, 1])
-            self._current_code = code
+            if code != self._current_code.strip():
+                self._current_code = code
+                self._last_outcome = "The LLM's new code was accepted and is now live."
             # Save every accepted code version for later analysis
             try:
                 log_path = self._code_log_dir / f"call_{self._call_count:04d}.py"
@@ -188,8 +250,12 @@ class ApproachCController(OllamaController):
             self._call_count += 1
             return {"strategy": "_custom", "params": {}, "x_next": x_next}
 
-        # Sandbox failed — keep current code, return random
+        # Sandbox failed even for the last known-good code — keep it, return random
         logger.warning("Sandbox failed — falling back to random")
+        self._last_outcome = (
+            "Both the new code AND the previous known-good code failed in the "
+            "sandbox this round; the simulator fell back to a random point."
+        )
         return {"strategy": "random", "params": {}}
 
 
@@ -224,7 +290,7 @@ class ApproachCEvoController(ApproachCController):
     when instructed to use it — the template makes usage mandatory.
     """
 
-    def __init__(self, model: str = "qwen2.5-coder:7b",
+    def __init__(self, model: str = "qwen3-coder:30b",
                  code_log_dir: str = "./approach_c_evo_logs", **kwargs):
         super().__init__(model=model, code_log_dir=code_log_dir, **kwargs)
         # Override template with evo version
@@ -232,6 +298,36 @@ class ApproachCEvoController(ApproachCController):
             _TEMPLATE_EVO.read_text() if _TEMPLATE_EVO.exists()
             else _DEFAULT_TEMPLATE_EVO
         )
+        self._check_evolutionary_candidates_importable()
+
+    @staticmethod
+    def _check_evolutionary_candidates_importable() -> None:
+        """Fail loudly (not silently, inside the sandbox, 6 hours into a run)
+        if evolutionary_candidates can't be imported from the sandbox's view
+        of sys.path. Runs the exact import the template depends on inside a
+        real subprocess so the check matches sandbox conditions."""
+        probe = (
+            f"import sys\n"
+            f"sys.path.insert(0, {_PROJECT_ROOT!r})\n"
+            f"from evolutionary_candidates import evolutionary_candidates, novelty_select\n"
+            f"print('OK')\n"
+        )
+        try:
+            result = subprocess.run(
+                [sys.executable, "-c", probe],
+                capture_output=True, text=True, timeout=10,
+            )
+        except Exception as e:
+            logger.error(f"evolutionary_candidates import self-test crashed: {e}")
+            return
+        if result.returncode != 0 or "OK" not in result.stdout:
+            logger.error(
+                f"evolutionary_candidates is NOT importable from the sandbox "
+                f"(project root={_PROJECT_ROOT!r}). Every ApproachCEvo call will "
+                f"fail until this is fixed. stderr:\n{result.stderr}"
+            )
+        else:
+            logger.info(f"evolutionary_candidates import self-test OK (project root={_PROJECT_ROOT!r})")
 
 
 _DEFAULT_TEMPLATE_EVO = """import numpy as np

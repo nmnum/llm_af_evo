@@ -107,10 +107,15 @@ class CampaignSimulator:
 
                 strategy_name = decision.get("strategy", current_strategy)
                 params = decision.get("params", current_params)
-                x_next_custom = decision.get("x_next", None)  # approach C raw suggestion
+                x_next_custom = decision.get("x_next", None)  # approach C's first-step suggestion
 
-                if strategy_name == "_custom" and x_next_custom is not None:
-                    custom_fn = None  # raw array mode
+                if strategy_name == "_custom":
+                    # NOTE: x_next_custom below is only used for the first step of this
+                    # controller_interval window. For approach C, controller.suggest_point()
+                    # re-runs the LLM's accepted code against fresh X_obs/y_obs on every
+                    # subsequent step in the window (see below) — previously the code ran
+                    # once and the other controller_interval-1 steps silently fell back to
+                    # random because "_custom" isn't in STRATEGY_MAP.
                     current_strategy = "_custom"
                     current_params = params
                 elif strategy_name in STRATEGY_MAP:
@@ -140,10 +145,27 @@ class CampaignSimulator:
                     x_next = self.oracle._X_raw[chosen_global_idx]
                     y_next = float(self.oracle._y_raw[chosen_global_idx])
 
-                elif current_strategy == "_custom" and x_next_custom is not None:
-                    x_next = np.asarray(x_next_custom, dtype=float)
+                elif current_strategy == "_custom":
+                    if x_next_custom is not None:
+                        # First step of this window: reuse the point already computed
+                        # while parsing the LLM's decision (avoids re-running the sandbox).
+                        x_next = np.asarray(x_next_custom, dtype=float)
+                        x_next_custom = None  # consume once
+                    elif hasattr(controller, "suggest_point"):
+                        # Every subsequent step in the window: re-run the accepted code
+                        # against the latest X_obs/y_obs so it actually governs all
+                        # controller_interval steps, not just the first.
+                        x_next = controller.suggest_point(X_obs, y_obs, bounds)
+                        if x_next is None:
+                            failures.append(step)
+                            x_next = np.array([
+                                rng.uniform(bounds[i, 0], bounds[i, 1]) for i in range(d)
+                            ])
+                    else:
+                        x_next = np.array([
+                            rng.uniform(bounds[i, 0], bounds[i, 1]) for i in range(d)
+                        ])
                     x_next = np.clip(x_next, bounds[:, 0], bounds[:, 1])
-                    x_next_custom = None  # consume once
                     if self.discrete:
                         # Snap to nearest *unqueried* row (not global nearest)
                         all_indices = np.arange(len(self.oracle._X_raw))
@@ -275,6 +297,11 @@ class CampaignSimulator:
             kernel=Matern(nu=2.5, length_scale_bounds=(1e-3, 1e3)),
             alpha=1e-6,
             normalize_y=True,
+            # Match strategies.py's fit_gp (n_restarts_optimizer=2) — this GP's
+            # signals (gp_uncertainty, lengthscale_norm) are fed straight into the
+            # LLM's prompt, so an unconverged fit (sklearn defaults to 0 restarts)
+            # means the LLM is reasoning on a noisy kernel fit.
+            n_restarts_optimizer=2,
         )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

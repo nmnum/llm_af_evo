@@ -61,7 +61,7 @@ ALL_DATASETS = [
 
 # ── Controller factory ────────────────────────────────────────────────────────
 def make_controller(condition: str, seed: int, ds_name: str,
-                    ada_csv: str = None, model: str = "qwen2.5-coder:7b"):
+                    ada_csv: str = None, model: str = "qwen3-coder:30b"):
     if condition == "fixed_random":    return FixedStrategyBaseline("random", {})
     if condition == "fixed_ucb_low":   return FixedStrategyBaseline("ucb", {"beta": 0.2})
     if condition == "fixed_ucb_high":  return FixedStrategyBaseline("ucb", {"beta": 400.0})
@@ -94,7 +94,7 @@ def run_experiment(
     n_seeds: int = 20,
     datasets: list = None,
     conditions: list = None,
-    model: str = "qwen2.5-coder:7b",
+    model: str = "qwen3-coder:30b",
     discrete: bool = False,
 ):
     data_dir = pathlib.Path(data_dir)
@@ -223,7 +223,7 @@ if __name__ == "__main__":
                         help="Run only real LLM conditions (merge into existing results)")
     parser.add_argument("--conditions", nargs="+", default=None,
                         help="Explicit list of conditions to run, e.g. --conditions fixed_ucb_low fixed_lhs fixed_ei")
-    parser.add_argument("--model", default="qwen2.5-coder:7b",
+    parser.add_argument("--model", default="qwen3-coder:30b",
                         help="Ollama model name")
     parser.add_argument("--discrete", action="store_true",
                         help="Use discrete scoring (score unqueried dataset rows directly)")
