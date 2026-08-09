@@ -6,7 +6,8 @@ Usage
 # Mock LLM controllers only (no Ollama required):
 python run_experiment.py --n_seeds 20 --out_dir results/
 
-# Include real LLM controllers (requires Ollama running with qwen2.5-coder:7b):
+# Include real LLM controllers (requires Ollama running with qwen3-coder:30b),
+# now includes approach_d alongside a/b/c:
 python run_experiment.py --n_seeds 20 --out_dir results/ --llm
 
 # Single dataset, quick test:
@@ -15,10 +16,18 @@ python run_experiment.py --n_seeds 3 --datasets coatings --out_dir results_test/
 # Merge real LLM results into existing mock results:
 python run_experiment.py --n_seeds 20 --out_dir results/ --llm --llm_only
 
+# EGBO baselines (fixed-strategy, always egbo / always novelty_egbo — no LLM,
+# no adaptive switching). Needs botorch/gpytorch/torch/pymoo installed; NOT
+# included by --llm since it's a different dependency axis. Opt in explicitly:
+python run_experiment.py --n_seeds 20 --out_dir results/ --conditions egbo novelty_egbo
+
 Output
 ------
 results/
-  metrics_summary.csv          — 820 rows (9 conditions × 5 datasets × 20 seeds)
+  metrics_summary.csv          — rows = len(conditions) × 5 datasets × n_seeds
+                                  (row count varies with --conditions; the old
+                                  "9 conditions" default grew once approach_d
+                                  and egbo/novelty_egbo were wired in below)
   <dataset>/<condition>/
     curves.npy                 — (n_seeds, budget) running-best curves
     metrics_agg.json           — aggregated metrics (mean ± std)
@@ -83,6 +92,22 @@ def make_controller(condition: str, seed: int, ds_name: str,
     if condition == "approach_c":
         from controllers.approach_c import ApproachCController
         return ApproachCController(model=model)
+    if condition == "approach_d":
+        from controllers.approach_d import ApproachDController
+        # ApproachDController doesn't inherit OllamaController (own decide()/
+        # temperature handling in controllers/approach_d.py), so it only takes
+        # model/max_retries/timeout — not the full OllamaController kwarg set.
+        return ApproachDController(model=model)
+
+    # Fixed-strategy EGBO conditions (always egbo / always novelty_egbo, no
+    # adaptive switching) — mirrors shared_seed_experiment.py's "egbo" and
+    # "novelty_egbo" conditions. Requires botorch/gpytorch/torch/pymoo; if
+    # missing, strategies.py logs one warning and falls back to random rather
+    # than raising (see strategies.py's _egbo_module()).
+    if condition == "egbo":
+        return FixedStrategyBaseline("egbo", {})
+    if condition == "novelty_egbo":
+        return FixedStrategyBaseline("novelty_egbo", {})
 
     raise ValueError(f"Unknown condition: {condition!r}")
 
@@ -233,14 +258,19 @@ if __name__ == "__main__":
     if args.conditions:
         conditions = args.conditions
     elif args.llm_only:
-        conditions = ["approach_c"] #["approach_a", "approach_b", "approach_c"]
+        conditions = ["approach_c"] #["approach_a", "approach_b", "approach_c", "approach_d"]
     elif args.llm:
         conditions = [
             "fixed_random", "fixed_ucb_low", "fixed_ucb_high",
             "fixed_ei", "fixed_lhs",
             "mock_approach_a", "mock_approach_b", "mock_approach_c",
-            "approach_a", "approach_b", "approach_c",
+            "approach_a", "approach_b", "approach_c", "approach_d",
         ]
+        # "egbo"/"novelty_egbo" are NOT in this default LLM list: they need
+        # botorch/gpytorch/torch/pymoo (a different dependency axis than
+        # Ollama) and are much more expensive per step (fresh GP fit +
+        # acquisition + evolutionary search every call, see egbo_strategy.py).
+        # Opt in explicitly: --conditions egbo novelty_egbo ...
 
     run_experiment(
         data_dir=args.data_dir,
