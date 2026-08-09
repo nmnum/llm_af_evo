@@ -1516,12 +1516,48 @@ most diagnostic first:
    first move — mirroring the discipline already used for the base DA-COREG
    result and its §21 cross-check.
 
+### Step 1 Result: Front-Range Normalization, DTLZ2 (2026-08-09)
+
+Ran via `run_da_coreg_no_qnehvi_pilot.py --domain dtlz2 --frn`, 3 replicates,
+20 campaigns, `n_fitness_seeds=3` — same rigor as the resolved §21 runs,
+comparing three conditions (indep-GP baseline, DA-COREG unnormalized,
+DA-COREG with front-range-normalized fit inputs) pairwise against the same
+baseline:
+
+| Replicate | DA-COREG (unnorm.) pct_diff | Wins | p | DA-COREG+FRN pct_diff | Wins | p |
+|---|---|---|---|---|---|---|
+| 0 | −0.1% | 10/20 | 0.84 | −0.4% | 9/20 | 0.47 |
+| 1 | −1.2% | 7/20 | 0.13 | −1.5% | 7/20 | 0.08 |
+| 2 | −0.7% | 8/20 | 0.47 | −0.7% | 9/20 | 0.47 |
+
+Mean: unnormalized −0.7% (std 0.4), front-range-normalized −0.9% (std 0.5).
+0/3 significant in either condition; win rates at chance in both. One
+silent-fallback batch (1/360) in the unnormalized replicate 2, none in the
+FRN condition — not a driver of the pattern.
+
+**Result: front-range normalization does not rescue anything.** The two
+conditions are statistically indistinguishable from each other and both
+remain a tie against the independent-GP baseline, matching §21's original
+finding. This falsifies the specific [33]-motivated hypothesis that raw
+cross-objective scale mismatch was masking real correlation structure in
+DA-COREG's jointly-fit kernel — on DTLZ2 at least, that mechanism isn't
+what's flatlining the result. Since DTLZ2 is the cheap gate before mAb
+compute (per the execution plan above), this closes off step 1 without
+needing to spend mAb-domain compute on it: a change that doesn't move the
+needle on the cheap synthetic gate isn't worth confirming on the real
+domain.
+
+Step 2 (ParEGO-scalarized EI) and step 4 (hybrid marginals) remain
+untested and are the two design changes left to actually explain why
+DA-COREG's demonstrably-good posterior (Part 8's NLL check) doesn't
+translate into better campaigns under any acquisition/normalization
+variant tried so far.
+
 ### Status
 
-Design proposal only — not yet run. Step 1 (front-range normalization,
-isolated, `trust_only` pipeline) is the recommended starting point: smallest
-code change, reuses an already-validated comparison baseline, and tests the
-literature-motivated pitfall from [33] directly.
+Step 1 (front-range normalization) — **run, ruled out** (2026-08-09, DTLZ2,
+see result above). Steps 2–4 (ParEGO scalarization, combined, hybrid
+marginals) remain design proposals only, not yet run.
 
 ---
 
