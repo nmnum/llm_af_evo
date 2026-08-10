@@ -128,6 +128,85 @@ Pulled directly from the tables above (mean AUC, all datasets/conditions where a
 4. Mock controllers are rule-based stand-ins, not real LLM behaviour, and are used for pipeline validation, not as evidence.
 5. Only one model was used for most of the original three-approach experiments (qwen2.5-coder:7b); a larger instruct model (qwen2.5:14b-instruct) was tested later specifically for the oracle-gap hyperparameter experiment and did not improve on the lengthscale-mode judgment sub-task.
 
-## 7. Overall takeaway
+## 7. 2026-08-09/10 session: `results_combined` (5-condition-group merge), EGBO silent-fallback bug fix, mid-campaign analysis, and a data-loss incident
+
+This session merged `results_baselines`, `results_a`, `results_b`, `results_c`, `results_d`/`results_d_fixed`, and `results_egbo` into a single `results_combined/metrics_summary.csv` (14 conditions × 5 datasets × 20 seeds = 1400–1420 rows depending on the pass) and regenerated all `figures_combined/*.png` from it, once `approach_c` finished its last two pending Pareto datasets. **As of writing this section, the raw per-condition output directories and `figures_combined/` that produced the numbers below were deleted from the shared checkout by an unknown process (not by this session) before they were committed to git — see §7.5. The numbers/conclusions here remain valid (they were computed and recorded before the deletion) but the underlying `curves.npy`/`switch_logs.json` artifacts need to be regenerated to be re-verified or re-plotted. §7.6 gives the exact re-run commands.**
+
+### 7.1 Bug found and fixed: silent EGBO→random fallback in `strategies.py`
+
+`strategies.py`'s `egbo()` / `novelty_egbo()` / `egbo_discrete()` / `novelty_egbo_discrete()` — the functions an LLM controller (`approach_d`) calls when it chooses strategy name `"egbo"`/`"novelty_egbo"` mid-campaign — silently substituted `random_search`/`random_discrete` whenever `torch`/`botorch`/`gpytorch`/`pymoo` weren't importable in the running interpreter, with only a one-time log warning and **no entry in `switch_logs.json`'s `failures` list**. Confirmed via `readlink -f /proc/<PID>/exe` that the historical `approach_d` run (and other campaigns) actually executed under the bare `/usr/bin/python3.12` interpreter, which lacks these dependencies (`import torch` → `ModuleNotFoundError`), not the botorch-enabled `~/sdl_protein/sdl_prot/bin/python3` env.
+
+Per-dataset "egbo" request share in the old `approach_d` `switch_logs.json` (i.e. how often the LLM asked for egbo and silently got random instead): coatings ~10% (35/360), pareto_20201218 ~50% (119/240), pareto_20201223 ~46% (111/240), pareto_20210104 ~45% (90/200), pareto_20210112 ~40% (112/280). This means up to ~50% of `approach_d`'s "egbo" decisions on Pareto datasets were confounded with random search in the pre-fix data.
+
+**Fix**: the four functions now `raise RuntimeError` instead of silently falling back, so `simulator.py`'s existing per-step `except Exception: failures.append(step)` handler catches it, falls back to random itself, *and* records the step in `switch_logs.json.failures` — the same failure mode is now visible/counted instead of invisible. `simulator.py`'s stale comment describing `"egbo"` as an unmapped strategy name was also corrected (it *is* in `STRATEGY_MAP`; the fallback happens via the dependency check in `_egbo_module()`, not the unmapped-strategy branch).
+
+Re-running `approach_d` under the correct interpreter (`results_d_fixed/`, same 20 seeds via the shared `generate_init_points(oracle, n_init=5, seed=seed, ...)` mechanism, so directly comparable to the old run) shifted `auc_best` mostly on the highest-bug-rate dataset: `pareto_20210104` 0.732 → 0.776 (the dataset with ~45% egbo-call failure rate pre-fix); `coatings` 0.923 → 0.937; `pareto_20201218`/`pareto_20201223` ~flat; `pareto_20210112` 0.798 → 0.789 (slightly down). `failure_count` in `metrics_summary.csv` read 0 for both old and new runs in this pass, which is a metric-plumbing gap worth checking separately — `switch_logs.json.failures` (not currently surfaced into `metrics_summary.csv`) is the more reliable signal for this bug.
+
+### 7.2 What each LLM approach actually does (from `switch_logs.json` decision logs, aggregated across all seeds/datasets)
+
+- **LLM-A**: 100% `ucb` (1320/1320 decisions) — never switches strategy type, only tunes β (mean≈220.8, range 12.5–1000).
+- **LLM-B**: `lhs` 45% (588/1320), `ei` 36% (473/1320), `ucb` 19% (259/1320, β mean≈12.8) — mean 2.18 type-switches per seed-run.
+- **LLM-C**: `_custom` 1039/1040 decisions (re-generates its own `suggest_point()` code every controller-interval step), `random` only once, 2 logged failures across 80 seed-runs — essentially never reverts to the acquisition-function menu.
+- **LLM-D**: `lhs` 193, `ucb` 660 (β mean≈12.3), `egbo` 467 out of 1320 total — mean 3.96 switches/run, the highest switch rate of the four, and the only approach that invokes EGBO at all.
+
+### 7.3 Full-campaign AUC interpretation (`results_combined`, `auc_best`, full budget)
+
+- **EGBO dominates**: statistically significant advantage over standard baselines (random/LHS/UCB-low/UCB-high/EI) on 4/5 datasets (paired t-test on shared seeds); `pareto_20201218` is a genuine, reproducible exception where the gap narrows.
+- **LLM approaches vs baselines**: largely statistically indistinguishable from simple fixed baselines. The one consistently significant win across all four LLM approaches is vs. `fixed_ucb_low` (β=0.2, the weakest baseline) — p<0.01 in every case. Beyond that, LLM-A beats `fixed_ei` (p=0.044); none of the four beats `fixed_random`, `fixed_lhs`, or `fixed_ucb_high` significantly.
+- **Ranking**: LLM-A is the strongest LLM approach and closest to competitive with strong fixed baselines (its 100%-UCB behavior effectively makes it a self-tuning UCB baseline). LLM-C is mid-pack. LLM-D is the most dataset-dependent and, pre-fix, was confounded by the EGBO bug on Pareto sets.
+- **EGBO vs LLM approaches directly**: EGBO beats all four LLM approaches, significantly, essentially everywhere it's compared.
+
+### 7.4 Mid-campaign (`h=40` of ~53–91-step budget) analysis — `figure2_auc_bars_h40.png` / `figure2_final_at_h40.png`
+
+Mean AUC@40 across datasets: EGBO 0.845, UCB β=400 0.790, LLM-A 0.788, LLM-C 0.785, LHS 0.781, LLM-B 0.777, Random 0.775, LLM-D 0.771, EI 0.762, UCB β=0.2 0.732.
+
+- **EGBO's edge is front-loaded** — already present and significant (p<0.0001 vs all four LLM approaches) by step 40, not something accrued only late in the campaign.
+- Rankings at h=40 closely track the full-budget rankings — no LLM approach shows a "slow starter, catches up later" pattern.
+- LLM-A remains closest to competitive (0.788 vs UCB-high's 0.790, not distinguishable, p=0.83).
+- LLM-D is weakest mid-campaign (0.771, at/below random), even post-bugfix — its mixed lhs/ucb/egbo switching isn't clearly paying off relative to just picking one baseline strategy and sticking with it.
+
+### 7.5 Statistical power check: is n=20 seeds enough?
+
+Computed Cohen's d and required-n-for-80%-power for every LLM-vs-baseline pairing on `auc_best` (pooled n=100, 5 datasets × 20 seeds). Conclusion: **no, n=20 does not need to be increased broadly.** Near-zero effects (d≈0.01–0.09, e.g. `approach_a` vs `fixed_random`) would need 800–100,000+ seeds to resolve — not a power problem, the true effect is ~0. Comparisons that already look meaningful (LLM vs UCB-low, d≈0.28–0.41; LLM-A/C vs EI, d≈0.20–0.26) are already significant at n=20. The one genuinely borderline case is `approach_d` vs `fixed_lhs` (p=0.049, d=-0.20, n_needed≈198) — worth a targeted larger run *only* on that specific pair if it matters for the thesis narrative, not a blanket 80-seed re-run of everything.
+
+### 7.6 Data-loss incident and recovery commands
+
+After this session's `results_a/b/c/d_fixed/baselines/egbo` and `figures_combined/` were generated (feeding §7.1–7.4 above) but before they were committed to git, they were found deleted from the shared checkout (`/home/nehamungale/ls_na_egbo/sdl_adaptive/`) by a process not run by this session — plausibly a concurrent session sharing the same checkout. `git fsck --lost-found --full` found two dangling `git stash` WIP commits from around the same timestamp, but plain `git stash` only captures *tracked*-file changes; these untracked result directories were never stashed and are not recoverable from git objects. The `COMMIT_EDITMSG` file (which persists across attempted-but-not-completed commits) misleadingly suggested a commit had happened when it hadn't — `git log`/`git show` are the only reliable way to confirm a commit landed, not `COMMIT_EDITMSG`.
+
+**Not lost**: the code (`strategies.py`/`simulator.py` fixes, `combine_results.py`, `figure2_short_horizon.py`, `figure2_final_full_budget.py`) and this log entry, since seeding is fully deterministic (`generate_init_points(oracle, n_init=5, seed=seed, ...)`, keyed only by `seed`) — a re-run reproduces identical initial conditions to what produced §7.1–7.4.
+
+Re-run commands (from `sdl_adaptive/`, using `~/sdl_protein/sdl_prot/bin/python3` so EGBO's real dependencies are present):
+
+```bash
+# 1. Baselines (fast, no LLM)
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 run_experiment.py --n_seeds 20 --out_dir results_baselines/ \
+  --conditions fixed_random fixed_lhs fixed_ucb_low fixed_ucb_high fixed_ei ada_original \
+               mock_approach_a mock_approach_b mock_approach_c
+
+# 2. EGBO / novelty-EGBO (fast-ish, no LLM)
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 run_experiment.py --n_seeds 20 --out_dir results_egbo/ \
+  --conditions egbo novelty_egbo
+
+# 3-5. LLM approaches (slow — real Ollama calls, qwen3-coder:30b)
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 run_experiment.py --n_seeds 20 --out_dir results_a/ --conditions approach_a --model qwen3-coder:30b
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 run_experiment.py --n_seeds 20 --out_dir results_b/ --conditions approach_b --model qwen3-coder:30b
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 run_experiment.py --n_seeds 20 --out_dir results_c/ --conditions approach_c --model qwen3-coder:30b
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 run_experiment.py --n_seeds 20 --out_dir results_d_fixed/ --conditions approach_d --model qwen3-coder:30b
+
+# 6. Rebuild combined view + figures
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 combine_results.py
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 analyse.py --results_dir results_combined --out_dir figures_combined
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 figure2_short_horizon.py
+PYTHONPATH=. ~/sdl_protein/sdl_prot/bin/python3 figure2_final_full_budget.py
+
+# 7. Commit immediately — do not let untracked LLM-run output sit uncommitted in the shared checkout again
+git add results_baselines results_egbo results_a results_b results_c results_d_fixed \
+        results_combined/metrics_summary.csv figures_combined/*.png \
+        strategies.py simulator.py combine_results.py figure2_short_horizon.py figure2_final_full_budget.py
+git commit -m "sdl_adaptive: re-run and document full results after prior uncommitted run was lost"
+git push origin master
+```
+
+## 8. Overall takeaway
 
 Across the full set of results in this folder, the most consistent, reproducible empirical pattern is that **hand-coded EGBO outperforms every LLM-driven approach (A/B/C/C-evo/D) and every fixed/rule-based baseline** tested here, especially in the larger, more carefully controlled runs (`results_power2`, `results_shared`, `results_ninit15`, `results_phase1`, `results_fcs_sweep`). The original three LLM approaches (A/B/C) show only marginal, seed-noise-level advantages over fixed baselines in the smaller original run, and the isolated LLM hyperparameter judgment calls (`oracle_gap_experiment`) track the fixed default closely rather than approaching oracle-optimal tuning — with a larger LLM (14b vs 7b) making the lengthscale-mode judgment *worse*, not better. This motivated moving to the differently-designed `llm_bo` project (candidate-pool ranking with domain-knowledge priors, in the sibling `llm_bo/` folder), which found a more favourable result for LLM value-add via a different mechanism.
