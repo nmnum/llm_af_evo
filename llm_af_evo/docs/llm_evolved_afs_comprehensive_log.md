@@ -1518,6 +1518,15 @@ most diagnostic first:
 
 ### Step 1 Result: Front-Range Normalization, DTLZ2 (2026-08-09)
 
+Implemented as an opt-in `use_front_range_norm` flag on
+`full_replay.strategy_unsga3_pool_af` (DA-COREG branch only, no-op for
+independent GPs): rescales `train_y` by each objective's current Pareto
+front range before fitting DA-COREG, then un-scales the returned posterior
+mean/variance immediately after, so nothing downstream sees anything but
+raw units. `run_da_coreg_no_qnehvi_pilot.py` exposes it via a `--frn` flag
+that adds a third `unsga3_pool_af_da_coreg_frn` condition alongside the
+existing indep/da_coreg pair.
+
 Ran via `run_da_coreg_no_qnehvi_pilot.py --domain dtlz2 --frn`, 3 replicates,
 20 campaigns, `n_fitness_seeds=3` — same rigor as the resolved §21 runs,
 comparing three conditions (indep-GP baseline, DA-COREG unnormalized,

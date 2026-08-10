@@ -494,7 +494,8 @@ the gate exists to catch before real-domain compute is spent, and it did.
    budget as every independent-GP fit elsewhere in this project):
    held-out Gaussian NLL/RMSE, DA-COREG vs. independent GPs, fit on the
    exact same reconstructed campaigns, evaluated against other pool
-   points' true noiseless DTLZ2 values. **Falsified — DA-COREG's fit was
+   points' true noiseless DTLZ2 values (script:
+   `diagnose_da_coreg_fit.py`, Part 2). **Falsified — DA-COREG's fit was
    actually *better*** (mean held-out NLL −0.375 vs. independent GPs'
    +0.215, lower RMSE in most objective/campaign combinations). The
    surrogate itself is not the problem.
