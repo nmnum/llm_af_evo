@@ -360,7 +360,7 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
 def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
                              af_code: str, budget: int, sandbox_log_dir=None,
                              evo_candidates: int = 25, use_da_coreg: bool = False,
-                             **kw):
+                             use_front_range_norm: bool = False, **kw):
     """
     The missing cell in the baseline-decomposition table: scores/selects
     over a candidate pool generated PURELY by UNSGA3 — no qLogNEHVI-
@@ -380,6 +380,26 @@ def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
     joint MC batch scoring." Comparing unsga3_pool_af_indep vs
     unsga3_pool_af_da_coreg (both this function, only use_da_coreg
     differs) isolates that.
+
+    use_front_range_norm (only meaningful when use_da_coreg=True; a no-op
+    otherwise) rescales each objective's train_y by its current Pareto
+    front's range BEFORE fitting DA-COREG's jointly-shared task-covariance
+    kernel, then rescales model.posterior()'s mean/variance back to raw
+    units immediately after, so nothing downstream of the fit (af_code
+    scoring, front_allmax, etc.) sees anything but original-scale numbers.
+    This isolates §22's [33]-motivated pitfall: da_coreg.py's
+    fit_da_coreg_model stacks all M objectives into one flat column and
+    applies a single global Standardize(m=1)) over that concatenation, so
+    if e.g. viscosity's raw scale dwarfs Tm's, the learned cross-task
+    correlation can be dominated by whichever objective has the largest raw
+    range before any acquisition ever sees it. Independent GPs already fit
+    one Standardize per objective and are unaffected either way — this flag
+    changes DA-COREG's fit inputs only, nothing else, so a difference is
+    attributable to this one variable (see docs/llm_evolved_afs_
+    comprehensive_log.md §22 "Execution plan", step 1).
+
+    Not yet exercised end-to-end against a real botorch install in this
+    environment — the same caveat da_coreg.py's own docstring carries.
 
     Isolates something the existing ladder structurally can't: whether the
     gradient-optimized candidates in the usual qbo_x+ea_x pool are
@@ -434,9 +454,25 @@ def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
         train_x = torch.tensor(X_norm, **tkwargs)
         train_y = torch.tensor(Y_int, **tkwargs)
 
+        # §22 step 1: rescale train_y by each objective's current Pareto
+        # front range BEFORE fitting DA-COREG's jointly-shared task kernel,
+        # so a raw-scale mismatch across objectives (e.g. viscosity >> Tm)
+        # can't distort the learned cross-task correlation the way [33]
+        # flags. Independent GPs (use_da_coreg=False) already fit one
+        # Standardize() per objective and are unaffected by this flag
+        # either way, so it's scoped to the DA-COREG branch only.
+        frn_scale = None
+        if use_da_coreg and use_front_range_norm:
+            _pf_idx = pareto_front_of(Y_obs, directions=directions)
+            pf_y = Y_int[_pf_idx] if len(_pf_idx) > 0 else Y_int
+            frn_scale = np.clip(pf_y.max(axis=0) - pf_y.min(axis=0), 1e-9, None)
+            train_y_fit = train_y / torch.tensor(frn_scale, **tkwargs)
+        else:
+            train_y_fit = train_y
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            model = _fit_model(train_x, train_y, use_da_coreg, tkwargs)
+            model = _fit_model(train_x, train_y_fit, use_da_coreg, tkwargs)
 
         pf_idx_np = pareto_front_of(Y_obs, directions=directions)
         seed_pool_idx = pf_idx_np if len(pf_idx_np) > 0 else np.arange(len(Y_obs))
@@ -472,6 +508,14 @@ def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             post = model.posterior(candidates)
             pool_mu = post.mean.detach().cpu().numpy()
             pool_sigma = post.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
+        if frn_scale is not None:
+            # Undo the fit-time rescale immediately — everything downstream
+            # (af_code scoring, front_allmax, ref_point_allmax) must see
+            # original-scale numbers, exactly as the use_front_range_norm=
+            # False path always has. mean and std (already sqrt'd) both
+            # scale linearly with frn_scale.
+            pool_mu = pool_mu * frn_scale
+            pool_sigma = pool_sigma * frn_scale
 
         front_allmax = to_allmax(Y_obs.copy(), directions=directions)
         Y_all_int = oracle._Y_raw.copy()
@@ -498,6 +542,7 @@ def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             np.column_stack([lo, hi]).T, **tkwargs)).cpu().numpy())
 
         return new_x_raw, {"unsga3_pool_af": True, "use_da_coreg": use_da_coreg,
+                            "use_front_range_norm": use_front_range_norm,
                             "n_candidates": len(candidates)}
 
     except SandboxError as e:

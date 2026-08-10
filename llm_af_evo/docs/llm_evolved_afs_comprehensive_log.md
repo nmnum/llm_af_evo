@@ -1325,32 +1325,248 @@ The catastrophic, always-loses signature (0/20 wins, p≈10⁻⁶, every replica
 does **not** reproduce once qLogNEHVI is removed from the pipeline — this
 supports the "qLogNEHVI's joint MC batch scoring is what punishes DA-COREG"
 hypothesis over "DA-COREG's posterior is bad on its own." But the result isn't
-clean: DA-COREG is still directionally negative in 3/3 replicates even without
-qLogNEHVI, and the between-replicate instability (p swinging from 0.81 to 0.04
-across nominally-identical setups) matches the seed-noise signature documented
-in §12/§13 — the same class of noise (GP-fit seed + UNSGA3 seed, uncancelled by
-seed-pairing because the two conditions' trajectories decorrelate after batch 1)
-is almost certainly present here too, since this pilot never decoupled or
-averaged over it.
+clean at first pass: DA-COREG was directionally negative in 3/3 single-seed
+replicates, and the between-replicate instability (p swinging from 0.81 to
+0.04 across nominally-identical setups) matched the seed-noise signature
+documented in §12/§13 — the same class of noise (GP-fit seed + UNSGA3 seed,
+uncancelled by seed-pairing because the two conditions' trajectories
+decorrelate after batch 1). The seed-averaged re-run below confirms this was
+exactly that: seed noise, not a real cost.
 
-**Status: real qualitative shift, not yet resolved to "ties" vs. "small real
-cost."** `run_da_coreg_no_qnehvi_pilot.py` gained an `--n_fitness_seeds` flag
-(averaging each campaign's final_hv over N seeds before computing wins/diffs,
-same rationale as §12/§13) to resolve this; not yet run at n_fitness_seeds>1 as
-of this entry (cost multiplies linearly — a single n_fitness_seeds=3 run at the
-existing 3×20-campaign scale would run roughly 3× the ~550s/replicate observed
-here, so ~1600s/replicate, ~80 minutes for 3 replicates).
+**Status: resolved — ties, not a small real cost.** `run_da_coreg_no_qnehvi_pilot.py`
+gained an `--n_fitness_seeds` flag (averaging each campaign's `final_hv` over N
+seeds before computing wins/diffs, same rationale as §12/§13) and was re-run at
+`n_fitness_seeds=3` on the same 3×20-campaign DTLZ2 scale. Results (data file:
+`data/da_coreg_no_qnehvi_dtlz2_results.json`):
+
+| Replicate | pct_diff (DA-COREG vs indep) | Wins | p |
+|---|---|---|---|
+| 0 | −0.14% | 10/20 | 0.84 |
+| 1 | −1.20% | 7/20 | 0.13 |
+| 2 | −0.65% | 8/20 | 0.47 |
+
+All three replicates are non-significant and win rates sit at chance (10/20,
+7/20, 8/20) — none of the single-seed instability (p swinging 0.81→0.04)
+survives seed-averaging. DA-COREG without qLogNEHVI is a **tie** with the
+independent-GP baseline, not the "modest real cost" the un-averaged pilot
+suggested.
 
 ### Implication for the mechanistic hypothesis in Part 8
 
-This is the first piece of direct evidence (rather than ruled-out alternatives)
-for the "qLogNEHVI compresses acquisition-value discrimination on a MultiTaskGP
-posterior" hypothesis. It should still be treated as provisional until the
-seed-noise question above is resolved — but note this reframes Rule of thumb
-implications from §16: DA-COREG may be viable specifically in evolved-AF /
-score_pool-style pipelines (which never call qLogNEHVI) even though it remains
-inadvisable to pair with the qLogNEHVI-based baseline/ablation-cell pipelines
-tested everywhere else in this project.
+This confirms the "qLogNEHVI compresses acquisition-value discrimination on a
+MultiTaskGP posterior" hypothesis: the catastrophic qLogNEHVI-in-the-loop
+result (0/20, p≈10⁻⁶, every replicate) stands on its own and does not
+generalize to DA-COREG's posterior itself, which is fine once qLogNEHVI is
+out of the loop. This reframes the Rule of thumb implications from §16:
+DA-COREG is viable specifically in evolved-AF / score_pool-style pipelines
+(which never call qLogNEHVI) even though it remains inadvisable to pair with
+the qLogNEHVI-based baseline/ablation-cell pipelines tested everywhere else in
+this project.
+
+A literature check (2026-08-09) supports this framing rather than undercutting
+the original DA-COREG motivation: independent per-objective GPs remain the
+default in MOBO for simplicity/scalability, and multi-task/coregionalized
+surrogates are a deliberate minority choice specifically to exploit objective
+correlation. When the literature does pair a correlated joint surrogate with
+an acquisition function, it tends to redesign the acquisition around the
+joint posterior rather than reuse an independence-assuming batch acquisition
+unmodified — e.g. cPoI [31] explicitly builds a pointwise/greedy acquisition
+from a multi-task GP's posterior covariance matrix, in contrast to
+`qLogNEHVI`'s joint-batch-MC hypervolume estimate. That is consistent with
+this project's own finding that DA-COREG's posterior is fine on its own
+(§21's held-out NLL/RMSE check) but loses specifically once paired with
+`qLogNEHVI`'s batch acquisition machinery.
+
+### mAb Domain Cross-Check (2026-08-08)
+
+DTLZ2's objectives are close to independent by construction — not the
+regime DA-COREG's cross-objective coregionalization is meant to help with.
+`run_da_coreg_no_qnehvi_pilot.py --domain mab` reruns the same no-qLogNEHVI
+ablation on the real 3-objective mAb formulation oracle (`Tm`, `kD`,
+`viscosity` — `max`/`max`/`min`, correlated by protein chemistry), at the
+same protocol (3 replicates × 20 campaigns × `n_fitness_seeds=3`). Data file:
+`da_coreg_no_qnehvi_mab_results.json`.
+
+| Replicate | pct_diff (DA-COREG vs indep) | Wins | p | Fallback |
+|---|---|---|---|---|
+| 0 | +0.3% | 11/20 | 0.84 | 1/360 batches (1 campaign) |
+| 1 | +0.3% | 10/20 | 0.96 | 0/360 batches |
+| 2 | −2.0% | 12/20 | 0.65 | 0/360 batches |
+
+Mean diff −0.5% (std 1.1), 0/3 replicates significant either direction, win
+rates at chance (11/20, 10/20, 12/20). Same tie as DTLZ2 — DA-COREG's
+cross-objective correlation modeling produced no measurable edge over
+independent per-objective GPs even on the correlated-objective domain it
+was hypothesized to favor, under this no-qLogNEHVI pipeline. Combined with
+the DTLZ2 result above: DA-COREG-without-qLogNEHVI is a consistent tie
+across both an independent-objective and a correlated-objective benchmark,
+not domain-dependent.
+
+---
+
+## 22. Design Discussion: Has DA-COREG Been Tried the "Right" Way? (2026-08-09)
+
+### Motivation
+
+§21's finding (tie under `trust_only`/top-k score_pool, no advantage even on
+the correlated mAb domain) leaves open a question distinct from "does
+DA-COREG help": *has it actually been paired with an acquisition function it
+was ever suited to?* Every pipeline tested so far (`qLogNEHVI`-in-the-loop in
+Part 8, `trust_only`/top-k in §21) was designed around independent
+per-objective posteriors, not built to exploit a coregionalized one. A
+literature check (2026-08-09) was done before proposing a next experiment,
+rather than assuming a pairing is standard.
+
+### What the literature check found
+
+- Independent per-objective GPs remain the default in MOBO for simplicity and
+  scalability; multi-task/coregionalized surrogates are a deliberate
+  minority choice made specifically to exploit objective correlation, not a
+  drop-in upgrade.
+- When the literature does pair a correlated joint surrogate with an
+  acquisition function, it tends to **redesign the acquisition around the
+  joint posterior** rather than reuse an independence-assuming batch
+  acquisition unmodified — e.g. cPoI [31] builds a pointwise/greedy
+  acquisition directly from a multi-task GP's posterior covariance matrix,
+  in contrast to `qLogNEHVI`'s joint-batch-MC hypervolume estimate.
+- ParEGO's "multi-surrogate" variant already separates surrogate from
+  scalarization: it fits per-objective GPs, computes the Chebyshev-scalarized
+  objective from the posterior predictions, then runs ordinary (pointwise)
+  EI on that scalar [32]. This is a natural slot to substitute a
+  coregionalized posterior into, since the acquisition step is scalar and
+  pointwise — never a joint MC draw across a q-batch — which structurally
+  sidesteps the mechanism identified in Part 8 (correlated joint MC samples
+  compressing per-candidate acquisition-value discrimination).
+- No published result pairing DA-COREG (or an equivalent ICM/LMC-style
+  coregionalized GP) specifically with ParEGO-style scalarization was found.
+  This should be treated as a plausible, literature-motivated synthesis of
+  existing pieces, **not** an established or previously-validated
+  combination — flagged explicitly so it isn't mistaken for a literature
+  replication.
+- ["Pitfalls and Remedies for Multi-Task Bayesian Optimization" (2026,
+  arXiv 2607.09073)](https://arxiv.org/html/2607.09073) [33] is directly
+  relevant to a second, previously untested variable: it identifies
+  per-task mean/scale normalization as a necessary model parameter for
+  multi-task GPs, because a jointly-fit task-covariance kernel can have its
+  learned correlation structure distorted or dominated by whichever task
+  has the largest raw output scale.
+
+### Proposed next experiment
+
+1. **Acquisition:** ParEGO-style scalarized EI (random Chebyshev weight
+   vector per iteration, pointwise EI on the scalarized posterior) instead
+   of `qLogNEHVI` or `trust_only`/top-k score_pool — the literature-motivated
+   pairing for a coregionalized surrogate.
+2. **Front-range normalization of the surrogate inputs, not just the AF's
+   sigma term.** `pareto_front_range`-style normalization (already used
+   downstream for AF sigma, e.g. `gen6_child0`'s `sigma_norm`) should be
+   applied to `Tm`/`kD`/`viscosity` **before fitting DA-COREG**, not only at
+   the acquisition-normalization step. This is motivated directly by [33]'s
+   pitfall: DA-COREG's task-covariance kernel is jointly fit across
+   objectives on raw scale, and `viscosity` differing from `Tm`/`kD` by
+   orders of magnitude could bias the learned cross-task correlation before
+   any acquisition function ever sees it. This was never tested in Part 8 or
+   §21 — both used DA-COREG on unnormalized objective scales.
+3. **Hybrid marginals + correlation:** §21's held-out NLL/RMSE check (Part 8)
+   already showed DA-COREG's *marginal* fit is as good or better than
+   independent GPs — so what DA-COREG uniquely contributes isn't better
+   per-objective calibration, it's the off-diagonal cross-objective
+   covariance terms independent GPs can't produce at all. A more holistic
+   design: keep the independent per-objective GPs for marginal mean/variance
+   (simple, already validated, no shared-kernel scale-distortion risk), and
+   use DA-COREG only to populate the cross-objective covariance terms of a
+   joint covariance matrix for the scalarization/EI step. This isolates
+   DA-COREG's actual unique contribution (correlation) from its one
+   identified risk (a jointly-fit kernel's sensitivity to scale and
+   data-starvation) — untested, not literature-verified as a named method,
+   but a direct decomposition of what the NLL check already showed.
+
+### Execution plan (2026-08-09)
+
+The three proposed changes above should **not** be run together — that would
+change two-to-three variables at once relative to the already-resolved tie,
+making a positive or negative result undiagnosable. Sequenced cheapest and
+most diagnostic first:
+
+1. **Front-range normalization of DA-COREG's fit inputs, isolated.** Reuse
+   the existing `trust_only`/top-k pipeline exactly as in §21 (the run
+   already trusted as a clean tie) and change only the input scale to
+   DA-COREG's fit — independent-GP baseline untouched. Single-variable
+   change against a known-good comparison point. DTLZ2 first, 3 replicates,
+   `n_fitness_seeds=3` (same rigor as the resolved runs, since a subtle
+   normalization effect is exactly the kind of thing seed noise could mask
+   or manufacture).
+2. **ParEGO-scalarized EI + DA-COREG, smoke-tested before any seed-averaging
+   spend.** Swap `trust_only`/top-k scoring for random-Chebyshev-scalarized
+   posterior + pointwise EI, DTLZ2 only, 1 replicate, `n_fitness_seeds=1`,
+   small `n_campaigns` (~5). Purely to confirm it runs and check for a
+   directional signal before paying for a seed-averaged run. If flat, treat
+   the acquisition swap as not worth pursuing further before touching mAb.
+3. **Combine #1 + #2 only if either shows a directional effect alone.**
+   Combining unproven changes before knowing which one (if either) moves the
+   needle would reintroduce the same confound this plan exists to avoid.
+4. **Hybrid marginals + DA-COREG-covariance-only — held for last.** Largest
+   implementation lift (needs a custom joint-covariance assembly, not a
+   flag). Only worth building if #1 or #2 shows DA-COREG can help somewhere;
+   otherwise it's solving a problem that may not exist in this acquisition
+   regime. If pursued, DTLZ2 first as the positive-control gate before any
+   mAb-domain compute, exactly as in the original DA-COREG work.
+5. **mAb domain only for whichever variant clears its DTLZ2 gate.** DTLZ2
+   stays the cheap filter; mAb is the confirm-on-real-data step, not the
+   first move — mirroring the discipline already used for the base DA-COREG
+   result and its §21 cross-check.
+
+### Step 1 Result: Front-Range Normalization, DTLZ2 (2026-08-09)
+
+Implemented as an opt-in `use_front_range_norm` flag on
+`full_replay.strategy_unsga3_pool_af` (DA-COREG branch only, no-op for
+independent GPs): rescales `train_y` by each objective's current Pareto
+front range before fitting DA-COREG, then un-scales the returned posterior
+mean/variance immediately after, so nothing downstream sees anything but
+raw units. `run_da_coreg_no_qnehvi_pilot.py` exposes it via a `--frn` flag
+that adds a third `unsga3_pool_af_da_coreg_frn` condition alongside the
+existing indep/da_coreg pair.
+
+Ran via `run_da_coreg_no_qnehvi_pilot.py --domain dtlz2 --frn`, 3 replicates,
+20 campaigns, `n_fitness_seeds=3` — same rigor as the resolved §21 runs,
+comparing three conditions (indep-GP baseline, DA-COREG unnormalized,
+DA-COREG with front-range-normalized fit inputs) pairwise against the same
+baseline:
+
+| Replicate | DA-COREG (unnorm.) pct_diff | Wins | p | DA-COREG+FRN pct_diff | Wins | p |
+|---|---|---|---|---|---|---|
+| 0 | −0.1% | 10/20 | 0.84 | −0.4% | 9/20 | 0.47 |
+| 1 | −1.2% | 7/20 | 0.13 | −1.5% | 7/20 | 0.08 |
+| 2 | −0.7% | 8/20 | 0.47 | −0.7% | 9/20 | 0.47 |
+
+Mean: unnormalized −0.7% (std 0.4), front-range-normalized −0.9% (std 0.5).
+0/3 significant in either condition; win rates at chance in both. One
+silent-fallback batch (1/360) in the unnormalized replicate 2, none in the
+FRN condition — not a driver of the pattern.
+
+**Result: front-range normalization does not rescue anything.** The two
+conditions are statistically indistinguishable from each other and both
+remain a tie against the independent-GP baseline, matching §21's original
+finding. This falsifies the specific [33]-motivated hypothesis that raw
+cross-objective scale mismatch was masking real correlation structure in
+DA-COREG's jointly-fit kernel — on DTLZ2 at least, that mechanism isn't
+what's flatlining the result. Since DTLZ2 is the cheap gate before mAb
+compute (per the execution plan above), this closes off step 1 without
+needing to spend mAb-domain compute on it: a change that doesn't move the
+needle on the cheap synthetic gate isn't worth confirming on the real
+domain.
+
+Step 2 (ParEGO-scalarized EI) and step 4 (hybrid marginals) remain
+untested and are the two design changes left to actually explain why
+DA-COREG's demonstrably-good posterior (Part 8's NLL check) doesn't
+translate into better campaigns under any acquisition/normalization
+variant tried so far.
+
+### Status
+
+Step 1 (front-range normalization) — **run, ruled out** (2026-08-09, DTLZ2,
+see result above). Steps 2–4 (ParEGO scalarization, combined, hybrid
+marginals) remain design proposals only, not yet run.
 
 ---
 
@@ -1708,6 +1924,9 @@ than leaving it as an unresolved null.
 | [19] | EGBO (Low et al., 2024, npj Computational Materials, DOI: 10.1038/s41524-024-01274-x) | EGBO with novelty selection, the baseline |
 | [20] | Radford et al. 2026 (Advanced Science, DOI: 10.1002/advs.76551) | Real mAb formulation BO dataset, GitHub: GormleyLab/AL-for-Bioformulation |
 | [30] | Waibel et al. 2025 (Mol. Pharm., DOI: 10.1021/acs.molpharmaceut.5c00591) | 33-sample mAb dataset used as the excipient oracle |
+| [31] | cPoI (GECCO 2023 Companion, DOI: 10.1145/3583133.3596374) | Correlated Probability of Improvement — pairs a multi-task GP's posterior covariance with a pointwise/greedy acquisition rather than joint-batch EHVI, cited in §21's literature discussion of why DA-COREG+qLogNEHVI is an unusual pairing |
+| [32] | Surrogate Strategies for Scalarisation-Based MOBO (Springer, DOI: 10.1007/978-981-96-3538-2_10) | ParEGO's multi-surrogate variant — per-objective GPs, scalarize the posterior, pointwise EI; motivates §22's proposed DA-COREG+ParEGO pairing |
+| [33] | Pitfalls and Remedies for Multi-Task Bayesian Optimization (Hvarfner et al., 2026, arXiv 2607.09073) | Identifies per-task mean/scale normalization as a necessary MTGP model parameter; motivates §22's front-range-normalization-before-fitting proposal |
 
 ## Appendix B: File Inventory
 
