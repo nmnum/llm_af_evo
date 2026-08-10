@@ -6,7 +6,8 @@ Usage
 # Mock LLM controllers only (no Ollama required):
 python run_experiment.py --n_seeds 20 --out_dir results/
 
-# Include real LLM controllers (requires Ollama running with qwen2.5-coder:7b):
+# Include real LLM controllers (requires Ollama running with qwen3-coder:30b),
+# now includes approach_d alongside a/b/c:
 python run_experiment.py --n_seeds 20 --out_dir results/ --llm
 
 # Single dataset, quick test:
@@ -15,10 +16,18 @@ python run_experiment.py --n_seeds 3 --datasets coatings --out_dir results_test/
 # Merge real LLM results into existing mock results:
 python run_experiment.py --n_seeds 20 --out_dir results/ --llm --llm_only
 
+# EGBO baselines (fixed-strategy, always egbo / always novelty_egbo — no LLM,
+# no adaptive switching). Needs botorch/gpytorch/torch/pymoo installed; NOT
+# included by --llm since it's a different dependency axis. Opt in explicitly:
+python run_experiment.py --n_seeds 20 --out_dir results/ --conditions egbo novelty_egbo
+
 Output
 ------
 results/
-  metrics_summary.csv          — 820 rows (9 conditions × 5 datasets × 20 seeds)
+  metrics_summary.csv          — rows = len(conditions) × 5 datasets × n_seeds
+                                  (row count varies with --conditions; the old
+                                  "9 conditions" default grew once approach_d
+                                  and egbo/novelty_egbo were wired in below)
   <dataset>/<condition>/
     curves.npy                 — (n_seeds, budget) running-best curves
     metrics_agg.json           — aggregated metrics (mean ± std)
@@ -40,7 +49,7 @@ import pandas as pd
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 
 from oracle import NNOracle
-from simulator import CampaignSimulator
+from simulator import CampaignSimulator, generate_init_points
 from baselines import FixedStrategyBaseline, ADAOriginalBaseline
 from evaluate import compute_metrics, aggregate_across_seeds
 from controllers.mock_controller import (
@@ -49,6 +58,10 @@ from controllers.mock_controller import (
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
+
+# Conditions that don't go through make_controller()/CampaignSimulator at all
+# — see the EGBO branch inside run_experiment()'s seed loop below.
+EGBO_CONDITIONS = {"egbo": 1.0, "novelty_egbo": 0.7}  # -> merit_weight
 
 # ── Dataset registry ─────────────────────────────────────────────────────────
 ALL_DATASETS = [
@@ -61,7 +74,7 @@ ALL_DATASETS = [
 
 # ── Controller factory ────────────────────────────────────────────────────────
 def make_controller(condition: str, seed: int, ds_name: str,
-                    ada_csv: str = None, model: str = "qwen2.5-coder:7b"):
+                    ada_csv: str = None, model: str = "qwen3-coder:30b"):
     if condition == "fixed_random":    return FixedStrategyBaseline("random", {})
     if condition == "fixed_ucb_low":   return FixedStrategyBaseline("ucb", {"beta": 0.2})
     if condition == "fixed_ucb_high":  return FixedStrategyBaseline("ucb", {"beta": 400.0})
@@ -83,6 +96,26 @@ def make_controller(condition: str, seed: int, ds_name: str,
     if condition == "approach_c":
         from controllers.approach_c import ApproachCController
         return ApproachCController(model=model)
+    if condition == "approach_d":
+        from controllers.approach_d import ApproachDController
+        # ApproachDController doesn't inherit OllamaController (own decide()/
+        # temperature handling in controllers/approach_d.py), so it only takes
+        # model/max_retries/timeout — not the full OllamaController kwarg set.
+        return ApproachDController(model=model)
+
+    # NOTE: "egbo"/"novelty_egbo" are NOT handled here. They don't go through
+    # make_controller()/CampaignSimulator at all — see run_experiment()'s main
+    # loop, which calls shared_seed_experiment.py's run_egbo_campaign()
+    # directly. That's the real Aqeeli et al. (2026) batch protocol
+    # (batch_size=4, one GP fit + acquisition + evolutionary search per
+    # 4-point batch). strategies.py also has an "egbo" entry (egbo_strategy.py)
+    # but that's a *different*, stateless single-point-per-call adapter built
+    # so approach_d can select "egbo" mid-campaign one step at a time — it
+    # trades protocol fidelity for fitting the per-step controller interface,
+    # and was never validated against run_egbo_campaign's numbers. Routing
+    # this condition through make_controller()+FixedStrategyBaseline would
+    # have silently used that different, unvalidated implementation instead
+    # of the one everything else compares against.
 
     raise ValueError(f"Unknown condition: {condition!r}")
 
@@ -94,7 +127,7 @@ def run_experiment(
     n_seeds: int = 20,
     datasets: list = None,
     conditions: list = None,
-    model: str = "qwen2.5-coder:7b",
+    model: str = "qwen3-coder:30b",
     discrete: bool = False,
 ):
     data_dir = pathlib.Path(data_dir)
@@ -134,18 +167,42 @@ def run_experiment(
             seed_metrics, seed_curves, seed_logs = [], [], []
 
             for seed in range(n_seeds):
-                try:
-                    ctrl = make_controller(condition, seed, ds_name, ada_csv, model)
-                except Exception as e:
-                    logger.warning(f"Skipping {condition} seed {seed}: {e}")
-                    continue
+                if condition in EGBO_CONDITIONS:
+                    try:
+                        # Bypasses make_controller()/CampaignSimulator entirely:
+                        # run_egbo_campaign() owns its own batch loop (see
+                        # make_controller()'s docstring note on why this isn't
+                        # wrapped as a per-step controller). Draw the SAME shared
+                        # init points every other condition sees at this seed
+                        # (generate_init_points is the single source of truth
+                        # CampaignSimulator.run() itself uses) so this condition
+                        # stays comparable to the rest of the run.
+                        from shared_seed_experiment import run_egbo_campaign
+                        X_init, y_init, _ = generate_init_points(
+                            oracle, n_init=5, seed=seed, discrete=discrete
+                        )
+                        res = run_egbo_campaign(
+                            oracle, X_init, y_init, budget,
+                            merit_weight=EGBO_CONDITIONS[condition],
+                            random_state=seed,
+                        )
+                    except Exception as e:
+                        logger.warning(f"Skipping {condition} seed {seed}: {e}")
+                        continue
+                else:
+                    try:
+                        ctrl = make_controller(condition, seed, ds_name, ada_csv, model)
+                    except Exception as e:
+                        logger.warning(f"Skipping {condition} seed {seed}: {e}")
+                        continue
 
-                sim = CampaignSimulator(
-                    oracle, ds_name, n_init=5, budget=budget,
-                    controller_interval=5, seed=seed,
-                    discrete=discrete,
-                )
-                res = sim.run(ctrl)
+                    sim = CampaignSimulator(
+                        oracle, ds_name, n_init=5, budget=budget,
+                        controller_interval=5, seed=seed,
+                        discrete=discrete,
+                    )
+                    res = sim.run(ctrl)
+
                 m = compute_metrics(res, gb, budget=budget, oracle_global_min=gmin)
                 seed_metrics.append(m)
                 seed_curves.append(np.array(res["running_best"]))
@@ -223,7 +280,7 @@ if __name__ == "__main__":
                         help="Run only real LLM conditions (merge into existing results)")
     parser.add_argument("--conditions", nargs="+", default=None,
                         help="Explicit list of conditions to run, e.g. --conditions fixed_ucb_low fixed_lhs fixed_ei")
-    parser.add_argument("--model", default="qwen2.5-coder:7b",
+    parser.add_argument("--model", default="qwen3-coder:30b",
                         help="Ollama model name")
     parser.add_argument("--discrete", action="store_true",
                         help="Use discrete scoring (score unqueried dataset rows directly)")
@@ -233,14 +290,19 @@ if __name__ == "__main__":
     if args.conditions:
         conditions = args.conditions
     elif args.llm_only:
-        conditions = ["approach_c"] #["approach_a", "approach_b", "approach_c"]
+        conditions = ["approach_c"] #["approach_a", "approach_b", "approach_c", "approach_d"]
     elif args.llm:
         conditions = [
             "fixed_random", "fixed_ucb_low", "fixed_ucb_high",
             "fixed_ei", "fixed_lhs",
             "mock_approach_a", "mock_approach_b", "mock_approach_c",
-            "approach_a", "approach_b", "approach_c",
+            "approach_a", "approach_b", "approach_c", "approach_d",
         ]
+        # "egbo"/"novelty_egbo" are NOT in this default LLM list: they need
+        # botorch/gpytorch/torch/pymoo (a different dependency axis than
+        # Ollama) and are much more expensive per step (fresh GP fit +
+        # acquisition + evolutionary search every call, see egbo_strategy.py).
+        # Opt in explicitly: --conditions egbo novelty_egbo ...
 
     run_experiment(
         data_dir=args.data_dir,
