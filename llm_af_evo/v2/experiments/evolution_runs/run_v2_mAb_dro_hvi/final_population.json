@@ -1,0 +1,160 @@
+[
+  {
+    "id": "trust_only",
+    "code": "def score_pool(context):\n    \"\"\"\n    Pure exploitation: rank by predicted objective sum only. Iterates over\n    context[\"objective_names\"] rather than hardcoding Tm/kD/viscosity, so\n    this works on any oracle's objective set. No sign-flipping is applied\n    here \u2014 gp[name][\"mean\"] is ALREADY in all-maximise convention by the\n    time score_pool sees it (upstream strategy code does that conversion\n    before building context), so re-applying objective_directions here\n    would double-flip and invert behaviour on any min-objective.\n    \"\"\"\n    names = context[\"objective_names\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        scores.append(sum(gp[name][\"mean\"] for name in names))\n    return scores",
+    "win_rate": 0.5066666666666667,
+    "mean_margin": 0.00929908928786116,
+    "median_margin": 0.001499698592183164,
+    "ci_lower_16": 0.0010423237613473861,
+    "bootstrap_ci": [
+      -0.006923583645709487,
+      0.026334322707298585
+    ],
+    "gamma": 0.0008660490166875147,
+    "loc": 6,
+    "fitness": -0.004153970338777702,
+    "mean_hv": 8128.378437222759,
+    "n_campaigns": 75,
+    "selection_signature": "4fc9b4de0288171570b9f63e4ff34768",
+    "docstring": "Pure exploitation: rank by predicted objective sum only. Iterates over"
+  },
+  {
+    "id": "gen1_child2",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with uncertainty-aware ranking: sum of means plus a scaled std penalty to balance exploration and exploitation.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_norm = sum(gp[name][\"std\"] / front_range[name] for name in names)\n        # Scale the uncertainty term to balance exploitation (mu) and exploration (sigma).\n        scores.append(mu_sum - 0.5 * sigma_norm)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.5333333333333333,
+    "mean_margin": 0.008885619559267147,
+    "median_margin": 0.0023267169331485354,
+    "ci_lower_16": 0.0013104772984448877,
+    "bootstrap_ci": [
+      -0.005860951281549472,
+      0.02404293734410827
+    ],
+    "gamma": 0.0007730556395292812,
+    "loc": 9,
+    "fitness": -0.005647023457318643,
+    "mean_hv": 8124.65170488046,
+    "n_campaigns": 75,
+    "selection_signature": "9ec2a94da2c4453d87d22c8704f54fdb",
+    "docstring": "Exploitation with uncertainty-aware ranking: sum of means plus a scaled std penalty to balance exploration and exploitation."
+  },
+  {
+    "id": "gen8_child1",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with uncertainty-aware ranking: sum of means plus scaled std penalty, adjusted by progress-driven exploration weight.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n    \n    # Dynamically adjust the balance between exploitation and exploration\n    exploit_weight = 1.0 - max(0., (progress * 2.0) - 1.) ** 2\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_norm = sum(gp[name][\"std\"] / front_range[name] for name in names)\n        \n        # Blend exploitation and exploration based on progress\n        scores.append(mu_sum - exploit_weight * 0.5 * sigma_norm)\n\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.5333333333333333,
+    "mean_margin": 0.009133209874809846,
+    "median_margin": 0.0023267169331485354,
+    "ci_lower_16": 0.001606639828830307,
+    "bootstrap_ci": [
+      -0.005723085015362555,
+      0.024285490946994344
+    ],
+    "gamma": 0.0007725094905215193,
+    "loc": 11,
+    "fitness": -0.006890964566906406,
+    "mean_hv": 8125.356807424017,
+    "n_campaigns": 75,
+    "selection_signature": "b93b3f4763705a69c005fc130106e1b9",
+    "docstring": "Exploitation with uncertainty-aware ranking: sum of means plus scaled std penalty, adjusted by progress-driven exploration weight."
+  },
+  {
+    "id": "hint_fixed_ucb",
+    "code": "def score_pool(context):\n    \"\"\"Sum of predicted GP means plus a fixed-weight uncertainty bonus (UCB-style).\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_norm = sum(gp[name][\"std\"] / front_range[name] for name in names)\n        scores.append(mu_sum + 2.0 * sigma_norm)\n    return scores",
+    "win_rate": 0.52,
+    "mean_margin": 0.008587485896607586,
+    "median_margin": 0.002088717702802036,
+    "ci_lower_16": 0.0002713347675456916,
+    "bootstrap_ci": [
+      -0.007920825772520415,
+      0.02487699489317608
+    ],
+    "gamma": 0.0008490429350219723,
+    "loc": 9,
+    "fitness": -0.0073700516476520594,
+    "mean_hv": 8112.892226041338,
+    "n_campaigns": 75,
+    "selection_signature": "1387572064151c6f134722a41b0c8adc",
+    "docstring": "Sum of predicted GP means plus a fixed-weight uncertainty bonus (UCB-style)."
+  },
+  {
+    "id": "gen16_child2",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with probabilistic Pareto dominance estimation: rank by expected hypervolume improvement adjusted for uncertainty.\"\"\"\n    names = context[\"objective_names\"]\n    ref_point = np.array([context[\"ref_point_by_name\"][name] for name in names])\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Estimate probability of being Pareto optimal using Monte Carlo sampling\n        n_samples = 100\n        pareto_prob = 0.0\n        \n        for _ in range(n_samples):\n            sample_objectives = np.array([np.random.normal(gp[name][\"mean\"], gp[name][\"std\"]) \n                                         for name in names])\n            \n            # If this candidate dominates the reference point, it's potentially Pareto optimal  \n            if all(sample_objectives >= ref_point):\n                pareto_prob += 1.0\n                \n        pareto_prob /= n_samples\n        \n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        \n        scores.append(mu_sum * (1 + pareto_prob)) \n        \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.5066666666666667,
+    "mean_margin": 0.014292782994028348,
+    "median_margin": 0.0023267169331485354,
+    "ci_lower_16": 0.005574213734015071,
+    "bootstrap_ci": [
+      -0.001895297499960712,
+      0.03220514966649262
+    ],
+    "gamma": 0.0008796155360768249,
+    "loc": 16,
+    "fitness": -0.008499634843214128,
+    "mean_hv": 8158.926640723371,
+    "n_campaigns": 75,
+    "selection_signature": "f74e039a6487eb30bb77dde6d0de8d12",
+    "docstring": "Exploitation with probabilistic Pareto dominance estimation: rank by expected hypervolume improvement adjusted for uncertainty."
+  },
+  {
+    "id": "gen20_child3",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with uncertainty-aware ranking: sum of means plus scaled std penalty, modulated by progress towards target.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_norm = sum(gp[name][\"std\"] / front_range[name] for name in names)\n        \n        # Progress-aware scaling: early on, emphasise uncertainty; later, exploit more.\n        progress = context[\"campaign\"][\"progress\"]\n        weight_factor = 0.5 + (2.0 * max(0, progress - 0.3))  # Start at 0.5 and ramp up to 2.5\n        scores.append(mu_sum - weight_factor * sigma_norm)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.52,
+    "mean_margin": 0.0076614697922857515,
+    "median_margin": 0.001499698592183164,
+    "ci_lower_16": 3.3795466820516465e-05,
+    "bootstrap_ci": [
+      -0.007915272357906174,
+      0.023302055451967195
+    ],
+    "gamma": 0.0007941324772314624,
+    "loc": 11,
+    "fitness": -0.00870166178272557,
+    "mean_hv": 8114.311362060457,
+    "n_campaigns": 75,
+    "selection_signature": "0676c810657f1e278d8b9b38e56fb15b",
+    "docstring": "Exploitation with uncertainty-aware ranking: sum of means plus scaled std penalty, modulated by progress towards target."
+  },
+  {
+    "id": "gen7_child1",
+    "code": "def score_pool(context):\n    \"\"\"\n    Exploitation with uncertainty-aware novelty: rank by predicted objective sum,\n    then penalize candidates that are too close to existing observations in feature space.\n    This encourages exploration of under-represented regions while still exploiting high-value predictions.\n    \"\"\"\n    names = context[\"objective_names\"]\n    scores = []\n    \n    # Compute base exploitation score (sum of means)\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        \n        # Add novelty penalty based on distance to nearest observed point\n        x_cand = cand[\"x\"]\n        if len(context[\"X_obs\"]) > 0:\n            distances = np.linalg.norm(context[\"X_obs\"] - x_cand, axis=1)\n            min_distance = np.min(distances)\n            \n            # Scale the novelty penalty inversely with distance (closer = more penalized)\n            # Use a small constant to avoid division by zero\n            novel_penalty = 0.5 / (min_distance + 1e-8) if min_distance > 0 else 2.0\n            \n        else:\n            novel_penalty = 0.0\n        \n        scores.append(mu_sum - novel_penalty * np.std([gp[name][\"mean\"] for name in names]))\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.5466666666666666,
+    "mean_margin": 0.009937033801536963,
+    "median_margin": 0.01680891163967212,
+    "ci_lower_16": 0.0012629945149307204,
+    "bootstrap_ci": [
+      -0.0073919666922053545,
+      0.027326863264293393
+    ],
+    "gamma": 0.0008849575151307198,
+    "loc": 14,
+    "fitness": -0.011126410696899357,
+    "mean_hv": 8168.355301225988,
+    "n_campaigns": 75,
+    "selection_signature": "ef1bbff253a6beaee136c326dd108aee",
+    "docstring": "Exploitation with uncertainty-aware novelty: rank by predicted objective sum,"
+  },
+  {
+    "id": "gen2_child2",
+    "code": "def score_pool(context):\n    \"\"\"Exploitation with progressive uncertainty weighting: blend mean prediction and normalized std based on campaign progress.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    t = context[\"campaign\"][\"progress\"]  # in [0,1]\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        mu_sum = sum(gp[name][\"mean\"] for name in names)\n        sigma_norm = sum(gp[name][\"std\"] / front_range[name] for name in names)\n\n        # Progressive weighting: start with exploitation, shift towards uncertainty as campaign progresses\n        w_exploit = 1.0 - t * 0.5   # reduce exploit weight from 1 to 0.5 over time\n        scores.append(w_exploit * mu_sum + (1 - w_exploit) * sigma_norm)\n    return scores",
+    "used_llm": true,
+    "win_rate": 0.48,
+    "mean_margin": 0.006573980403564141,
+    "median_margin": -0.0035889523190688146,
+    "ci_lower_16": -0.0016991262293599328,
+    "bootstrap_ci": [
+      -0.009953186695447716,
+      0.024032072272135403
+    ],
+    "gamma": 0.0008701881506334951,
+    "loc": 11,
+    "fitness": -0.011271195886328378,
+    "mean_hv": 8120.177624973312,
+    "n_campaigns": 75,
+    "selection_signature": "9207c9d0e5023d7010c8f20147860805",
+    "docstring": "Exploitation with progressive uncertainty weighting: blend mean prediction and normalized std based on campaign progress."
+  }
+]
