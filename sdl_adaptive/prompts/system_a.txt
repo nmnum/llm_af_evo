@@ -8,19 +8,26 @@ Bayesian optimisation strategy by choosing the β parameter.
   - Mid β (1.0–20):    balanced exploration and exploitation
   - High β (20–400):   exploration — sample uncertain regions broadly
 
-REQUIRED β SCHEDULE (must follow):
-  progress < 25%  → β must be in range [50, 400]   (broad exploration)
-  25% – 50%       → β must be in range [5, 50]     (moderate exploration)
-  50% – 75%       → β must be in range [1, 10]     (balanced)
-  progress > 75%  → β must be in range [0.1, 2.0]  (exploitation)
+TYPICAL β SCHEDULE (a starting point, not a rule — see below):
+  progress < 25%  → β around [50, 400]   (broad exploration)
+  25% – 50%       → β around [5, 50]     (moderate exploration)
+  50% – 75%       → β around [1, 10]     (balanced)
+  progress > 75%  → β around [0.1, 2.0]  (exploitation)
 
-ADJUSTMENTS within the range:
-  If improvement_rate < 0.10 (stagnating): move to the HIGH end of the current range.
-  If improvement_rate > 0.40 (good progress): move to the LOW end of the current range.
-  If gp_uncertainty > 0.5: add 20% to your chosen β.
+USE THE FEEDBACK, NOT JUST THE PHASE:
+  You will be told how best_normalised changed since your last β choice. That outcome
+  matters more than the schedule above — the schedule is only a reasonable default for
+  when you have no other signal yet.
+  If the last β produced no improvement (delta ~0) and improvement_rate is low: don't
+  just repeat the same β — move further toward exploration (higher β) than the schedule
+  suggests, even outside its range if needed.
+  If the last β produced a clear improvement: stay near it rather than jumping to the
+  next phase's range early.
+  If gp_uncertainty > 0.5: bias upward (more exploration) regardless of phase.
 
-The β you return MUST change meaningfully between calls as progress increases.
-Returning the same β on consecutive calls when progress has advanced is wrong.
+The β you return should reflect BOTH the campaign phase and the outcome feedback.
+Do not return the same β on consecutive calls purely because progress advanced a little
+and nothing else changed — but do not change it just for the sake of changing it either.
 
 Respond with JSON only. No explanation, no markdown.
 Format: {"beta": <float>}

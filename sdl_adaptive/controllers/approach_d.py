@@ -2,7 +2,9 @@
 controllers/approach_d.py — LLM strategy router (Approach D).
 
 The LLM receives campaign-state signals and selects a strategy + optional parameter.
-Uses qwen2.5-coder:7b-instruct (NOT the coder model) for better instruction following.
+Default model: qwen3-coder:30b (matches approaches A/B/C in this rerun; this
+approach only needs the model to follow a short flat-JSON output format, so
+any instruction-following-capable model works here).
 
 Output format — flat JSON, two fields maximum:
   {"strategy": "egbo"}
@@ -70,8 +72,8 @@ class ApproachDController:
 
     Parameters
     ----------
-    model        : Ollama model name. Default: qwen2.5-coder:7b-instruct
-                   Use the instruct variant, not the base coder model.
+    model        : Ollama model name. Default: qwen3-coder:30b (matches the
+                   model used for the other three approaches in this rerun).
     max_retries  : Number of retries on parse failure (default 2).
     timeout      : Seconds to wait for Ollama response (default 30).
     """
@@ -80,7 +82,7 @@ class ApproachDController:
 
     def __init__(
         self,
-        model: str = "qwen2.5-coder:7b-instruct",
+        model: str = "qwen3-coder:30b",
         max_retries: int = 2,
         timeout: int = 30,
     ):
@@ -109,7 +111,10 @@ class ApproachDController:
             f"lengthscale_norm: {ls:.3f}\n"
             f"obs_per_dim:      {obs_per_dim:.1f}\n"
             f"progress:         {progress:.2f}\n"
-            f"current_strategy: {self._current_strategy}\n\n"
+            f"current_strategy: {self._current_strategy}"
+            + (f" (selected {self._consecutive_same} times in a row — "
+               f"consider whether it's still appropriate)" if self._consecutive_same >= 3 else "")
+            + "\n\n"
             f"Select the best strategy. Output JSON only."
         )
 
@@ -169,7 +174,16 @@ class ApproachDController:
             try:
                 # think=False disables chain-of-thought for qwen3 models
                 # num_predict=256 gives enough tokens after thinking is stripped
-                options = {"temperature": 0.1, "num_predict": 256}
+                # temperature 0.1 -> 0.3: this is discrete classification (pick 1 of
+                # ~5 strategy names), not code generation, so 0.1's "collapses to
+                # reproducing the input" failure mode (see approach_c) doesn't apply
+                # the same way — but 0.1 still tends to give the same answer for very
+                # similar states, undercutting the point of an LLM router over
+                # rule_router.py. 0.3 is a modest hedge, not a full 0.7: a parse
+                # failure here already falls through to _rule_fallback with a logged
+                # warning, so a regression from raising this would be visible in the
+                # logs rather than silently mis-routing.
+                options = {"temperature": 0.3, "num_predict": 256}
                 if "qwen3" in self.model.lower():
                     options["think"] = False
                 response = ollama.chat(

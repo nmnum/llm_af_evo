@@ -1979,4 +1979,40 @@ than leaving it as an unresolved null.
 
 ---
 
+## Addendum: §22 Step 2 Smoke Test — ParEGO-Scalarised EI + DA-COREG (2026-08-10)
+
+§22's "Proposed next experiment" left step 2 (ParEGO-scalarised EI) untested
+(status table: "remain design proposals only, not yet run"). Ran the smoke
+check it specified: DTLZ2 only, 1 replicate, `n_fitness_seeds=1`,
+`n_campaigns=5`, purely to confirm the swap runs and check for a directional
+signal before any seed-averaging spend.
+
+**Implementation** (`llm_af_evo/v1_pre_v2/experiments/run_parego_ei_da_coreg_smoke.py`):
+same two-condition harness as `run_da_coreg_no_qnehvi_pilot.py`
+(`unsga3_pool_af_indep` vs `unsga3_pool_af_da_coreg`, both via
+`strategy_unsga3_pool_af`, no `qLogNEHVI`/`optimize_acqf` anywhere), with
+`af_code` swapped from `trust_only` to a new `PAREGO_EI` score_pool program:
+a random Dirichlet weight vector redrawn each campaign step (seeded off
+`context["campaign"]["step"]`), weighted-Tchebycheff scalarisation of the
+posterior mean against the observed ideal point, and pointwise analytic EI
+against the best observed scalarised value — sigma for the scalarised
+posterior is approximated as the same Chebyshev-weighted combination applied
+to per-objective sigma (no closed form exists for the true posterior of a
+max-of-linear-terms scalarisation). Normal CDF/PDF are hand-rolled from
+`math.erf` since the AF sandbox's import whitelist (numpy/math/itertools)
+excludes scipy.
+
+**Result:** `diff=+2.1%`, `wins=3/5`, `p=0.625`, 0/30 DA-COREG fallback
+batches (clean MultiTaskGP fits throughout). Directionally positive, as
+step 1 (front-range normalisation) was not. Per the decision rule already
+stated in §22 ("if flat, treat the acquisition swap as not worth pursuing
+further before touching mAb"): this is not flat, so — unlike step 1, which
+was run and ruled out — step 2 is not ruled out by this smoke check and
+would be the next candidate for a real seed-averaged run
+(`--n_campaigns 20 --n_replicates 3`) before drawing any real conclusion.
+n=5/p=0.625 has essentially no statistical power; this is a green light to
+spend the seed-averaging budget, not a positive result in itself.
+
+---
+
 *End of document.*

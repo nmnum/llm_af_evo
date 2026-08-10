@@ -1,0 +1,125 @@
+[
+  {
+    "replicate": 0,
+    "per_campaign_final_hv": {
+      "unsga3_pool_af_indep": [
+        5.052360423636865,
+        4.8569795220567595,
+        4.611027434225208,
+        4.87487909167922,
+        4.934714489381753
+      ],
+      "unsga3_pool_af_da_coreg": [
+        5.019293951236631,
+        4.846652583385622,
+        4.994589794657432,
+        5.038072449854738,
+        4.9406127525878265
+      ]
+    },
+    "summary": {
+      "unsga3_pool_af_da_coreg": {
+        "pct_diff": 2.0931417504499787,
+        "n_wins": 3,
+        "n_campaigns": 5,
+        "p": 0.625
+      }
+    },
+    "fallback_info": {
+      "unsga3_pool_af_indep": [
+        {
+          "campaign": 0,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            5.052360423636865
+          ]
+        },
+        {
+          "campaign": 1,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            4.8569795220567595
+          ]
+        },
+        {
+          "campaign": 2,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            4.611027434225208
+          ]
+        },
+        {
+          "campaign": 3,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            4.87487909167922
+          ]
+        },
+        {
+          "campaign": 4,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            4.934714489381753
+          ]
+        }
+      ],
+      "unsga3_pool_af_da_coreg": [
+        {
+          "campaign": 0,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            5.019293951236631
+          ]
+        },
+        {
+          "campaign": 1,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            4.846652583385622
+          ]
+        },
+        {
+          "campaign": 2,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            4.994589794657432
+          ]
+        },
+        {
+          "campaign": 3,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            5.038072449854738
+          ]
+        },
+        {
+          "campaign": 4,
+          "n_fallback": 0,
+          "n_total": 6,
+          "reasons": [],
+          "per_seed_hv": [
+            4.9406127525878265
+          ]
+        }
+      ]
+    }
+  }
+]
