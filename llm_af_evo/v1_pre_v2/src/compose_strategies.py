@@ -56,6 +56,7 @@ from strategy_ls_na_egbo import strategy_mo_egbo
 from compose_sandbox import run_compose_in_sandbox, ComposeSandboxError
 from da_coreg import fit_da_coreg_model
 from fitness_common import to_allmax
+from full_replay import pool_obj_correlation
 
 
 def _fit_model(train_x, train_y, use_da_coreg: bool, tkwargs: dict):
@@ -189,13 +190,24 @@ def strategy_ablation_cell(oracle, X_obs, Y_obs, bounds, batch_size, rng, budget
         front_allmax = to_allmax(Y_obs.copy(), directions=directions)
         ref_point_allmax = ref_point.cpu().numpy()
 
-        if use_compose:
-            with warnings.catch_warnings(), torch.no_grad():
-                warnings.simplefilter("ignore")
-                post = model.posterior(candidates)
-                pool_mu = post.mean.detach().cpu().numpy()
-                pool_sigma = post.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
+        # Pool posterior (mu/sigma) and cross-objective correlation are now
+        # computed unconditionally, not just under use_compose — this is
+        # what lets a caller (e.g. generate_coreg_steps.py) log a DA-COREG
+        # baseline-selection cell's own pool predictions for L1 training
+        # data, which needs the SAME baseline-selection path
+        # (use_compose=False) this cell already provides, just with the
+        # predictions surfaced in the return dict like strategy_mo_egbo_
+        # novelty/strategy_unsga3_pool_af already do. pool_obj_correlation
+        # is {} whenever use_da_coreg=False (see its docstring).
+        with warnings.catch_warnings(), torch.no_grad():
+            warnings.simplefilter("ignore")
+            post = model.posterior(candidates)
+            pool_mu = post.mean.detach().cpu().numpy()
+            pool_sigma = post.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
+        obj_correlation = pool_obj_correlation(model, candidates, oracle.objective_names(),
+                                                use_da_coreg)
 
+        if use_compose:
             selected_idx = run_compose_in_sandbox(
                 compose_code, candidates_n, pool_mu, pool_sigma, X_norm,
                 front_allmax, ref_point_allmax, step, budget, step, stagnant_batches,
@@ -223,7 +235,12 @@ def strategy_ablation_cell(oracle, X_obs, Y_obs, bounds, batch_size, rng, budget
             np.column_stack([lo, hi]).T, **tkwargs)).cpu().numpy())
 
         return new_x_raw, {"use_da_coreg": use_da_coreg, "use_compose": use_compose,
-                            "n_candidates": len(candidates)}
+                            "n_candidates": len(candidates),
+                            "pool_x_norm": candidates_n.tolist(),
+                            "pool_pred_mu": pool_mu.tolist(),
+                            "pool_pred_sigma": pool_sigma.tolist(),
+                            "pool_obj_correlation": obj_correlation,
+                            "pool_selected_idx": [int(i) for i in selected_idx]}
 
     except ComposeSandboxError:
         raise

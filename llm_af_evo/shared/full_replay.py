@@ -357,6 +357,47 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
         return cands, extra
 
 
+def pool_obj_correlation(model, candidates, names, use_da_coreg: bool) -> dict:
+    """
+    Per-candidate cross-objective posterior correlation, keyed by
+    "name_a,name_b" (JSON has no tuple keys) -> list[float], one entry per
+    candidate. Only ever populated for the DA-COREG surrogate — a
+    ModelListGP's per-objective models are fit independently, so their
+    cross-objective covariance is trivially zero and not worth threading
+    through the AF sandbox for the independent-GP path (returns {} there).
+
+    Computed via one posterior() call per candidate rather than slicing the
+    single batched pool posterior (post = model.posterior(candidates))
+    strategy_unsga3_pool_af already computes for pool_mu/pool_sigma:
+    MultiTaskGP's batched-q covariance_matrix is the JOINT covariance across
+    BOTH candidates and tasks, not a block-diagonal stack of per-candidate
+    MxM blocks — indexing into it for "candidate i's own MxM block" is
+    layout-dependent and easy to get silently wrong. Re-querying the
+    posterior one candidate at a time sidesteps that ambiguity entirely, at
+    the cost of len(candidates) extra (cheap relative to the GP fit itself)
+    posterior evaluations, and is only done when use_da_coreg=True.
+    """
+    M = len(names)
+    if not use_da_coreg or M < 2:
+        return {}
+    pairs = [(a, b) for i, a in enumerate(names) for b in names[i + 1:]]
+    out = {f"{a},{b}": [] for a, b in pairs}
+    with warnings.catch_warnings(), torch.no_grad():
+        warnings.simplefilter("ignore")
+        for i in range(candidates.shape[0]):
+            try:
+                cov = (model.posterior(candidates[i:i + 1]).mvn.covariance_matrix
+                       .detach().cpu().numpy().reshape(M, M))
+                for a, b in pairs:
+                    ia, ib = names.index(a), names.index(b)
+                    denom = np.sqrt(max(cov[ia, ia], 1e-12) * max(cov[ib, ib], 1e-12))
+                    out[f"{a},{b}"].append(float(cov[ia, ib] / denom) if denom > 0 else 0.0)
+            except Exception:
+                for a, b in pairs:
+                    out[f"{a},{b}"].append(0.0)
+    return out
+
+
 def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
                              af_code: str, budget: int, sandbox_log_dir=None,
                              evo_candidates: int = 25, use_da_coreg: bool = False,
@@ -473,6 +514,11 @@ def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             pool_mu = post.mean.detach().cpu().numpy()
             pool_sigma = post.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
 
+        # {} on the independent-GP path (use_da_coreg=False) — see
+        # pool_obj_correlation's docstring for why.
+        obj_correlation = pool_obj_correlation(model, candidates, oracle.objective_names(),
+                                                use_da_coreg)
+
         front_allmax = to_allmax(Y_obs.copy(), directions=directions)
         Y_all_int = oracle._Y_raw.copy()
         for j, direction in enumerate(directions):
@@ -490,6 +536,7 @@ def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             front_allmax,
             objective_names=oracle.objective_names(),
             log_dir=sandbox_log_dir,
+            obj_correlation=obj_correlation,
         )
         selected_idx = select_batch(scores, batch_size)
 
@@ -498,7 +545,11 @@ def strategy_unsga3_pool_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             np.column_stack([lo, hi]).T, **tkwargs)).cpu().numpy())
 
         return new_x_raw, {"unsga3_pool_af": True, "use_da_coreg": use_da_coreg,
-                            "n_candidates": len(candidates)}
+                            "n_candidates": len(candidates),
+                            "pool_x_norm": candidates_n.tolist(),
+                            "pool_pred_mu": pool_mu.tolist(),
+                            "pool_pred_sigma": pool_sigma.tolist(),
+                            "pool_obj_correlation": obj_correlation}
 
     except SandboxError as e:
         raise

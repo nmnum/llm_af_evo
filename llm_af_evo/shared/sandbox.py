@@ -100,6 +100,7 @@ if __name__ == "__main__":
     stagnant_batches = json.loads(sys.argv[10])
     OBJECTIVE_NAMES = json.loads(sys.argv[11])
     Y_obs = np.array(json.loads(sys.argv[12]))
+    OBJ_CORRELATION = json.loads(sys.argv[13]) if len(sys.argv) > 13 else {}
 
     # Translate flat, positional arrays into the self-documenting nested
     # context dict per af_interface.py's contract, BEFORE candidate code
@@ -137,6 +138,12 @@ if __name__ == "__main__":
             "step": step, "budget": budget, "progress": step / max(budget, 1),
             "n_obs": n_obs, "stagnant_batches": stagnant_batches,
         },
+        # {} unless the caller's surrogate is DA-COREG (see
+        # full_replay.pool_obj_correlation) — keyed "name_a,name_b" (JSON
+        # has no tuple keys) -> list[float], one entry per pool candidate,
+        # index-aligned with context["pool"]. AF code may ignore this key
+        # entirely; it's additive, not a required part of the contract.
+        "obj_correlation": OBJ_CORRELATION,
     }
 
     result = score_pool(context)
@@ -171,7 +178,8 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
                        Y_obs: np.ndarray,
                        objective_names=None,
                        log_dir: pathlib.Path = None,
-                       fail_log_dir: pathlib.Path = None) -> np.ndarray:
+                       fail_log_dir: pathlib.Path = None,
+                       obj_correlation: dict = None) -> np.ndarray:
     """
     Execute af_code (must define score_pool per af_interface.py's contract)
     in a subprocess and return the resulting (N,) score array. Raises
@@ -194,9 +202,19 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
     front), already in all-maximise convention like pool_mu/front_allmax —
     pass front_allmax itself if the caller doesn't separately track a
     filtered front, since both are derived from the same running Y array.
+
+    obj_correlation: optional per-candidate cross-objective posterior
+    correlation, keyed "name_a,name_b" -> list[float] (JSON has no tuple
+    keys). Only a DA-COREG surrogate produces a non-trivial value here
+    (see full_replay.pool_obj_correlation) — defaults to {} (independent-GP
+    callers, or any caller not yet passing it). AF code may read it or
+    ignore it entirely; this is additive to the context, not a contract
+    change on existing score_pool programs.
     """
     if objective_names is None:
         objective_names = ["Tm", "kD", "viscosity"]
+    if obj_correlation is None:
+        obj_correlation = {}
 
     # Explainability-line enforcement: reject before ever spawning the
     # subprocess (no point burning the 10s timeout budget on code that's
@@ -232,7 +250,8 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
              json.dumps(front_allmax.tolist()), json.dumps(ref_point_allmax.tolist()),
              json.dumps(int(step)), json.dumps(int(budget)),
              json.dumps(int(n_obs)), json.dumps(int(stagnant_batches)),
-             json.dumps(list(objective_names)), json.dumps(Y_obs.tolist())],
+             json.dumps(list(objective_names)), json.dumps(Y_obs.tolist()),
+             json.dumps(obj_correlation)],
             capture_output=True, text=True, timeout=SANDBOX_TIMEOUT,
         )
 
