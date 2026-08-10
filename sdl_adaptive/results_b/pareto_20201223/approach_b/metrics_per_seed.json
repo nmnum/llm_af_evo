@@ -1,0 +1,182 @@
+[
+  {
+    "auc_best": 0.829664142782045,
+    "final_best": 3.8324096192891406,
+    "final_best_normalised": 0.8211421234946482,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.877631016215651,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.790701045202852,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 2,
+    "switch_frequency": 0.31746031746031744,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8299709875813013,
+    "final_best": 3.8324096192891406,
+    "final_best_normalised": 0.8211421234946482,
+    "steps_to_90pct": -1,
+    "switch_count": 2,
+    "switch_frequency": 0.31746031746031744,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8353008373946523,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8646713084483698,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 2,
+    "switch_frequency": 0.31746031746031744,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.7727801072705077,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8744390379216838,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 1.0,
+    "final_best": 4.667169677008169,
+    "final_best_normalised": 0.9999999999997857,
+    "steps_to_90pct": 0,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8999748642734217,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 2,
+    "switch_frequency": 0.31746031746031744,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8739830410225455,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.7680144334363828,
+    "final_best": 3.8324096192891406,
+    "final_best_normalised": 0.8211421234946482,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.7766313666674773,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 4,
+    "switch_frequency": 0.6349206349206349,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.7648753826155715,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 2,
+    "switch_frequency": 0.31746031746031744,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8238933418540196,
+    "final_best": 3.8324096192891406,
+    "final_best_normalised": 0.8211421234946482,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8771750193165128,
+    "final_best": 4.0186641917660895,
+    "final_best_normalised": 0.8610495160615936,
+    "steps_to_90pct": -1,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.7610696487248406,
+    "final_best": 3.8324096192891406,
+    "final_best_normalised": 0.8211421234946482,
+    "steps_to_90pct": -1,
+    "switch_count": 2,
+    "switch_frequency": 0.31746031746031744,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.7589703728254708,
+    "final_best": 3.8324096192891406,
+    "final_best_normalised": 0.8211421234946482,
+    "steps_to_90pct": -1,
+    "switch_count": 2,
+    "switch_frequency": 0.31746031746031744,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8340263514080241,
+    "final_best": 3.8324096192891406,
+    "final_best_normalised": 0.8211421234946482,
+    "steps_to_90pct": -1,
+    "switch_count": 2,
+    "switch_frequency": 0.31746031746031744,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 1.0,
+    "final_best": 4.667169677008169,
+    "final_best_normalised": 0.9999999999997857,
+    "steps_to_90pct": 0,
+    "switch_count": 3,
+    "switch_frequency": 0.47619047619047616,
+    "failure_count": 0
+  }
+]

@@ -1,0 +1,2502 @@
+[
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  },
+  {
+    "decisions": [
+      [
+        5,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        9,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        13,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        17,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        21,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        25,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        29,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        33,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        37,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        41,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        45,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        49,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        53,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        57,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ],
+      [
+        61,
+        "novelty_egbo",
+        {
+          "merit_weight": 0.7,
+          "batch_size": 4
+        }
+      ]
+    ],
+    "failures": []
+  }
+]
