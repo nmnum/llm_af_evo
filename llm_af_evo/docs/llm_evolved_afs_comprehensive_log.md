@@ -1908,27 +1908,85 @@ check only). This is consistent with the DA-COREG posterior bug being the
 actual driver of Gate 2's failure, not a fundamental problem with the
 ParEGO-EI acquisition swap itself.
 
+### Gate 2 re-run post-fix: still negative — DECISION: shelve DA-COREG on mAb
+
+Ran the real seed-averaged Gate 2 re-run
+(`--domain mab --n_campaigns 20 --n_replicates 3 --n_fitness_seeds 3`,
+matching the original Gate 2 methodology exactly). The +13.6% smoke signal
+did **not** hold at real statistical power:
+
+| Replicate | diff | wins | p |
+|---|---|---|---|
+| 0 | -4.0% | 7/20 | 0.105 |
+| 1 | -3.6% | 6/20 | 0.033 |
+| 2 | -6.2% | 5/20 | 0.008 |
+
+**Pooled (n=60): wins=18/60, Wilcoxon p=0.00022** — still significantly
+negative, still 0/3 replicates directionally positive. Smaller in magnitude
+than pre-fix (-3.6% to -6.2% vs -4.5% to -6.7%) but not reversed, and the
+pooled test is if anything more significant than before.
+
+**Conclusion: the per-task-standardization fix was real and worth making**
+(it resolved a genuine numerical fitting pathology — 20/32 → 1/32 blow-ups
+in the posterior-quality sweep) **but it was not the primary driver of Gate
+2's campaign-level result.** Something else about DA-COREG on mAb still
+hurts real closed-loop performance even with well-calibrated held-out
+posteriors. Leading hypotheses, not yet tested:
+
+1. **Shared lengthscale across tasks (most likely).** botorch's default
+   `MultiTaskGP`/ICM construction uses one base kernel over the input space,
+   shared across all tasks — only the task-covariance matrix varies per
+   objective pair. `Tm`/`kD`/`viscosity` are physically distinct mechanisms
+   (thermal stability, colloidal interaction, flow behaviour) with no reason
+   to share a single smoothness/lengthscale across formulation space.
+   Independent GPs fit each objective its own lengthscale; DA-COREG forces
+   a compromise onto all three. This would bias mean predictions specifically
+   (not variance, which the fix already addressed) — consistent with variance
+   now being well-calibrated while campaign outcomes remain worse.
+2. **Coregionalization's added complexity costs more than the correlation
+   buys back in a low-data regime.** ICM fits an extra M×M task-covariance
+   structure on top of the shared kernel using the same ~30 training points
+   independent GPs use more efficiently per-objective; if the true
+   cross-objective correlation (`pool_obj_correlation` diagnostics saw
+   `Tm,kD`≈0.84 in one snapshot, but this varies with data amount/campaign
+   stage) isn't consistently strong enough, the extra parameters may not pay
+   for themselves.
+3. **Ruled out: shared noise.** `MultiTaskGP`'s likelihood already fits
+   per-task noise (confirmed: `noise=[0.00086905, 0.01925618, 0.00427137]`,
+   three distinct values in the debug fit) — not a case of one noisy
+   objective's uncertainty bleeding into a cleaner one's.
+
+**Decision: shelve DA-COREG on mAb.** Neither the ParEGO-EI acquisition
+swap nor the evolved-AF direction is worth pursuing further on top of this
+surrogate as currently constructed — a real fix would require a structurally
+different coregionalization (e.g. task-specific lengthscales within the ICM
+kernel), which is out of scope for this thread. The `da_coreg.py` fix itself
+stays committed (it's a correct, independently-justified bug fix regardless
+of this outcome, and DA-COREG may still be worth revisiting on domains
+without mAb's degree of cross-objective heterogeneity), but no further
+compute goes toward evolving or hand-tuning AFs on top of DA-COREG for mAb
+specifically.
+
 ### Status / next steps
 
-- **Fix committed** in the `worktree-sdl-adaptive-improvements` branch
-  (`da_coreg.py`, plus new diagnostics `diagnose_da_coreg_posterior.py` and
-  `run_evolved_af_validation.py`) — not yet merged to `master` as of this
-  writing.
-- **Pending:** a real seed-averaged Gate 2 re-run post-fix
-  (`--domain mab --n_campaigns 20 --n_replicates 3 --n_fitness_seeds 3`,
-  matching the original Gate 2 methodology exactly for a clean before/after
-  comparison) to confirm the +13.6% smoke direction survives at real
-  statistical power. Not yet run as of this writing.
-- If the seed-averaged Gate 2 re-run confirms a real positive effect, Gate 3
-  (AF evolution) is worth revisiting from scratch with the corrected
-  surrogate — the current evolved AF (`evolution_runs/gate3_coreg_mab/best_af.py`)
-  was evolved and validated entirely against the buggy posterior and should
-  not be trusted regardless of the fix's outcome.
-- This also means DTLZ2's Gate 1 result should not be reinterpreted by this
-  finding — DTLZ2 never used DA-COREG's multi-task path in the same
-  distribution regime that broke on mAb (synthetic Y values are smoother/
-  more uniformly scaled), so the marginal +0.69% there is unaffected either
-  way.
+- **Fix committed and merged to `master`** (`da_coreg.py`, plus new
+  diagnostics `diagnose_da_coreg_posterior.py` and
+  `run_evolved_af_validation.py`).
+- **Gate 3 (AF evolution) will NOT be re-run** on this surrogate/domain
+  combination, per the shelve decision above — the training-data
+  regeneration (`training_logs_coreg_mab_postfix`) that was run in
+  anticipation of this is kept for reference but not used for evolution.
+  The existing evolved AF (`evolution_runs/gate3_coreg_mab/best_af.py`)
+  remains untrusted (built against the pre-fix posterior) and is not being
+  revisited.
+- DTLZ2's Gate 1 result (+0.69%, pooled p=0.045) is unaffected by this
+  finding — DTLZ2 never exercised DA-COREG's multi-task path in the same
+  cross-objective-heterogeneity regime that hurt mAb (synthetic Y values are
+  smoother/more uniformly scaled across objectives), so it should be read on
+  its own terms, still only suggestive rather than confirmed.
+- §22's covariance-aware acquisition direction is closed on mAb for now.
+  Any future revival should start from hypothesis 1 above (task-specific
+  lengthscales) rather than another surrogate-side standardization fix.
 
 ---
 
