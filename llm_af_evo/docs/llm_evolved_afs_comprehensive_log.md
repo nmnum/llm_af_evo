@@ -1226,6 +1226,23 @@ The assistant initially said hint_fixed_ucb overfits (it was non-significant on 
 
 ## 20. Current Plan and Next Steps
 
+**Superseded (confirmed 2026-08-11) — read `docs/NEGATIVE_RESULT.md` instead
+of this section for the current state.** Every item below was executed on
+the `v2` track after this section was written (pre-reorg, 2026-08-01) and
+closed out in `NEGATIVE_RESULT.md` (drafted 2026-08-02): the 3 broken hints
+were fixed and re-tested (all null/negative on held-out mAb, one
+significantly so); median fitness was superseded entirely by a
+bootstrap-CI-lower-bound fitness function; the noise-sweep, IGD reporting,
+mAb/coatings exploitation-edge mechanism, and paper structure remain open
+but are tracked there, not here. One gap in `NEGATIVE_RESULT.md` itself is
+also now flagged in its own "What remains open" section: the
+bootstrap-CI-lower-bound fitness function and a new `dro_robust_hvi` hint
+(added the same day, right after that document's first close) were never
+taken past a hand-backtest and a code-correctness check — no real
+evolution run of either exists anywhere in this repo's history. This
+section is left below unedited as the historical record of the plan as
+originally written; do not treat it as current.
+
 ### The Current Plan (from PLAN.md)
 
 The plan is to evolve on mAb with noise-robust fitness, validated by the 3-seed re-validation:

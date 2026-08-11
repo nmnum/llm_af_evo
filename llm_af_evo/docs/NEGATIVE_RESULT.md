@@ -344,3 +344,33 @@ either one is.
   the seven individually-tested candidates across Part 4 and Part 5a missed
   is unknown, though their uniform null result makes that less likely than
   it looked before this pass.
+- **The bootstrap-CI-lower-bound fitness function and the `dro_robust_hvi`
+  hint were never actually evolution-tested (confirmed 2026-08-11).** Both
+  landed in the same merged PR, in the hour immediately after this document
+  was first closed (commits `2211b2e`, `bdfaabb`, merged via `05f0b96`):
+  `dro_robust_hvi` (`af_interface_v2.py`) asks the LLM to sample each
+  candidate's outcome from its GP posterior, compute HVI-style improvement
+  per sample, and score by `mean(improvement) - lam*std(improvement)`
+  instead of plain mean+beta*sigma UCB; `evolve_af_v2.py`'s fitness function
+  was replaced with `ci_lower_16 - gamma*loc` (a bootstrap 16th-percentile
+  over resampled campaign margins) specifically to stop LOC penalties from
+  dominating a noisy point-estimate mean, the exact failure mode Part 4/5's
+  fixed-hints re-tests above needed 3-seed averaging to work around. What
+  exists for `dro_robust_hvi`: (1) a hand-written reference-implementation
+  backtest, no LLM, n=10 mAb campaigns — mean_margin +10.1% vs.
+  `fixed_ucb`'s +7.2% and `noisy_front_hvi`'s +7.4%, explicitly flagged
+  "not conclusive at n=10" in its own commit message; (2) a
+  `--real_llm, n_generations=0` sanity run confirming the LLM generates
+  correct code from the hint (dominance direction, discount factor,
+  mean-minus-std sign) — a code-generation correctness check, not a
+  performance test (`n_generations=0` means no evolutionary search ran).
+  No multi-generation LLM-driven evolution run of `dro_robust_hvi` exists
+  anywhere in this repo's history (checked across every worktree branch,
+  merged or not), and no results file, log, or evolution-run artifact
+  anywhere in the tree exercises the bootstrap-CI-lower-bound fitness
+  function either. Both pieces are real, committed code — just never taken
+  past a hand-backtest and a syntax check. This is the single most
+  promising untested lead left by this document: `dro_robust_hvi`'s n=10
+  backtest was the best of three compared, and the CI-lower-bound fitness
+  it would need to be evolved under was purpose-built to fix the exact
+  noise-dominance problem that sank every mechanism actually tested above.
