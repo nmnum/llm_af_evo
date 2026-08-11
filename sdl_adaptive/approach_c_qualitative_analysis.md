@@ -27,14 +27,14 @@ acq_scores = np.concatenate([gp_scores, np.zeros(72)])  # dummy scores for evo c
 
 `novelty_select(..., merit_weight=0.7)` combines `0.7*merit + 0.3*novelty`. Since merit is unconditionally 0 for every evolutionary candidate, they can only ever be selected on the strength of the 0.3-weighted novelty term — structurally starved relative to GP candidates regardless of how promising the evolutionary points actually are. The comment ("dummy scores") shows the LLM knew this was a stand-in, and it was never fixed across 16 subsequent identical or near-identical calls.
 
-This lines up with the quantitative finding already recorded in `COMPREHENSIVE_LOG.md`: `approach_c_evo` was the weakest LLM-adjacent condition sampled (≈0.708 AUC vs. `novelty_egbo`'s 0.833 and `egbo`'s 0.805–0.818). This code log gives a plausible causal mechanism for that gap — the LLM wired up the evolutionary-candidate pool but never connected it to real acquisition scoring, so the "diversity" feature it added was largely cosmetic.
+This lines up with the quantitative finding already recorded in `sdl_adaptive/COMPREHENSIVE_LOG.md` (`results_power2`): `approach_c_evo` was the weakest LLM-adjacent condition sampled (0.708 AUC vs. `egbo`'s 0.805 and `novelty_egbo`'s 0.791; separately, on `pareto_20210112`, `novelty_egbo` reaches 0.833 and `egbo` 0.818). This code log gives a plausible causal mechanism for that gap — the LLM wired up the evolutionary-candidate pool but never connected it to real acquisition scoring, so the "diversity" feature it added was largely cosmetic.
 
 ## Other qualitative observations
 
 - **Fixed exploration weight, no decay.** `beta = 2.0` is hardcoded in all 18 versions — no progress-dependent decay schedule, unlike the hand-designed EGBO baselines elsewhere in the project. The LLM never explored this axis across any of its rewrites.
 - **Random-uniform, not quasi-random, candidate sampling.** All versions draw candidates via `np.random.uniform` per dimension rather than Sobol/LHS, giving noisier space coverage than the hand-written baselines.
 - **Defensive but opaque error handling.** Every version wraps its GP logic in a bare `try/except Exception: pass`, falling back to a pre-drawn random point. Good defensive practice — the function never crashes or returns `None` — but it silently swallows all exceptions, including genuine bugs, so a silent degradation to random search is indistinguishable from a healthy run without inspecting logs.
-- **Near-total code stagnation.** 12 of 18 calls are exact duplicates of Generation B, and the LLM only ever iterated once further, to Generation C. For a design where the optimiser is rewritten from scratch every call, there is remarkably little exploration of alternative mechanisms — consistent with the project's broader documented finding (`llm_af_evo/docs/NEGATIVE_RESULT.md`) that LLM-generated optimisation code tends to converge to a narrow structural basin rather than discovering genuinely different strategies.
+- **Near-total code stagnation.** 12 of 18 calls are exact duplicates of Generation B, and the LLM only ever iterated once further, to Generation C. For a design where the optimiser is rewritten from scratch every call, there is remarkably little exploration of alternative mechanisms — three structural variants across 18 independent generation calls.
 
 ## Bottom line
 
