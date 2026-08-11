@@ -19,6 +19,17 @@ Conditions:
 Usage:
     python run_phase3.py --mock_llm --n_seeds 20
     python run_phase3.py --model qwen2.5:72b-instruct --n_seeds 20
+
+    # Restart after interruption — just re-run the same command, it resumes
+    # from results/benchmark_phase3/phase3_raw_results.csv (or --out_dir).
+
+Resumable: writes a checkpoint row to <out_dir>/phase3_raw_results.csv
+after every single (condition, seed) combo, not just at the end — the
+real-LLM run (llm_labo calls the LLM every batch, ls_na_egbo once per
+campaign) is long enough (~20hrs at qwen3:32b's measured ~327s/call,
+~220 total calls across 20 seeds) that losing all progress to a crash or
+disconnect partway through would be expensive to re-pay. On restart, any
+(condition, seed) combo already present in the checkpoint is skipped.
 """
 
 import argparse
@@ -37,6 +48,36 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from synthetic_coatings_oracle import SyntheticCoatingsOracle
 from novelty_selection import novelty_aware_select_vectorised
 from llm_warmstart import llm_warmstart_init_coatings, build_coatings_prompt, parse_llm_coatings
+
+
+CKPT_COLS = [
+    "phase", "condition", "seed", "budget", "n_init", "final_best",
+    "best_frac", "exp_to_90pct", "n_obs", "llm_fallback_used", "llm_retry_count",
+]
+
+
+def load_checkpoint(ckpt_path):
+    """Load existing checkpoint CSV, return DataFrame or empty. Same pattern
+    as run_benchmark_resumable.py's load_checkpoint."""
+    if pathlib.Path(ckpt_path).exists():
+        try:
+            df = pd.read_csv(ckpt_path)
+            print(f"  Loaded checkpoint: {len(df)} rows from {ckpt_path}")
+            return df
+        except Exception as e:
+            print(f"  Warning: could not load checkpoint: {e}")
+    return pd.DataFrame(columns=CKPT_COLS)
+
+
+def save_checkpoint(df, ckpt_path):
+    df.to_csv(str(ckpt_path), index=False)
+
+
+def is_completed(ckpt_df, condition, seed):
+    if len(ckpt_df) == 0:
+        return False
+    mask = (ckpt_df["condition"] == condition) & (ckpt_df["seed"] == seed)
+    return mask.any()
 
 
 def make_shared_inits_coatings(oracle, n_repeats, n_init, rng_seed=42):
@@ -325,11 +366,16 @@ def main():
     parser.add_argument("--mock_llm", action="store_true")
     parser.add_argument("--w_acq", type=float, default=0.9)
     parser.add_argument("--w_nov", type=float, default=0.1)
-    parser.add_argument("--out_dir", default="/mnt/results/benchmark_phase3")
+    # Was hardcoded to /mnt/results/benchmark_phase3 (a path from a
+    # different environment — not writable, not even present, here).
+    # Relative to the repo root, alongside the other results/benchmark_*
+    # directories this project already uses.
+    parser.add_argument("--out_dir", default="results/benchmark_phase3")
     args = parser.parse_args()
 
     out_dir = pathlib.Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    ckpt_path = out_dir / "phase3_raw_results.csv"
 
     print(f"\n{'='*60}")
     print(f"PHASE 3: Coatings generalisability (synthetic 4D)")
@@ -356,14 +402,22 @@ def main():
                        "n_llm_candidates": 20}, False),
     }
 
-    results = []
+    ckpt_df = load_checkpoint(ckpt_path)
+    results = ckpt_df.to_dict("records")
+    total_combos = len(conditions) * args.n_seeds
+    print(f"  Progress: {len(results)}/{total_combos} combos completed")
+
     t_start = time.time()
 
     for cond_name, (fn, kwargs, is_warmstart) in conditions.items():
         t0 = time.time()
-        print(f"\n  {cond_name}...", end="", flush=True)
+        pending = [s for s in range(args.n_seeds)
+                   if not is_completed(ckpt_df, cond_name, s)]
+        skipped = args.n_seeds - len(pending)
+        print(f"\n  {cond_name}... ({skipped} already done, {len(pending)} to run)",
+              end="", flush=True)
 
-        for seed_idx in range(args.n_seeds):
+        for seed_idx in pending:
             disc_seed = oracle.make_discrete_oracle(n_samples=200, seed=42)
 
             llm_fallback_used, llm_retry_count = False, 0
@@ -402,6 +456,16 @@ def main():
                 "llm_fallback_used": llm_fallback_used,
                 "llm_retry_count": llm_retry_count,
             })
+            # Checkpoint after every single (condition, seed) combo, not just
+            # at the end — real-LLM runs here are long enough (~20hrs full
+            # scale) that losing all progress to a crash/disconnect would be
+            # expensive. ckpt_df is intentionally NOT refreshed from this
+            # save within the loop (matches run_benchmark_resumable.py's
+            # pattern) -- is_completed() is only consulted once per
+            # condition above, so this is safe within a single process run;
+            # a concurrent second process against the same out_dir is not
+            # supported.
+            save_checkpoint(pd.DataFrame(results), ckpt_path)
             print(".", end="", flush=True)
         print(f" ({time.time()-t0:.0f}s)")
 
@@ -409,7 +473,6 @@ def main():
     print(f"\n\nTotal runtime: {elapsed:.0f}s ({elapsed/60:.1f} min)")
 
     df = pd.DataFrame(results)
-    df.to_csv(out_dir / "phase3_raw_results.csv", index=False)
 
     # Summary
     summary = df.groupby("condition").agg(
