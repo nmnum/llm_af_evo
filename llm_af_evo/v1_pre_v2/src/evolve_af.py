@@ -116,6 +116,26 @@ def load_training_steps(train_dir: pathlib.Path) -> list:
         budget = log["budget"]
         hv_trajectory = log["hv_trajectory"]
 
+        # objective_names: threaded through to run_af_in_sandbox so evolved
+        # code sees the SAME keys a real deployment context would use for
+        # this domain (see sandbox.py's run_af_in_sandbox docstring). Bug
+        # found 2026-08-11: this used to be omitted entirely, so every
+        # training step (mab AND dtlz2/zdt1) silently used
+        # run_af_in_sandbox's ["Tm","kD","viscosity"] default regardless of
+        # domain — evolution against dtlz2 data still produced correct
+        # win_rate numbers (positionally consistent labels throughout
+        # training), but the resulting best_af.py hardcoded mAb's names and
+        # would KeyError immediately in a real dtlz2 campaign, where
+        # context["gp_posterior"] is actually keyed by f1/f2/f3. mab logs
+        # don't carry a "domain" key (pre-dates --domain), so absence of
+        # that key still means mAb's Tm/kD/viscosity, matching
+        # generate_coreg_steps.py's mab payload shape.
+        domain = log.get("domain")
+        if domain in ("dtlz2", "zdt1"):
+            objective_names = [f"f{i + 1}" for i in range(Y_running.shape[1])]
+        else:
+            objective_names = ["Tm", "kD", "viscosity"]
+
         for batch_idx, step in enumerate(log["decisions"]):
             if "pool_x_norm" not in step or "pool_pred_sigma" not in step:
                 Y_running = np.vstack([Y_running, np.array(step["picked_y"])]) \
@@ -151,6 +171,7 @@ def load_training_steps(train_dir: pathlib.Path) -> list:
                 "range_j": range_j,
                 "oracle_X": oracle_X, "oracle_Y": oracle_Y,
                 "egbo_true_gain": egbo_true_gain,
+                "objective_names": objective_names,
             })
 
             Y_running = np.vstack([Y_running, np.array(step["picked_y"])])
@@ -216,6 +237,7 @@ def evaluate_af(code: str, steps: list, gamma: float, log_dir=None) -> dict:
                 s["front_allmax"], s["ref_point_allmax"],
                 s["step"], s["budget"], s["n_obs"], s["stagnant_batches"],
                 s["Y_obs"], obj_correlation=s["obj_correlation"],
+                objective_names=s["objective_names"],
             )
             af_idx = select_batch(scores, s["batch_size"])
             sig_hasher.update(str(sorted(af_idx)).encode())
@@ -241,7 +263,11 @@ def evaluate_af(code: str, steps: list, gamma: float, log_dir=None) -> dict:
 # ── Real-LLM child generation (wired, untestable in this sandbox) ─────────
 
 _LLM_SYSTEM_PROMPT = '''You are evolving acquisition functions for multi-objective \
-Bayesian optimisation of protein formulations. You must write a Python function:
+Bayesian optimisation. The objectives being optimised vary by run (e.g. protein \
+formulation properties, or synthetic benchmark objectives) — NEVER hardcode \
+objective names; always read them from context["objective_names"] (see below), \
+so the same score_pool works regardless of which domain it's being evolved for. \
+You must write a Python function:
 
 def score_pool(context) -> list:
     ...
@@ -261,32 +287,41 @@ the front early, add an uncertainty penalty once stagnant"), not restate \
 the code line-by-line.
 
 context = {
+    "objective_names": [str, ...],           # e.g. ["Tm", "kD", "viscosity"] or ["f1", "f2", "f3"]
+                                              # — ALWAYS iterate this, never hardcode names;
+                                              # it tells you both the names AND how many
+                                              # objectives this run has (not always 3).
     "pool": [
-        {"x": np.ndarray(16,),               # normalised candidate features
+        {"x": np.ndarray(d,),                # normalised candidate features
          "gp_posterior": {
-             "Tm":        {"mean": float, "std": float},  # higher is better
-             "kD":        {"mean": float, "std": float},  # higher is better
-             "viscosity": {"mean": float, "std": float},  # already flipped: higher is better
+             # one entry per name in context["objective_names"], e.g.:
+             # "Tm": {"mean": float, "std": float},  # ALREADY flipped: higher is always better
          }},
         ...  # one entry per candidate
     ],
-    "X_obs": np.ndarray(n_obs, 16),          # every formulation observed so far
-    "Y_obs": np.ndarray(n_obs, 3),           # every OUTCOME observed so far, all-maximised,
-                                              # rows match X_obs, columns [Tm, kD, viscosity]
+    "X_obs": np.ndarray(n_obs, d),           # every point observed so far
+    "Y_obs": np.ndarray(n_obs, len(objective_names)),  # every OUTCOME observed so far,
+                                              # all-maximised, rows match X_obs, columns
+                                              # match context["objective_names"] order
                                               # (full observation history, not filtered to
                                               # the front — use for novelty distance or
                                               # resampling a noisy Pareto front)
-    "pareto_front": np.ndarray(n_pf, 3),     # non-dominated points, columns [Tm, kD, viscosity]
-    "pareto_front_range": {"Tm": float, "kD": float, "viscosity": float},  # observed range per objective
-    "ref_point": np.ndarray(3,),             # HV reference point, columns [Tm, kD, viscosity]
-    "ref_point_by_name": {"Tm": float, "kD": float, "viscosity": float},
+    "pareto_front": np.ndarray(n_pf, len(objective_names)),  # non-dominated points,
+                                              # columns match context["objective_names"]
+    "pareto_front_range": {name: float, ...},  # observed range per objective, keyed by name
+    "ref_point": np.ndarray(len(objective_names),),  # HV reference point, all-maximised,
+                                              # same column order as objective_names
+    "ref_point_by_name": {name: float, ...},
     "campaign": {"step": int, "budget": int, "progress": float,  # step/budget, in [0,1]
                  "n_obs": int, "stagnant_batches": int},  # consecutive non-improving batches
 }
 
-Note viscosity is ALREADY flipped so higher is always better for all three objectives —
-do not flip it again. Access objectives BY NAME (e.g. cand["gp_posterior"]["viscosity"]["std"]),
-never by a remembered array position.
+Every objective in gp_posterior/pareto_front_range/ref_point_by_name is ALREADY flipped so
+higher is always better, whatever the true direction (min/max) — do not flip it again.
+Access objectives BY NAME via context["objective_names"] (e.g.
+`for name in context["objective_names"]: gp[name]["std"]`), never by a hardcoded name or a
+remembered array position — the exact same score_pool source must work whether this run has
+3 objectives called Tm/kD/viscosity or 3 called f1/f2/f3.
 
 THE BASELINE YOU ARE TRYING TO BEAT: the current production method
 ("EGBO-novelty") does NOT use a linear combination of mean and std. Each
@@ -324,7 +359,7 @@ same point (both measured against the real, not GP-predicted, outcome).
 fitness = win_rate - (a small penalty per line of code). The FINAL
 evaluation that decides whether an AF is actually good, however, runs your
 score_pool as the acquisition function for complete, multi-batch campaigns
-on new formulations and compares final hypervolume — so an AF that wins
+on new points and compares final hypervolume — so an AF that wins
 many individual decision points but makes choices that leave later
 decisions worse off (e.g. by never exploring) can still under-perform
 end-to-end. Consider how your choices at one decision compound into later
@@ -344,14 +379,13 @@ Worked example — a simple exploitation-plus-uncertainty AF:
 
 def score_pool(context):
     """Sum of predicted GP means plus normalised uncertainty (UCB-style)."""
+    names = context["objective_names"]
     front_range = context["pareto_front_range"]
     scores = []
     for cand in context["pool"]:
         gp = cand["gp_posterior"]
-        mu_sum = gp["Tm"]["mean"] + gp["kD"]["mean"] + gp["viscosity"]["mean"]
-        sigma_norm = (gp["Tm"]["std"] / front_range["Tm"]
-                      + gp["kD"]["std"] / front_range["kD"]
-                      + gp["viscosity"]["std"] / front_range["viscosity"])
+        mu_sum = sum(gp[name]["mean"] for name in names)
+        sigma_norm = sum(gp[name]["std"] / front_range[name] for name in names)
         scores.append(mu_sum + 2.0 * sigma_norm)
     return scores
 
