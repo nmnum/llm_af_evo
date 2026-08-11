@@ -142,6 +142,10 @@ def load_training_steps(train_dir: pathlib.Path) -> list:
                 "stagnant_batches": _stagnant_prefix(hv_trajectory, batch_idx),
                 "pool_x": np.array(step["pool_x_norm"]),
                 "pool_mu": pool_mu, "pool_sigma": pool_sigma,
+                # {} for every pre-existing independent-GP training log
+                # (generate_training_set.py never wrote this key) — only
+                # generate_coreg_steps.py's DA-COREG campaigns populate it.
+                "obj_correlation": step.get("pool_obj_correlation", {}),
                 "X_obs": X_running.copy(), "Y_obs": front_allmax.copy(),
                 "front_allmax": front_allmax, "ref_point_allmax": ref_point_allmax,
                 "range_j": range_j,
@@ -211,7 +215,7 @@ def evaluate_af(code: str, steps: list, gamma: float, log_dir=None) -> dict:
                 code, s["pool_x"], s["pool_mu"], s["pool_sigma"], s["X_obs"],
                 s["front_allmax"], s["ref_point_allmax"],
                 s["step"], s["budget"], s["n_obs"], s["stagnant_batches"],
-                s["Y_obs"],
+                s["Y_obs"], obj_correlation=s["obj_correlation"],
             )
             af_idx = select_batch(scores, s["batch_size"])
             sig_hasher.update(str(sorted(af_idx)).encode())
@@ -484,7 +488,7 @@ def make_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
 
 def run_evolution(steps: list, pop_size: int, n_generations: int, n_offspring: int,
                    gamma: float, mock: bool, model: str, seed: int,
-                   log_dir: pathlib.Path = None) -> dict:
+                   log_dir: pathlib.Path = None, patience: int = 6) -> dict:
     rng = np.random.default_rng(seed)
 
     population = []
@@ -507,6 +511,8 @@ def run_evolution(steps: list, pop_size: int, n_generations: int, n_offspring: i
                 "best_win_rate": max(p["win_rate"] for p in population)}]
 
     n_llm_calls, n_llm_failures = 0, 0
+    no_improve_count = 0
+    best_fitness_so_far = history[0]["best_fitness"]
     for gen in range(1, n_generations + 1):
         # Recomputed each generation rather than relying on population
         # being pre-sorted — it IS sorted after gen 1 (bottom of this loop
@@ -574,6 +580,21 @@ def run_evolution(steps: list, pop_size: int, n_generations: int, n_offspring: i
                  if llm_failure_rate is not None else "")
               + f"  duplicates={n_duplicate}/{len(children)}")
 
+        # Stagnation-based early stop: patience generations with no
+        # fitness improvement (float tolerance, same 1e-6 threshold
+        # evaluate_af/_stagnant_prefix already use elsewhere in this file)
+        # ends the run early instead of burning the remaining generations'
+        # LLM-call budget on a population that has already converged.
+        if population[0]["fitness"] > best_fitness_so_far + 1e-6:
+            best_fitness_so_far = population[0]["fitness"]
+            no_improve_count = 0
+        else:
+            no_improve_count += 1
+            if no_improve_count >= patience:
+                print(f"  stopping early at gen {gen}: no fitness improvement "
+                      f"for {patience} generations")
+                break
+
     if not mock:
         print(f"\nReal-LLM calls: {n_llm_calls}, fell back to mock crossover: "
               f"{n_llm_failures} ({100 * n_llm_failures / max(1, n_llm_calls):.0f}%)")
@@ -607,6 +628,9 @@ def main():
                           "default; qwen3-coder-next (52-85GB) trades latency "
                           "for quality if evolved AFs look too shallow.")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--patience", type=int, default=6,
+                     help="stop early if best fitness hasn't improved for this "
+                          "many consecutive generations")
     ap.add_argument("--out_dir", default=str(pathlib.Path(__file__).parent /
                                               "evolution_runs" / "run1"))
     args = ap.parse_args()
@@ -625,6 +649,7 @@ def main():
     result = run_evolution(
         steps, args.pop_size, args.n_generations, args.n_offspring, args.gamma,
         args.mock, args.model, args.seed, log_dir=code_log_dir,
+        patience=args.patience,
     )
 
     best = result["population"][0]

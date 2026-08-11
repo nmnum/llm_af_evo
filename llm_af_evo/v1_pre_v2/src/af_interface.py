@@ -200,6 +200,9 @@ def score_pool(context):
     time score_pool sees it (upstream strategy code does that conversion
     before building context), so re-applying objective_directions here
     would double-flip and invert behaviour on any min-objective.
+    context["obj_correlation"] (per-candidate cross-objective posterior
+    correlation, DA-COREG surrogate only — see cov_aligned_ei below) is
+    available in context but deliberately unused here.
     """
     names = context["objective_names"]
     scores = []
@@ -352,6 +355,38 @@ def score_pool(context):
     return scores
 '''
 
+SEED_COV_ALIGNED_EI = '''
+def score_pool(context):
+    """
+    Use cross-objective posterior correlation to weight candidates by
+    expected joint improvement. Starting point only, not a prescribed
+    implementation — trust_only's mu_sum, boosted for candidates whose
+    objective pairs the DA-COREG surrogate currently believes move
+    together (positive obj_correlation: a gain on one objective predicts
+    a gain on the correlated one too, i.e. more of the mu_sum estimate is
+    jointly, not independently, achievable) and discounted for pairs
+    believed to trade off (negative correlation). context["obj_correlation"]
+    is {} on the independent-GP path (ModelListGP's per-objective models
+    never see each other), so this collapses to plain trust_only there —
+    correct, since there is no cross-objective signal to use in that case.
+    """
+    names = context["objective_names"]
+    corr = context["obj_correlation"]
+    scores = []
+    for i, cand in enumerate(context["pool"]):
+        gp = cand["gp_posterior"]
+        mu_sum = sum(gp[name]["mean"] for name in names)
+        corr_bonus = 0.0
+        n_pairs = 0
+        for key, vals in corr.items():
+            corr_bonus += vals[i]
+            n_pairs += 1
+        if n_pairs > 0:
+            corr_bonus /= n_pairs
+        scores.append(mu_sum * (1.0 + 0.25 * corr_bonus))
+    return scores
+'''
+
 SEED_PROGRAMS = {
     "trust_only": SEED_TRUST_ONLY.strip("\n"),
     "fixed_ucb": SEED_FIXED_UCB.strip("\n"),
@@ -360,6 +395,7 @@ SEED_PROGRAMS = {
     "phase_decaying_ucb": SEED_PHASE_DECAYING_UCB.strip("\n"),
     "ehvi_approx": SEED_EHVI_APPROX.strip("\n"),
     "mc_hvi_approx": SEED_MC_HVI_APPROX.strip("\n"),
+    "cov_aligned_ei": SEED_COV_ALIGNED_EI.strip("\n"),
 }
 
 # term_weights equivalents of the hand-written seeds above, expressed over
