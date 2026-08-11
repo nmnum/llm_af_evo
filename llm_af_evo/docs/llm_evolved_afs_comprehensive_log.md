@@ -1796,4 +1796,140 @@ spend the seed-averaging budget, not a positive result in itself.
 
 ---
 
+## Addendum 2: §22 Step 2 Seed-Averaged Follow-Through — Gate 1/2/3 and a Real DA-COREG Bug (2026-08-11)
+
+Following the Addendum's green light, ran the full gate sequence the smoke
+result earned: DTLZ2 seed-averaged (Gate 1), mAb cross-check (Gate 2), and —
+authorized in parallel while Gate 2 ran — a covariance-aware evolution build
+(Gate 3). Gate 2's clean negative result led to a closed-loop-vs-fitness-proxy
+validation and a posterior-quality diagnostic, which surfaced and fixed a real
+bug in `da_coreg.py`.
+
+### Gate 1: DTLZ2 seed-averaged (`--n_campaigns 20 --n_replicates 3`)
+
+Pooled all 3×20=60 replicate×campaign pairs into one paired Wilcoxon test
+(more power than reading each replicate's underpowered n=20 test alone).
+Result: **+0.69%, pooled Wilcoxon p=0.045** — borderline-significant,
+suggestive but not confirmed on its own. Motivated a cross-check on the real
+domain (Gate 2) before treating this as validated.
+
+### Gate 2: mAb cross-check (`--domain mab --n_campaigns 20 --n_replicates 3 --n_fitness_seeds 3`)
+
+**Result: 0/3 replicates directionally positive**, consistently and
+significantly negative:
+
+| Replicate | diff | wins | p |
+|---|---|---|---|
+| 0 | -6.7% | 4/20 | 0.00944 |
+| 1 | -4.5% | 5/20 | 0.0328 |
+| 2 | -5.8% | 6/20 | 0.0107 |
+
+0/360 DA-COREG fallback batches (clean fits, not fallback contamination).
+This is a much stronger, cleaner signal than DTLZ2's marginal positive —
+strongly suggesting the real problem is not this specific ParEGO-EI
+approximation but something wrong with the DA-COREG posterior itself on
+mAb (later confirmed — see below).
+
+### Gate 3: Covariance-aware AF evolution (built during Gate 2, run after)
+
+5-piece infrastructure build, gated on Gate 1/2 passing (Gate 2 in fact
+failed, per the reasoning "either way [Gate 2] reinforces or motivates
+evolving further" — proceeded anyway as an independent test):
+`obj_correlation` threaded through `full_replay.py`'s context →
+`sandbox.py`'s `run_af_in_sandbox` → `evolve_af.py`'s fitness evaluation;
+`generate_coreg_steps.py` (new) generates DA-COREG training-step snapshots
+with `strategy_ablation_cell(use_da_coreg=True, use_compose=False)`
+baseline picks (surrogate held fixed, so any measured AF improvement is
+attributable to the AF, not a surrogate swap); stagnation-based early
+stopping (`patience`, default 6) added to `run_evolution`; a `cov_aligned_ei`
+seed program added to `af_interface.py`.
+
+Real-LLM evolution run (`evolve_af.py --real_llm`, 152 real LLM calls, 0%
+mock-crossover fallback) converged at gen 19 (patience=6, plateaued from gen
+7): best AF `fitness=0.4656`, `win_rate=0.531` — barely above the per-step
+proxy's coin-flip baseline. **The evolved AF never uses `context["obj_correlation"]`** —
+despite being available, the search converged on a generic inverse-uncertainty
++ progressive-exploration + novelty heuristic instead.
+
+**Closed-loop validation** (`run_evolved_af_validation.py`, new): ran the
+evolved AF against a simple un-evolved `trust_only` baseline in real
+closed-loop mAb campaigns (both under DA-COREG), rather than trusting the
+per-step fitness proxy. 5-campaign smoke: **diff=-0.7%, wins=2/5, p=1** —
+the evolved AF's fitness-proxy edge did not translate into real campaign
+gains; if anything it's a small loss.
+
+### Root-cause diagnostic: DA-COREG posterior quality on mAb (`diagnose_da_coreg_posterior.py`, new)
+
+Given Gate 2's clean negative result and Gate 3's evolved AF ignoring the
+one feature it was built to exploit, tested whether the DA-COREG surrogate's
+posterior is simply unreliable on mAb, independent of any acquisition
+function. Fit DA-COREG and independent `ModelListGP` on matched train/test
+splits, scored held-out predictive NLL and z-score calibration.
+
+**Result (32-fit sweep, 4 `aggregation_tendency` levels × 8 splits, n=800
+held-out points):** `Tm` fit reliably every time (NLL 1.7–5). `kD` and
+`viscosity` blew up in **20/32 fits** — predictive variance collapsing to
+near-zero (`min_var` as low as 1e-10), NLL exploding into the millions/
+billions (`kD` up to 1.3e7, `viscosity` up to 2.5e9 in the largest sweep).
+This is a genuine numerical pathology in the fit, not a subtle miscalibration:
+z-score std as high as 70,251 (ideal ~1.0), meaning the model is severely
+**overconfident**, not producing inflated uncertainty (ruling out the
+hypothesis that a downstream scale trick like front-range normalisation
+would have masked it — that only rescales an already-collapsed sigma by a
+fixed constant, it can't recover the missing signal).
+
+### Root cause found and fixed
+
+`fit_da_coreg_model` (`llm_af_evo/v1_pre_v2/src/da_coreg.py`) applied
+`Standardize(m=1)` to the **pooled/flattened union of all M tasks' y-values**
+stacked together, not per task. On mAb, `Tm`/`kD`/`viscosity` have very
+different raw scales (`Tm` std≈2.0, `kD` std≈11.5, `viscosity` std≈4.0, all
+around different means) — pooling them into one global mean/std badly
+mis-scaled whichever tasks differ most from the pooled mean going into the
+shared ICM task-covariance fit. This exactly explains the asymmetry
+observed: `Tm` (closest to the pooled mean) fit fine every time; `kD`/
+`viscosity` (furthest from it) intermittently produced degenerate posteriors.
+Blow-up frequency also increased with `aggregation_tendency` (6/8 at 0.25,
+4/8 at 0.5, 4/8 at 0.75, 7/8 at 0.85), consistent with the mismatch between
+per-task and pooled scale worsening at higher `aggregation_tendency`.
+
+**Fix:** z-score each task's `y` column using its own train-set mean/std
+before stacking into `MultiTaskGP`'s flat `(n*M, 1)` target tensor, instead
+of a single `Standardize(m=1)` over the concatenated union;
+`DACoregModel.posterior()` now maps predictions back to each task's original
+scale. Re-running the identical 32-fit sweep post-fix: blowups dropped
+**20/32 → 1/32** (the one remaining case looks like an unrelated MLL
+local-optimum, not the systematic scale bug).
+
+**Immediate confirmation** (`run_parego_ei_da_coreg_smoke.py --domain mab
+--n_campaigns 5`, post-fix): **diff flipped from consistently negative to
++13.6%, wins=3/5, directionally positive** (n=5, p=0.44 — no power, smoke
+check only). This is consistent with the DA-COREG posterior bug being the
+actual driver of Gate 2's failure, not a fundamental problem with the
+ParEGO-EI acquisition swap itself.
+
+### Status / next steps
+
+- **Fix committed** in the `worktree-sdl-adaptive-improvements` branch
+  (`da_coreg.py`, plus new diagnostics `diagnose_da_coreg_posterior.py` and
+  `run_evolved_af_validation.py`) — not yet merged to `master` as of this
+  writing.
+- **Pending:** a real seed-averaged Gate 2 re-run post-fix
+  (`--domain mab --n_campaigns 20 --n_replicates 3 --n_fitness_seeds 3`,
+  matching the original Gate 2 methodology exactly for a clean before/after
+  comparison) to confirm the +13.6% smoke direction survives at real
+  statistical power. Not yet run as of this writing.
+- If the seed-averaged Gate 2 re-run confirms a real positive effect, Gate 3
+  (AF evolution) is worth revisiting from scratch with the corrected
+  surrogate — the current evolved AF (`evolution_runs/gate3_coreg_mab/best_af.py`)
+  was evolved and validated entirely against the buggy posterior and should
+  not be trusted regardless of the fix's outcome.
+- This also means DTLZ2's Gate 1 result should not be reinterpreted by this
+  finding — DTLZ2 never used DA-COREG's multi-task path in the same
+  distribution regime that broke on mAb (synthetic Y values are smoother/
+  more uniformly scaled), so the marginal +0.69% there is unaffected either
+  way.
+
+---
+
 *End of document.*
