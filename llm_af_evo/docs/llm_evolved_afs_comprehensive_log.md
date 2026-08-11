@@ -2209,4 +2209,161 @@ specifically.
 
 ---
 
+## DA-COREG: Consolidated Narrative (2026-08-11)
+
+DA-COREG content is scattered across §15.6, §21, both "§22"s (a numbering
+collision from concurrent edits — "Design Discussion: Has DA-COREG Been
+Tried the 'Right' Way?" and "Tunable Synthetic Domain" both landed as §22),
+and the two Addendums. This section is a single chronological walkthrough
+of the whole DA-COREG story for anyone who doesn't want to reconstruct it
+from those scattered entries. It doesn't replace or renumber anything above
+— those stay as the detailed record — this is the index/summary layered on
+top.
+
+**The idea.** DA-COREG is a coregionalized multi-task GP surrogate
+(`da_coreg.py`, botorch `MultiTaskGP` with an ICM/Kronecker task kernel) —
+a drop-in alternative to the independent per-objective `ModelListGP` used
+everywhere else in this project. The hypothesis: mAb's three objectives
+(`Tm`, `kD`, `viscosity`) are correlated by shared protein chemistry, and a
+surrogate that models that correlation jointly should out-predict one that
+fits each objective in isolation.
+
+**1. First attempt, in the qLogNEHVI pipeline — closed negative (§8 Part 8,
+§15.6).** DA-COREG swapped into `qLogNEHVI`'s posterior on DTLZ2: catastrophic,
+consistent loss (−3.8% mean margin, 0/20 wins, p≈1.9×10⁻⁶, every replicate).
+Closed as a dead end at the time (§15.6: "DA-COREG alone did not improve
+over the standard per-objective GP approach").
+
+**2. Re-tried without qLogNEHVI — resolved to a tie, not a real cost (§21,
+2026-08-01–08).** The Part 8 result never separated "DA-COREG's posterior is
+bad" from "DA-COREG's posterior is fine but `qLogNEHVI`'s correlated joint-MC
+batch scoring specifically punishes a MultiTaskGP posterior." Re-ran the same
+comparison through `strategy_unsga3_pool_af` (UNSGA3 candidates, `trust_only`
+top-k scoring, **no** `qLogNEHVI`/`optimize_acqf` call anywhere) —
+`run_da_coreg_no_qnehvi_pilot.py`. Un-averaged result was directionally
+negative but unstable (p swinging 0.81→0.04 across replicates — the seed-noise
+signature from §12/§13). Re-ran seed-averaged (`n_fitness_seeds=3`): all 3
+DTLZ2 replicates non-significant, win rates at chance (10/20, 7/20, 8/20) —
+**a tie**, not the "modest real cost" the un-averaged version suggested. A
+same-protocol mAb cross-check (2026-08-08) confirmed the same tie on the real
+correlated-objective domain (mean diff −0.5%, 0/3 significant, win rates at
+chance). **Conclusion at this point: DA-COREG's posterior is fine on its own
+(held-out NLL/RMSE check, Part 8) — the catastrophic Part 8 result was
+`qLogNEHVI`'s joint-batch MC scoring compressing acquisition-value
+discrimination on a correlated posterior, not a bad surrogate.** This reframed
+DA-COREG as viable specifically in evolved-AF/score_pool pipelines that never
+call `qLogNEHVI`.
+
+**3. Literature-motivated redesign proposal (§22 "Has DA-COREG Been Tried the
+Right Way?", 2026-08-09).** If DA-COREG is fine but ties rather than helps
+under `trust_only`/top-k, maybe it's never been paired with an acquisition
+function actually designed to exploit a joint posterior. A literature check
+found: independent GPs are the MOBO default; multi-task surrogates are a
+deliberate minority choice; when the literature does pair one with an
+acquisition function it tends to redesign the acquisition around the joint
+posterior (e.g. cPoI's pointwise/greedy acquisition from a multi-task
+posterior covariance) rather than reuse an independence-assuming batch
+acquisition. ParEGO's multi-surrogate variant (per-objective GPs → Chebyshev
+scalarization → pointwise EI) was identified as a natural, previously-untried
+slot for a coregionalized posterior — scalar and pointwise, never a joint MC
+batch draw, structurally sidestepping the mechanism that broke Part 8. A
+second untested variable was also flagged from a 2026 multi-task-BO pitfalls
+paper: per-task mean/scale normalization before fitting, since a jointly-fit
+task-covariance kernel can be distorted by whichever task has the largest raw
+scale.
+
+Sequenced execution plan, cheapest/most diagnostic first: (1) front-range
+normalization of DA-COREG's fit inputs alone; (2) ParEGO-scalarized EI alone;
+(3) combine only if either shows an effect; (4) hybrid marginals (independent
+GPs) + DA-COREG-covariance-only, held for last.
+
+**4. Step 1 result — front-range normalization, ruled out (2026-08-09).**
+Rescaling `train_y` by each objective's Pareto front range before fitting
+DA-COREG, DTLZ2, 3 replicates seed-averaged: statistically indistinguishable
+from unnormalized DA-COREG, both still a tie against independent GPs. Closed
+without spending mAb compute on it (DTLZ2 is the cheap gate).
+
+**5. Step 2 — ParEGO-scalarised EI + DA-COREG.** Random-Chebyshev-scalarised
+posterior + pointwise analytic EI (hand-rolled from `math.erf`, no scipy in
+the AF sandbox), swapped in for `trust_only` inside the same
+`strategy_unsga3_pool_af` no-`qLogNEHVI` pipeline.
+  - *Smoke check* (Addendum, 2026-08-10): DTLZ2, n=5, `diff=+2.1%`,
+    `wins=3/5`, `p=0.625` — directionally positive, unlike step 1. Green light
+    for seed-averaging spend, not a result on its own.
+  - *Gate 1, DTLZ2 seed-averaged* (Addendum 2, 2026-08-11):
+    `--n_campaigns 20 --n_replicates 3`, pooled 3×20=60 campaigns into one
+    Wilcoxon test. **+0.69%, pooled p=0.045** — borderline-significant,
+    suggestive not confirmed.
+  - *Gate 2, mAb cross-check* (Addendum 2): same protocol,
+    `--domain mab --n_fitness_seeds 3`. **0/3 replicates directionally
+    positive**, all individually significant: −6.7%/−4.5%/−5.8%,
+    p=0.0094/0.033/0.011. Clean (0/360 DA-COREG fallback batches) — a much
+    stronger, cleaner negative than DTLZ2's marginal positive.
+  - *Gate 3, covariance-aware AF evolution* (Addendum 2): built
+    `obj_correlation`-aware evolution infrastructure (threaded through
+    `full_replay.py`/`sandbox.py`/`evolve_af.py`, `generate_coreg_steps.py`
+    DA-COREG training-step generator, stagnation-based early stopping,
+    `cov_aligned_ei` seed program) and ran it (152 real-LLM calls, 0% mock
+    fallback). Best evolved AF converged at `fitness=0.4656`,
+    `win_rate=0.531` — barely above chance on the per-step proxy — and
+    **never used `context["obj_correlation"]`** despite it being available.
+    Closed-loop validation against a simple `trust_only` baseline (both
+    DA-COREG): `diff=-0.7%`, `wins=2/5`, `p=1` — the fitness-proxy edge
+    didn't survive contact with real campaigns.
+
+**6. Root-cause diagnostic — a real bug found (Addendum 2, 2026-08-11).**
+Given Gate 2's clean negative and Gate 3's evolved AF ignoring the one
+feature it existed to exploit: tested DA-COREG's held-out posterior quality
+directly (NLL + z-score calibration), independent of any acquisition
+function (`diagnose_da_coreg_posterior.py`). 32-fit sweep (4
+`aggregation_tendency` levels × 8 splits): `Tm` fit reliably every time;
+`kD`/`viscosity` blew up in **20/32 fits** — predictive variance collapsing
+toward zero (`min_var` as low as 1e-10), NLL exploding into the
+millions/billions, z-score std as high as 70,251 (severe overconfidence, not
+inflated uncertainty — ruling out a front-range-style rescaling as a fix).
+**Root cause:** `fit_da_coreg_model` applied `Standardize(m=1)` to the
+*pooled/flattened union of all M tasks' y-values*, not per task — badly
+mis-scaling whichever objectives differ most from the pooled mean/std going
+into the shared ICM task-covariance fit (`Tm` std≈2.0 survived; `kD`
+std≈11.5 and `viscosity` std≈4.0, both far from the pooled mean, didn't).
+**Fix:** per-task z-scoring before stacking into `MultiTaskGP`'s flat
+target tensor, un-done in `DACoregModel.posterior()`. Same sweep post-fix:
+blowups dropped **20/32 → 1/32**. 5-campaign mAb smoke re-run flipped from
+consistently negative to **+13.6%, wins=3/5** (n=5, no power).
+
+**7. Post-fix Gate 2 re-run — still negative; DECISION: shelve DA-COREG on
+mAb (2026-08-11).** Real seed-averaged re-run
+(`--n_campaigns 20 --n_replicates 3 --n_fitness_seeds 3`, matching original
+Gate 2 exactly): the +13.6% smoke signal did not hold. Pooled n=60,
+wins=18/60, Wilcoxon **p=0.00022** — still significantly negative, still
+0/3 replicates positive, and if anything more significant pooled than
+pre-fix. **The standardization fix was real and worth making (it resolved a
+genuine numerical pathology) but was not the primary driver of Gate 2's
+campaign-level result.** Leading unexplained-gap hypotheses, ranked, neither
+yet tested:
+  1. Shared lengthscale across tasks — botorch's default `MultiTaskGP`/ICM
+     uses one base kernel over the input space shared by all tasks, only the
+     task-covariance matrix varies per objective pair. `Tm`/`kD`/`viscosity`
+     are physically distinct mechanisms with no reason to share a single
+     smoothness/lengthscale; independent GPs fit each its own. This would
+     bias *mean* predictions specifically, consistent with variance now being
+     well-calibrated while campaigns remain worse. **Most likely.**
+  2. Coregionalization's added complexity (extra M×M task-covariance
+     structure) costing more than a moderate/noisy true correlation buys
+     back, in a ~30-points-per-objective low-data regime.
+  3. Shared noise — **ruled out**: `MultiTaskGP`'s likelihood already fits
+     per-task noise (confirmed distinct values in debug fits).
+
+**Where this leaves things:** DA-COREG on mAb is shelved — no further
+compute toward evolving or hand-tuning acquisition functions on top of it
+for this domain. The `da_coreg.py` per-task-standardization fix stays
+committed regardless (independently correct, may matter on other domains).
+Any future revival of the covariance-aware direction on mAb should start
+from hypothesis 1 (task-specific lengthscales within the ICM kernel) rather
+than another surrogate-side normalization fix — that path (per-task/global
+standardization) has now been tried twice (front-range normalization in
+step 1, output standardization here) and neither closed the gap.
+
+---
+
 *End of document.*
