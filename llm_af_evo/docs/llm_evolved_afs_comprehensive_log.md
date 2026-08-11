@@ -1905,8 +1905,38 @@ candidate-generation pipeline regardless of domain. The idea itself was not
 invalidated by this — the growth signal as sourced from this particular
 pool never gets a chance to activate. A different growth signal (e.g. GP
 uncertainty evaluated at the front's own boundary points, rather than pool
-extremes) was identified as the fix but not built or tested — this thread
-stops here for now, logged rather than pursued further at this point.
+extremes) was identified as the fix but not built or tested.
+
+**Update (2026-08-08) — v2/v3 built, tested, and the thread is now closed
+for good.** The fix identified above (GP std at the front's own boundary
+point) was built as v2 and confirmed to actually fire — `growth_weight` is
+no longer byte-identical to baseline — but it doesn't help: effect
++0.3120 vs. baseline's +0.3155 (both p<0.01, both worse than
+`hint_fixed_ucb`). Diagnostic (`growth_weight_debug.csv`) explains why:
+`growth_weight` stays flat (~1.02–1.03) across every batch regardless of
+campaign timing — GP std at an *already-observed* point is near its
+interpolation minimum by construction, so this signal has essentially no
+dynamic range to exploit. v3 fixes that specific scale mismatch by
+sourcing the growth signal from the pool's *unobserved* candidate with the
+highest predicted mean per objective instead — a properly decaying
+`growth_weight` (1.04–1.24, confirmed via `growth_weight_v3_debug.csv`).
+The full confirmatory run: effect +0.2950 (p=0.0045) — the smallest loss
+of the three growth-aware variants, but still significantly worse than
+`hint_fixed_ucb` (bootstrap CI [+0.143, +0.516], entirely on the
+unfavorable side).
+
+**Root cause, now pinned down**: `front_range` roughly doubles (or more)
+over the course of a campaign, while no version of the growth-weight term
+tested here ever exceeds ~1.1–1.2. No additive growth correction can
+outrun the normalization it's trying to compensate for — the front-range
+normalization itself is the defect, not a fixable side-effect of a missing
+growth term. Three independently-motivated corrections (v1: pool-extreme
+signal, structurally dead; v2: boundary-point GP std, fires but flat and
+unhelpful; v3: unobserved-pool-max GP std, properly decaying but still a
+significant loss) converge on the same negative result. This closes the
+growth-aware thread for good — not "logged, not pursued further" as
+originally stated, but built, tested, and ruled out with a mechanistic
+explanation for why no variant in this family can work.
 
 **Final conclusion:** `gen6_child0` (front-range-normalised UCB) is a
 genuine, mechanistically distinct AF the evolution methodology discovered —
