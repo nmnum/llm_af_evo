@@ -1,0 +1,32 @@
+{
+  "domain_seeds": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49
+  ],
+  "sanity_check_pool_extreme_reproduces_gen6": false,
+  "mixedlm": {
+    "gen6_child0_beta2": {
+      "effect": 0.31546995143405837,
+      "p": 0.002695522791043739
+    },
+    "gen6_child0_growth_aware_beta2": {
+      "effect": 0.32897201813406923,
+      "p": 0.0014160294522489974
+    },
+    "gen6_child0_growth_aware_v2_beta2": {
+      "effect": 0.3119531242122431,
+      "p": 0.0029021455204451636
+    }
+  },
+  "bootstrap_ci": {
+    "mean": 0.3090339720386946,
+    "ci_lo": 0.17250654246774055,
+    "ci_hi": 0.5019967663379155
+  }
+}
