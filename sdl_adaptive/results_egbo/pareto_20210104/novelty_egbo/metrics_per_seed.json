@@ -1,42 +1,15 @@
 [
   {
-    "auc_best": 0.928402252571297,
+    "auc_best": 0.8496534179429149,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 5,
+    "steps_to_90pct": 13,
     "switch_count": 0,
     "switch_frequency": 0.0,
     "failure_count": 0
   },
   {
-    "auc_best": 0.9385663505592277,
-    "final_best": 4.502143575747799,
-    "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 9,
-    "switch_count": 0,
-    "switch_frequency": 0.0,
-    "failure_count": 0
-  },
-  {
-    "auc_best": 0.8042038719116587,
-    "final_best": 4.502143575747799,
-    "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 29,
-    "switch_count": 0,
-    "switch_frequency": 0.0,
-    "failure_count": 0
-  },
-  {
-    "auc_best": 0.8662703524566745,
-    "final_best": 4.502143575747799,
-    "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 21,
-    "switch_count": 0,
-    "switch_frequency": 0.0,
-    "failure_count": 0
-  },
-  {
-    "auc_best": 0.8996160565232216,
+    "auc_best": 0.8839586621674299,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
     "steps_to_90pct": 17,
@@ -45,10 +18,37 @@
     "failure_count": 0
   },
   {
-    "auc_best": 0.7974618713643279,
+    "auc_best": 0.8572766392337413,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 25,
+    "steps_to_90pct": 13,
+    "switch_count": 0,
+    "switch_frequency": 0.0,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8074053561751994,
+    "final_best": 4.502143575747799,
+    "final_best_normalised": 0.9999999999997778,
+    "steps_to_90pct": 33,
+    "switch_count": 0,
+    "switch_frequency": 0.0,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8321071422253312,
+    "final_best": 4.502143575747799,
+    "final_best_normalised": 0.9999999999997778,
+    "steps_to_90pct": 29,
+    "switch_count": 0,
+    "switch_frequency": 0.0,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8379140424838392,
+    "final_best": 4.502143575747799,
+    "final_best_normalised": 0.9999999999997778,
+    "steps_to_90pct": 21,
     "switch_count": 0,
     "switch_frequency": 0.0,
     "failure_count": 0
@@ -72,37 +72,37 @@
     "failure_count": 0
   },
   {
-    "auc_best": 0.817972073640666,
+    "auc_best": 0.8126833569553302,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 33,
+    "steps_to_90pct": 29,
     "switch_count": 0,
     "switch_frequency": 0.0,
     "failure_count": 0
   },
   {
-    "auc_best": 0.8839586621674299,
-    "final_best": 4.502143575747799,
-    "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 17,
-    "switch_count": 0,
-    "switch_frequency": 0.0,
-    "failure_count": 0
-  },
-  {
-    "auc_best": 0.8882249007917808,
-    "final_best": 4.502143575747799,
-    "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 17,
-    "switch_count": 0,
-    "switch_frequency": 0.0,
-    "failure_count": 0
-  },
-  {
-    "auc_best": 0.920512108917274,
+    "auc_best": 0.9385663505592277,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
     "steps_to_90pct": 9,
+    "switch_count": 0,
+    "switch_frequency": 0.0,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.9145249241348912,
+    "final_best": 4.502143575747799,
+    "final_best_normalised": 0.9999999999997778,
+    "steps_to_90pct": 13,
+    "switch_count": 0,
+    "switch_frequency": 0.0,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8302499354496418,
+    "final_best": 4.502143575747799,
+    "final_best_normalised": 0.9999999999997778,
+    "steps_to_90pct": 21,
     "switch_count": 0,
     "switch_frequency": 0.0,
     "failure_count": 0
@@ -117,28 +117,28 @@
     "failure_count": 0
   },
   {
-    "auc_best": 0.8746193018419264,
-    "final_best": 4.502143575747799,
-    "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 21,
-    "switch_count": 0,
-    "switch_frequency": 0.0,
-    "failure_count": 0
-  },
-  {
-    "auc_best": 0.898881642010458,
-    "final_best": 4.502143575747799,
-    "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 9,
-    "switch_count": 0,
-    "switch_frequency": 0.0,
-    "failure_count": 0
-  },
-  {
-    "auc_best": 0.8725188141284907,
+    "auc_best": 0.8206685122267897,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
     "steps_to_90pct": 29,
+    "switch_count": 0,
+    "switch_frequency": 0.0,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.8774607314735998,
+    "final_best": 4.502143575747799,
+    "final_best_normalised": 0.9999999999997778,
+    "steps_to_90pct": 13,
+    "switch_count": 0,
+    "switch_frequency": 0.0,
+    "failure_count": 0
+  },
+  {
+    "auc_best": 0.9253568432730802,
+    "final_best": 4.502143575747799,
+    "final_best_normalised": 0.9999999999997778,
+    "steps_to_90pct": 13,
     "switch_count": 0,
     "switch_frequency": 0.0,
     "failure_count": 0
@@ -153,28 +153,28 @@
     "failure_count": 0
   },
   {
-    "auc_best": 0.9120189937400355,
+    "auc_best": 0.7448865727062395,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 9,
+    "steps_to_90pct": 41,
     "switch_count": 0,
     "switch_frequency": 0.0,
     "failure_count": 0
   },
   {
-    "auc_best": 0.8441236132946255,
+    "auc_best": 0.815598377216424,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 13,
+    "steps_to_90pct": 25,
     "switch_count": 0,
     "switch_frequency": 0.0,
     "failure_count": 0
   },
   {
-    "auc_best": 0.8484773877041544,
+    "auc_best": 0.8882249007917808,
     "final_best": 4.502143575747799,
     "final_best_normalised": 0.9999999999997778,
-    "steps_to_90pct": 33,
+    "steps_to_90pct": 17,
     "switch_count": 0,
     "switch_frequency": 0.0,
     "failure_count": 0
