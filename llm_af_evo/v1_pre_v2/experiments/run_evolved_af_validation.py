@@ -106,6 +106,39 @@ def score_pool(context):
     return scores
 '''.strip("\n")
 
+# evolve_af.py's best evolved AF for DTLZ2 (evolution_runs/gate3_coreg_dtlz2_v2/
+# best_af.py, fitness=0.3894, win_rate=0.419 on its per-step proxy), generated
+# AFTER the objective_names plumbing fix — domain-generic (no hardcoded names),
+# loaded from disk below rather than pasted verbatim so it always reflects
+# whatever the latest evolution run actually produced.
+_DTLZ2_BEST_AF_PATH = (_LLM_AF_EVO / "v1_pre_v2" / "src" / "evolution_runs" /
+                       "gate3_coreg_dtlz2_v2" / "best_af.py")
+
+
+def _evolved_af_for(domain: str) -> str:
+    if domain == "mab":
+        return EVOLVED_AF
+    if domain == "dtlz2":
+        if not _DTLZ2_BEST_AF_PATH.exists():
+            raise FileNotFoundError(
+                f"{_DTLZ2_BEST_AF_PATH} not found — run evolve_af.py with "
+                f"--out_dir evolution_runs/gate3_coreg_dtlz2_v2 first.")
+        return _DTLZ2_BEST_AF_PATH.read_text().strip("\n")
+    raise ValueError(f"no evolved AF known for domain {domain!r}")
+
+
+def build_conditions(domain: str):
+    evolved_af = _evolved_af_for(domain)
+    return {
+        "unsga3_pool_af_indep": (strategy_unsga3_pool_af,
+                                  {"af_code": TRUST_ONLY_BASELINE, "use_da_coreg": True}),
+        "unsga3_pool_af_da_coreg": (strategy_unsga3_pool_af,
+                                     {"af_code": evolved_af, "use_da_coreg": True}),
+    }
+
+
+# Kept for backward compat with any external references; main() rebuilds this
+# per --domain via build_conditions() since the evolved AF differs by domain.
 CONDITIONS = {
     "unsga3_pool_af_indep": (strategy_unsga3_pool_af,
                               {"af_code": TRUST_ONLY_BASELINE, "use_da_coreg": True}),
@@ -143,13 +176,14 @@ def run_one(oracle, X_init, Y_init, budget, batch_size, seed, fn, kwargs):
 
 
 def run_one_replicate(oracle, n_campaigns, budget, n_init, batch_size, replicate_idx,
-                       base_seed, n_fitness_seeds: int = 1):
+                       base_seed, n_fitness_seeds: int = 1, conditions=None):
+    conditions = conditions if conditions is not None else CONDITIONS
     seed_offset = base_seed + replicate_idx * 1000
     inits = make_shared_inits(oracle, n_campaigns, n_init, rng_seed=seed_offset)
 
-    results = {cond: [] for cond in CONDITIONS}
-    fallback_info = {cond: [] for cond in CONDITIONS}
-    for cond_name, (fn, kwargs) in CONDITIONS.items():
+    results = {cond: [] for cond in conditions}
+    fallback_info = {cond: [] for cond in conditions}
+    for cond_name, (fn, kwargs) in conditions.items():
         for i, (X_init, Y_init) in enumerate(inits):
             seed_hvs = []
             n_fallback_total = n_total_total = 0
@@ -185,9 +219,11 @@ def summarize(results, n_campaigns):
 
 def main():
     ap = argparse.ArgumentParser()
-    # EVOLVED_AF hardcodes "Tm"/"kD"/"viscosity" object names (it evolved
-    # against mAb training data specifically) — mab only, not domain-generic.
-    ap.add_argument("--domain", choices=["mab"], default="mab")
+    # EVOLVED_AF (mab) hardcodes "Tm"/"kD"/"viscosity" object names (it
+    # evolved against mAb training data before the objective_names fix).
+    # dtlz2 loads its evolved AF fresh from evolution_runs/gate3_coreg_dtlz2_v2/
+    # best_af.py, which is domain-generic (post-fix).
+    ap.add_argument("--domain", choices=["mab", "dtlz2"], default="mab")
     ap.add_argument("--n_replicates", type=int, default=1)
     ap.add_argument("--n_campaigns", type=int, default=5)
     ap.add_argument("--budget", type=int, default=40)
@@ -202,13 +238,13 @@ def main():
     out_path = args.out_path or str(HERE / f"evolved_af_validation_{args.domain}_results.json")
 
     oracle = build_oracle(args.domain)
+    conditions = build_conditions(args.domain)
     print(f"Domain: {args.domain} — {len(oracle)} pool points, {oracle.objective_names()} "
           f"({oracle.objective_directions()})")
     print("Both conditions: UNSGA3-only candidates, DA-COREG surrogate, top-k "
           "select — no qLogNEHVI/optimize_acqf call anywhere. Only score_pool "
           "differs: trust_only baseline (pure exploitation, un-evolved) vs "
-          "EVOLVED_AF (evolve_af.py's best output from gate3_coreg_mab, "
-          "fitness=0.4656 win_rate=0.531 on the per-step proxy).\n")
+          f"evolve_af.py's best output for --domain {args.domain}.\n")
     print(f"Running {args.n_replicates} replicate(s) of {args.n_campaigns} campaigns "
           f"x 2 conditions x {args.n_fitness_seeds} fitness seed(s) each "
           f"(replicate_idx {args.replicate_start}..{args.replicate_start + args.n_replicates - 1})...\n")
@@ -224,7 +260,7 @@ def main():
         t0 = time.perf_counter()
         results, fallback_info = run_one_replicate(
             oracle, args.n_campaigns, args.budget, args.n_init, args.batch_size,
-            r, args.base_seed, n_fitness_seeds=args.n_fitness_seeds)
+            r, args.base_seed, n_fitness_seeds=args.n_fitness_seeds, conditions=conditions)
         summary = summarize(results, args.n_campaigns)
         elapsed = time.perf_counter() - t0
         s = summary["unsga3_pool_af_da_coreg"]
