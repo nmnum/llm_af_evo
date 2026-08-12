@@ -1,24 +1,56 @@
 """
-run_phase3.py — Phase 3: Cross-domain generalisability on synthetic coatings.
+run_phase3.py — Phase 3: Cross-domain generalisability on real ADA coatings
+data, MULTI-OBJECTIVE (not the earlier synthetic single-objective version).
 
 Tests whether the LS-NA-EGBO architecture generalises to a different domain
-(coatings) with only prompt changes — no code changes to the strategy itself.
+(coatings, real MacLeod et al. 2022 data) with only prompt changes — no code
+changes to the strategy itself.
 
-The coatings problem is single-objective (maximise quality score), 4D continuous.
-We adapt the multi-objective strategies to single-objective by using the same
-acquisition (qLogNEHVI doesn't apply to single-objective, so we use qNEI instead)
-and the same novelty-aware selection.
+REVISION (2026-08-12): the original version of this script used
+SyntheticCoatingsOracle, a synthetic single-objective (4D->1) oracle. mAb —
+the domain this architecture was designed and validated on — is genuinely
+multi-objective (Tm/kD/viscosity, Pareto front, qLogNEHVI + novelty-aware
+selection). Testing generalisation on a single-objective coatings problem
+required REWRITING the strategies as single-objective variants (qNEI instead
+of qLogNEHVI, scalar UCB instead of Pareto-dominance ranking) — i.e. it
+confounded "does the architecture transfer to a new domain" with "does a
+different, SO-adapted architecture work at all", which is not the claim
+Phase 3 is meant to test.
+
+This version instead uses llm_af_evo/shared/ada_coatings_oracle.py's
+DiscreteADACoatingsOracle — REAL measured data (253 samples,
+github.com/berlinguette/ada, MacLeod et al. 2022, Nature Communications),
+genuinely multi-objective (conductivity maximize, conductance_std minimize,
+confirmed non-degenerate: 31.2% of the pool is Pareto-optimal), 4D
+continuous inputs. The campaign machinery — run_mo_campaign,
+strategy_mo_egbo_novelty, strategy_mo_egbo, pareto_front_of — is imported
+UNCHANGED from excipient_campaign_mo.py / strategy_ls_na_egbo.py, the exact
+code already used and validated on the mAb domain. Only the oracle and the
+LLM prompts (this file's build_ada_coatings_prompt / MO coatings warm-start)
+differ, matching the "only prompt changes, no strategy-code changes" design
+goal for real.
 
 Conditions:
-  random       — Random search
-  egbo         — EGBO (GP + UCB + evolutionary candidates)
-  egbo_novelty — EGBO + novelty-aware selection
-  ls_na_egbo   — LLM warm-start + novelty-aware EGBO
-  llm_labo     — LABO-style (LLM every batch)
+  random       — strategy_mo_random (unmodified, from excipient_campaign_mo)
+  egbo         — strategy_mo_egbo (unmodified)
+  egbo_novelty — strategy_mo_egbo_novelty (unmodified, qLogNEHVI + UNSGA3 +
+                 novelty-aware selection — the mAb domain's own EGBO)
+  ls_na_egbo   — LLM warm-start (once, real ADA-domain prompt) + unmodified
+                 strategy_mo_egbo_novelty for the rest of the campaign
+  llm_labo     — LLM proposes raw candidates every batch, trust-weighted
+                 mixing with strategy_mo_egbo candidates (mirrors mAb's own
+                 mo_llm condition, just with raw x-vectors instead of named
+                 formulations — coatings has no excipient catalogue)
+
+Metrics: final hypervolume (fixed reference point, anchored to the FULL
+oracle pool, same convention as run_mo_campaign's own HV reporting) as a
+fraction of the full pool's true Pareto-front hypervolume (the best any
+strategy could achieve given this discrete pool), and experiments-to-90%-
+of-that-ceiling.
 
 Usage:
     python run_phase3.py --mock_llm --n_seeds 20
-    python run_phase3.py --model qwen2.5:72b-instruct --n_seeds 20
+    python run_phase3.py --model qwen3:32b --n_seeds 20
 
     # Restart after interruption — just re-run the same command, it resumes
     # from results/benchmark_phase3/phase3_raw_results.csv (or --out_dir).
@@ -26,9 +58,8 @@ Usage:
 Resumable: writes a checkpoint row to <out_dir>/phase3_raw_results.csv
 after every single (condition, seed) combo, not just at the end — the
 real-LLM run (llm_labo calls the LLM every batch, ls_na_egbo once per
-campaign) is long enough (~20hrs at qwen3:32b's measured ~327s/call,
-~220 total calls across 20 seeds) that losing all progress to a crash or
-disconnect partway through would be expensive to re-pay. On restart, any
+campaign) is long enough that losing all progress to a crash or disconnect
+partway through would be expensive to re-pay. On restart, any
 (condition, seed) combo already present in the checkpoint is skipped.
 """
 
@@ -39,20 +70,96 @@ import time
 import warnings
 import numpy as np
 import pandas as pd
-from scipy import stats
 
 warnings.filterwarnings("ignore")
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
+_ROOT = pathlib.Path(__file__).parent
+sys.path.insert(0, str(_ROOT))
+sys.path.insert(0, str(_ROOT / "llm_af_evo" / "shared"))
 
-from synthetic_coatings_oracle import SyntheticCoatingsOracle
-from novelty_selection import novelty_aware_select_vectorised
-from llm_warmstart import llm_warmstart_init_coatings, build_coatings_prompt, parse_llm_coatings
+from ada_coatings_oracle import DiscreteADACoatingsOracle
+from excipient_campaign_mo import (
+    run_mo_campaign, make_shared_inits, pareto_front_of,
+    strategy_mo_random, strategy_mo_egbo_real,
+    mixing_weight, pareto_filter_candidates, _fit_gp_1d,
+)
+from strategy_ls_na_egbo import strategy_mo_egbo_novelty
+from llm_warmstart import diversity_select, parse_llm_coatings, _mock_warmstart_coatings
+
+
+def per_objective_trust_generic(X_obs: np.ndarray, Y_obs: np.ndarray,
+                                 objective_names) -> dict:
+    """Dimension-agnostic copy of excipient_campaign_mo.per_objective_trust
+    (same LOO-calibration + ls/nn-ratio + uncertainty-reduction battery,
+    identical math and thresholds) — that function hardcodes the module-
+    level OBJECTIVE_NAMES = ["Tm","kD","viscosity"] (M=3), so calling it
+    directly here would IndexError on Y_obs[:, 2] for coatings' 2-objective
+    oracle. Kept as a local copy rather than patching the shared mAb-domain
+    function, to avoid touching validated mAb infrastructure for a
+    coatings-specific fix."""
+    n, d = X_obs.shape
+    scores = {}
+    for j, name in enumerate(objective_names):
+        y = Y_obs[:, j]
+        if n < 3:
+            scores[name] = 0.5
+            continue
+
+        loo_z = []
+        for i in range(n):
+            mask = np.ones(n, dtype=bool); mask[i] = False
+            if mask.sum() < 2:
+                continue
+            gp_i, sc_i = _fit_gp_1d(X_obs[mask], y[mask])
+            mu, sigma = gp_i.predict(sc_i.transform(X_obs[i:i+1]), return_std=True)
+            sigma = max(float(sigma[0]), 1e-6)
+            loo_z.append((float(mu[0]) - y[i]) / sigma)
+        loo_mean_abs_z = float(np.mean(np.abs(loo_z))) if loo_z else 1.0
+        loo_score = (1.0 if 0.3 <= loo_mean_abs_z <= 1.8 else
+                     max(0.0, 1.0 - (loo_mean_abs_z - 1.8) / 2.0) if loo_mean_abs_z > 1.8
+                     else 0.6)
+
+        obs_per_dim = n / d
+        gp_full, sc_full = _fit_gp_1d(X_obs, y)
+        ls = float(gp_full.kernel_.length_scale)
+        Xn = sc_full.transform(X_obs)
+        nn_dists = []
+        for i in range(n):
+            dists = np.linalg.norm(Xn - Xn[i], axis=1)
+            dists[i] = np.inf
+            nn_dists.append(dists.min())
+        mean_nn = float(np.mean(nn_dists))
+        ls_nn_ratio = ls / (mean_nn + 1e-12)
+
+        if obs_per_dim < 2.0 or abs(ls - 1e-3) < 1e-4:
+            ls_score = 0.5
+        elif ls_nn_ratio < 0.8:
+            ls_score = 0.0
+        elif ls_nn_ratio > 8.0:
+            ls_score = 0.5
+        else:
+            ls_score = 1.0
+
+        rng_test = np.random.default_rng(0)
+        test_pts = rng_test.random((100, d))
+        _, sigma_post = gp_full.predict(sc_full.transform(test_pts), return_std=True)
+        uncertainty_reduction = float(np.clip(1.0 - sigma_post.mean(), -1, 1))
+        unc_score = 0.0 if uncertainty_reduction > 0.3 and loo_mean_abs_z > 1.8 else \
+                    (0.5 if uncertainty_reduction < 0.1 else 1.0)
+
+        if obs_per_dim < 2.0:
+            trust = 0.6 * loo_score + 0.15 * ls_score + 0.25 * unc_score
+        else:
+            trust = 0.5 * loo_score + 0.3 * ls_score + 0.2 * unc_score
+        scores[name] = float(np.clip(trust, 0, 1))
+
+    return scores
 
 
 CKPT_COLS = [
-    "phase", "condition", "seed", "budget", "n_init", "final_best",
-    "best_frac", "exp_to_90pct", "n_obs", "llm_fallback_used", "llm_retry_count",
+    "phase", "condition", "seed", "budget", "n_init", "final_hv",
+    "hv_frac", "exp_to_90pct_hv", "n_obs", "final_pf_size",
+    "llm_fallback_used", "llm_retry_count",
 ]
 
 
@@ -80,162 +187,202 @@ def is_completed(ckpt_df, condition, seed):
     return mask.any()
 
 
-def make_shared_inits_coatings(oracle, n_repeats, n_init, rng_seed=42):
-    """Generate shared random initialisations for coatings oracle."""
-    rng = np.random.default_rng(rng_seed)
-    inits = []
-    for _ in range(n_repeats):
-        idx = rng.choice(len(oracle._X_raw), n_init, replace=False)
-        inits.append((oracle._X_raw[idx].copy(), oracle._y_raw[idx].copy()))
-    return inits
+def compute_pool_hv(oracle):
+    """Hypervolume of the FULL oracle pool's true Pareto front — the best
+    any strategy could achieve given this discrete 253-point dataset. Uses
+    the exact same fixed-reference-point formula as run_mo_campaign's own
+    HV reporting, so every condition's final_hv is comparable against this
+    ceiling on a consistent scale."""
+    from pymoo.indicators.hv import HV
+    directions = oracle.objective_directions()
+    Y_all = oracle._Y_raw.copy()
+    Y_all_flipped = Y_all.copy()
+    for j, d_ in enumerate(directions):
+        if d_ == "max":
+            Y_all_flipped[:, j] = -Y_all_flipped[:, j]
+    fixed_ref = (Y_all_flipped.max(axis=0) +
+                 0.1 * (Y_all_flipped.max(axis=0) - Y_all_flipped.min(axis=0) + 1e-9))
+    pf_idx = pareto_front_of(Y_all, directions=directions)
+    Y = Y_all.copy()
+    for j, d_ in enumerate(directions):
+        if d_ == "max":
+            Y[:, j] = -Y[:, j]
+    return float(HV(ref_point=fixed_ref)(Y[pf_idx]))
 
 
-# ── Single-objective strategies for coatings ──────────────────────────────────
+# ── Real-ADA-domain LLM prompt (NOT the synthetic concentration/temperature/
+# flow_rate/pressure description from llm_warmstart.py's LAYER3_COATINGS —
+# that describes SyntheticCoatingsOracle's made-up physical meaning, which
+# does not match DiscreteADACoatingsOracle's real inputs/objectives) ────────
 
-def strategy_coatings_random(oracle, X_obs, y_obs, bounds, batch_size, rng, **kw):
-    d = bounds.shape[0]
-    return rng.uniform(0, 1, (batch_size, d)), {}
-
-
-def strategy_coatings_egbo(oracle, X_obs, y_obs, bounds, batch_size, rng, **kw):
-    """EGBO for single-objective: GP + UCB + evolutionary candidates."""
-    from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import Matern
-    from sklearn.preprocessing import StandardScaler
-
-    d = bounds.shape[0]
+def build_ada_coatings_prompt(n_propose: int, bounds: np.ndarray) -> str:
     lo, hi = bounds[:, 0], bounds[:, 1]
-    Xn = (X_obs - lo) / (hi - lo + 1e-12)
-
-    # Fit GP
-    scaler = StandardScaler()
-    Xs = scaler.fit_transform(X_obs)
-    gp = GaussianProcessRegressor(
-        kernel=Matern(nu=2.5, length_scale_bounds=(1e-3, 1e3)),
-        alpha=1e-6, normalize_y=True, n_restarts_optimizer=2,
+    dims = [
+        ("x0", "fuel to oxidizer ratio", lo[0], hi[0]),
+        ("x1", "acac amount (glycine <-> acetylacetone composition)", lo[1], hi[1]),
+        ("x2", "total precursor concentration (g/mL)", lo[2], hi[2]),
+        ("x3", "annealing temperature (Celsius)", lo[3], hi[3]),
+    ]
+    dim_lines = "\n".join(
+        f"  {name} ({desc}): observed range {v_lo:.4g} to {v_hi:.4g}"
+        for name, desc, v_lo, v_hi in dims
     )
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        gp.fit(Xs, y_obs)
+    return f"""You are optimising a solution-combustion-synthesis thin-film coating
+process with 4 continuous input parameters, tracking TWO separate objectives
+simultaneously:
+  conductivity      (S/m, higher = better)
+  conductance_std   (Siemens, lower = better — within-sample uniformity;
+                     higher position-to-position variability means a less
+                     uniform film)
+There is no single "best" input combination — you are looking for good
+TRADE-OFFS across these two objectives (a Pareto front), not one optimal
+point.
 
-    # UCB acquisition
-    progress = kw.get("progress", 0.5)
-    beta = max(0.5, 5.0 * (1.0 - progress))
+Input parameters (real experimental units — NOT normalised):
+{dim_lines}
 
-    # Evolutionary candidates (simple mutation around best points)
-    top_k = min(20, len(y_obs))
-    seed_x = Xn[np.argsort(y_obs)[-top_k:][::-1]]
-    if len(seed_x) < 20:
-        pad = rng.random((20 - len(seed_x), d))
-        seed_x = np.vstack([seed_x, pad])
+Propose exactly {n_propose} new candidate points to evaluate. For each,
+report x AS A FRACTION of the observed range above (0=minimum observed,
+1=maximum observed) — i.e. x0=0.5 means the midpoint of the fuel:oxidizer
+ratio range, not the raw ratio itself.
 
-    # Perturbation-based evolutionary candidates
-    evo_cands = []
-    for base in seed_x[:20]:
-        for _ in range(3):
-            perturbed = np.clip(base + rng.normal(0, 0.1, d), 0, 1)
-            evo_cands.append(perturbed)
-    evo_cands = np.array(evo_cands[:30])
-
-    # Random exploration candidates
-    rand_cands = rng.random((10, d))
-
-    all_cands_n = np.vstack([evo_cands, rand_cands])
-    all_cands = all_cands_n * (hi - lo) + lo
-
-    # Score with UCB
-    mu, sigma = gp.predict(scaler.transform(all_cands), return_std=True)
-    ucb = mu + beta * sigma
-
-    # Greedy top-k selection
-    top_idx = np.argsort(ucb)[-batch_size:]
-    return all_cands[top_idx], {}
+Respond with valid JSON only:
+{{
+  "candidates": [
+    {{"x": [x0, x1, x2, x3], "targets": ["conductivity"|"conductance_std", ...],
+      "tradeoff": "<short phrase>"}}
+  ]
+}}"""
 
 
-def strategy_coatings_egbo_novelty(oracle, X_obs, y_obs, bounds, batch_size, rng,
-                                    w_acq=0.9, w_nov=0.1, **kw):
-    """EGBO + novelty-aware selection for single-objective coatings."""
-    from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import Matern
-    from sklearn.preprocessing import StandardScaler
+def llm_warmstart_init_coatings_mo(oracle, n_propose=25, n_select=10,
+                                    model="qwen3:32b", mock=False, seed=42):
+    """MO analogue of llm_warmstart.llm_warmstart_init_coatings — returns
+    (X_init, Y_init) with Y_init a (n_select, M) matrix (this oracle's real
+    multi-objective readout), not a scalar. Uses the real ADA-domain
+    prompt above instead of the generic SyntheticCoatingsOracle one."""
+    d = oracle.bounds().shape[0]
+    bounds = oracle.bounds()
 
-    d = bounds.shape[0]
-    lo, hi = bounds[:, 0], bounds[:, 1]
-    Xn = (X_obs - lo) / (hi - lo + 1e-12)
+    retry_count = 0
+    fallback_used = False
 
-    scaler = StandardScaler()
-    Xs = scaler.fit_transform(X_obs)
-    gp = GaussianProcessRegressor(
-        kernel=Matern(nu=2.5, length_scale_bounds=(1e-3, 1e3)),
-        alpha=1e-6, normalize_y=True, n_restarts_optimizer=2,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        gp.fit(Xs, y_obs)
-
-    progress = kw.get("progress", 0.5)
-    beta = max(0.5, 5.0 * (1.0 - progress))
-
-    # Evolutionary candidates
-    top_k = min(20, len(y_obs))
-    seed_x = Xn[np.argsort(y_obs)[-top_k:][::-1]]
-    if len(seed_x) < 20:
-        pad = rng.random((20 - len(seed_x), d))
-        seed_x = np.vstack([seed_x, pad])
-
-    evo_cands = []
-    for base in seed_x[:20]:
-        for _ in range(3):
-            perturbed = np.clip(base + rng.normal(0, 0.1, d), 0, 1)
-            evo_cands.append(perturbed)
-    evo_cands = np.array(evo_cands[:30])
-
-    rand_cands = rng.random((10, d))
-    all_cands_n = np.vstack([evo_cands, rand_cands])
-
-    # Score with UCB
-    mu, sigma = gp.predict(scaler.transform(all_cands_n * (hi - lo) + lo), return_std=True)
-    ucb = mu + beta * sigma
-
-    # Novelty-aware selection
-    selected_idx = novelty_aware_select_vectorised(
-        all_cands_n, ucb, batch_size, w_acq=w_acq, w_nov=w_nov, X_obs_n=Xn,
-    )
-
-    return all_cands_n[selected_idx] * (hi - lo) + lo, {"novelty_select": True}
-
-
-def strategy_coatings_ls_na_egbo(oracle, X_obs, y_obs, bounds, batch_size, rng,
-                                  w_acq=0.9, w_nov=0.1, **kw):
-    """LS-NA-EGBO for coatings: same as egbo_novelty during campaign.
-    The LLM warm-start happens before the campaign loop."""
-    return strategy_coatings_egbo_novelty(
-        oracle, X_obs, y_obs, bounds, batch_size, rng, w_acq=w_acq, w_nov=w_nov, **kw
-    )
-
-
-def strategy_coatings_llm_labo(oracle, X_obs, y_obs, bounds, batch_size, rng,
-                                model="qwen3:32b", mock_llm=False,
-                                w_acq=0.9, w_nov=0.1, n_llm_candidates=20, **kw):
-    """LABO-style for coatings: LLM generates candidates every batch."""
-    from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import Matern
-    from sklearn.preprocessing import StandardScaler
-
-    d = bounds.shape[0]
-    lo, hi = bounds[:, 0], bounds[:, 1]
-    Xn = (X_obs - lo) / (hi - lo + 1e-12)
-
-    # Generate LLM candidates
-    if mock_llm:
-        rng_mock = np.random.default_rng(rng.integers(1e6))
-        llm_cands_n = np.zeros((n_llm_candidates, d))
-        for j in range(d):
-            perm = rng_mock.permutation(n_llm_candidates)
-            llm_cands_n[:, j] = (perm + rng_mock.uniform(0, 1, n_llm_candidates)) / n_llm_candidates
+    if mock:
+        candidates_n = _mock_warmstart_coatings(n_propose, seed, d)
     else:
-        prompt = build_coatings_prompt(n_llm_candidates)
-        import ollama, json, re
+        prompt = build_ada_coatings_prompt(n_propose, bounds)
+        import ollama
+        candidates_n = np.array([])
+        for attempt in range(3):
+            retry_count = attempt
+            try:
+                resp = ollama.chat(
+                    model=model,
+                    messages=[
+                        {"role": "system",
+                         "content": "You are an expert optimisation assistant. "
+                                    "Respond with valid JSON only."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    options={"temperature": 0.4, "num_predict": 1024, "think": False,
+                              "seed": seed + attempt},
+                )
+                text = resp["message"]["content"]
+                candidates_n = parse_llm_coatings(text, n_propose, d)
+                if len(candidates_n) > 0:
+                    break
+            except Exception:
+                if attempt == 2:
+                    fallback_used = True
+                    candidates_n = _mock_warmstart_coatings(n_propose, seed, d)
+
+    if len(candidates_n) == 0:
+        fallback_used = True
+        candidates_n = _mock_warmstart_coatings(n_propose, seed, d)
+
+    selected_idx = diversity_select(candidates_n, n_select)
+    selected_n = candidates_n[selected_idx]
+
+    lo, hi = bounds[:, 0], bounds[:, 1]
+    selected_raw = selected_n * (hi - lo) + lo
+
+    all_X = oracle._X_raw
+    scaler = oracle._scaler
+    X_all_s = scaler.transform(all_X)
+    M = oracle._Y_raw.shape[1]
+
+    X_init = np.zeros((len(selected_idx), d))
+    Y_init = np.zeros((len(selected_idx), M))
+    queried = set()
+    for i, cand in enumerate(selected_raw):
+        cand_s = scaler.transform(cand.reshape(1, -1))[0]
+        unqueried = [j for j in range(len(all_X)) if j not in queried]
+        if not unqueried:
+            unqueried = list(range(len(all_X)))
+        pool_s = scaler.transform(all_X[unqueried])
+        chosen = unqueried[int(np.argmin(np.linalg.norm(pool_s - cand_s, axis=1)))]
+        queried.add(chosen)
+        X_init[i] = all_X[chosen]
+        Y_init[i] = oracle._Y_raw[chosen]
+
+    meta = {"llm_fallback_used": fallback_used, "llm_retry_count": retry_count}
+    return X_init, Y_init, meta
+
+
+def run_ls_na_egbo_campaign_coatings(oracle, budget, strategy_fn, strategy_kwargs,
+                                      batch_size=5, seed=0, n_init=10, n_propose=25,
+                                      model="qwen3:32b", mock_llm=False):
+    """MO coatings analogue of strategy_ls_na_egbo.run_ls_na_egbo_campaign:
+    Stage 1 LLM warm-start (real ADA prompt), Stage 2 unmodified
+    strategy_fn (strategy_mo_egbo_novelty) via run_mo_campaign — same
+    two-stage architecture, same Stage-2 code, only Stage 1's oracle/prompt
+    differ from the mAb version."""
+    X_init, Y_init, meta = llm_warmstart_init_coatings_mo(
+        oracle, n_propose=n_propose, n_select=n_init,
+        model=model, mock=mock_llm, seed=seed,
+    )
+
+    oracle._queried = set()
+    X_all_s = oracle._scaler.transform(oracle._X_raw)
+    for row in oracle._scaler.transform(X_init):
+        idx = int(np.argmin(np.linalg.norm(X_all_s - row, axis=1)))
+        oracle._queried.add(idx)
+
+    result = run_mo_campaign(
+        oracle, X_init, Y_init, budget, strategy_fn, strategy_kwargs,
+        batch_size=batch_size, seed=seed,
+    )
+    result["llm_fallback_used"] = meta["llm_fallback_used"]
+    result["llm_retry_count"] = meta["llm_retry_count"]
+    return result
+
+
+def strategy_mo_llm_coatings(oracle, X_obs, Y_obs, bounds, batch_size, rng,
+                              model="qwen3:32b", mock_llm=False,
+                              n_llm_candidates=20, **kw):
+    """LLM-every-batch condition for coatings — same trust-weighted
+    LLM/GP mixing architecture as excipient_campaign_mo.strategy_mo_llm
+    (mAb's own 'LLM every batch' condition), just proposing raw x-vectors
+    via build_ada_coatings_prompt instead of named formulations (coatings
+    has no excipient catalogue to name)."""
+    lo, hi = bounds[:, 0], bounds[:, 1]
+    trust = per_objective_trust_generic(X_obs, Y_obs, oracle.objective_names())
+    is_sparse = (len(X_obs) / bounds.shape[0]) < 2.0
+    weight = mixing_weight(trust, sparse=is_sparse)
+
+    n_llm_propose = max(batch_size, int(n_llm_candidates * (1.5 - weight)))
+
+    if mock_llm:
+        rng_mock = np.random.default_rng(rng.integers(1_000_000))
+        d = bounds.shape[0]
+        llm_cands_n = np.zeros((n_llm_propose, d))
+        for j in range(d):
+            perm = rng_mock.permutation(n_llm_propose)
+            llm_cands_n[:, j] = (perm + rng_mock.uniform(0, 1, n_llm_propose)) / n_llm_propose
+    else:
+        prompt = build_ada_coatings_prompt(n_llm_propose, bounds)
+        import ollama
+        llm_cands_n = np.array([])
         for attempt in range(3):
             try:
                 resp = ollama.chat(
@@ -250,114 +397,52 @@ def strategy_coatings_llm_labo(oracle, X_obs, y_obs, bounds, batch_size, rng,
                               "seed": int(rng.integers(1_000_000)) + attempt},
                 )
                 text = resp["message"]["content"]
-                llm_cands_n = parse_llm_coatings(text, n_llm_candidates, d)
+                llm_cands_n = parse_llm_coatings(text, n_llm_propose, bounds.shape[0])
                 if len(llm_cands_n) > 0:
                     break
             except Exception:
                 if attempt == 2:
-                    llm_cands_n = np.random.uniform(0, 1, (n_llm_candidates, d))
+                    llm_cands_n = rng.random((n_llm_propose, bounds.shape[0]))
 
-    # EGBO candidates
-    top_k = min(20, len(y_obs))
-    seed_x = Xn[np.argsort(y_obs)[-top_k:][::-1]]
-    if len(seed_x) < 20:
-        pad = rng.random((20 - len(seed_x), d))
-        seed_x = np.vstack([seed_x, pad])
+    llm_raw = (llm_cands_n * (hi - lo) + lo if len(llm_cands_n) > 0
+               else np.zeros((0, len(lo))))
 
-    evo_cands = []
-    for base in seed_x[:15]:
-        for _ in range(2):
-            perturbed = np.clip(base + rng.normal(0, 0.1, d), 0, 1)
-            evo_cands.append(perturbed)
-    evo_cands = np.array(evo_cands[:20])
-    rand_cands = rng.random((5, d))
+    gp_cands, _ = strategy_mo_egbo_real(oracle, X_obs, Y_obs, bounds, batch_size, rng)
+    pool_raw = np.vstack([llm_raw, gp_cands]) if len(llm_raw) else gp_cands
 
-    all_cands_n = np.vstack([evo_cands, rand_cands, llm_cands_n])
+    n_llm_pre_filter = len(llm_raw)
+    source_is_llm = np.zeros(len(pool_raw), dtype=bool)
+    source_is_llm[:n_llm_pre_filter] = True
 
-    # Score with GP + UCB
-    scaler = StandardScaler()
-    Xs = scaler.fit_transform(X_obs)
-    gp = GaussianProcessRegressor(
-        kernel=Matern(nu=2.5, length_scale_bounds=(1e-3, 1e3)),
-        alpha=1e-6, normalize_y=True, n_restarts_optimizer=2,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        gp.fit(Xs, y_obs)
+    X_obs_n = (X_obs - lo) / (hi - lo + 1e-12)
+    pool_n = (pool_raw - lo) / (hi - lo + 1e-12)
+    keep = pareto_filter_candidates(pool_n, X_obs_n, None)
+    if len(keep) > 0:
+        pool_raw = pool_raw[keep]
+        source_is_llm = source_is_llm[keep]
 
-    progress = kw.get("progress", 0.5)
-    beta = max(0.5, 5.0 * (1.0 - progress))
-    mu, sigma = gp.predict(scaler.transform(all_cands_n * (hi - lo) + lo), return_std=True)
-    ucb = mu + beta * sigma
+    n_select = min(batch_size, len(pool_raw))
+    n_llm_in_pool = int(source_is_llm.sum())
+    n_gp_in_pool = len(pool_raw) - n_llm_in_pool
 
-    selected_idx = novelty_aware_select_vectorised(
-        all_cands_n, ucb, batch_size, w_acq=w_acq, w_nov=w_nov, X_obs_n=Xn,
-    )
+    if n_llm_in_pool > 0 and n_gp_in_pool > 0:
+        gp_prob_each = weight / n_gp_in_pool
+        llm_prob_each = (1.0 - weight) / n_llm_in_pool
+        probs = np.where(source_is_llm, llm_prob_each, gp_prob_each)
+        probs = probs / probs.sum()
+        selected_idx = rng.choice(len(pool_raw), n_select, replace=False, p=probs)
+    else:
+        selected_idx = (rng.choice(len(pool_raw), n_select, replace=False)
+                         if len(pool_raw) > n_select else np.arange(len(pool_raw)))
 
-    return all_cands_n[selected_idx] * (hi - lo) + lo, {
-        "labo": True, "n_llm": len(llm_cands_n), "n_total": len(all_cands_n)
-    }
-
-
-# ── Campaign runner for coatings ───────────────────────────────────────────────
-
-def run_coatings_campaign(oracle, X_init, y_init, budget, strategy_fn, strategy_kwargs,
-                           batch_size=5, seed=0):
-    """Run a single-objective coatings campaign."""
-    bounds = oracle.bounds()
-    rng = np.random.default_rng(seed)
-    X_obs, y_obs = X_init.copy(), y_init.copy()
-
-    # Reset queried and register init points
-    oracle._queried = set()
-    X_all_s = oracle._scaler.transform(oracle._X_raw)
-    for row in oracle._scaler.transform(X_init):
-        idx = int(np.argmin(np.linalg.norm(X_all_s - row, axis=1)))
-        oracle._queried.add(idx)
-
-    running_best = [float(y_obs.max())] * len(y_obs)
-    n_batches = max(1, (budget - len(y_obs)) // batch_size)
-
-    for b in range(n_batches):
-        step = len(y_obs)
-        progress = step / budget
-
-        try:
-            candidates, extra = strategy_fn(
-                oracle=oracle, X_obs=X_obs, y_obs=y_obs, bounds=bounds,
-                batch_size=batch_size, rng=rng, progress=progress,
-                **strategy_kwargs,
-            )
-        except Exception as e:
-            warnings.warn(f"Strategy failed at batch {b}: {e}")
-            candidates = rng.uniform(0, 1, (batch_size, bounds.shape[0]))
-
-        # Snap to nearest unqueried oracle point
-        unqueried = [i for i in range(len(oracle._X_raw)) if i not in oracle._queried]
-        if not unqueried:
-            unqueried = list(range(len(oracle._X_raw)))
-
-        for cand in candidates[:batch_size]:
-            if not unqueried:
-                break
-            cand_s = oracle._scaler.transform(cand.reshape(1, -1))[0]
-            pool_s = oracle._scaler.transform(oracle._X_raw[unqueried])
-            chosen = unqueried[int(np.argmin(np.linalg.norm(pool_s - cand_s, axis=1)))]
-            oracle._queried.add(chosen)
-            X_obs = np.vstack([X_obs, oracle._X_raw[chosen]])
-            y_obs = np.append(y_obs, float(oracle._y_raw[chosen]))
-            running_best.append(float(y_obs.max()))
-            unqueried = [i for i in unqueried if i != chosen]
-
-    return {
-        "running_best": running_best,
-        "X_obs": X_obs,
-        "y_obs": y_obs,
+    return pool_raw[selected_idx], {
+        "labo": True, "trust": trust, "mixing_weight": weight,
+        "n_llm_proposed": len(llm_cands_n), "n_llm_in_pool": n_llm_in_pool,
     }
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Phase 3: Coatings generalisability benchmark")
+    parser = argparse.ArgumentParser(description="Phase 3: Coatings generalisability benchmark (real MO data)")
     parser.add_argument("--n_seeds", type=int, default=20)
     parser.add_argument("--budget", type=int, default=50)
     parser.add_argument("--n_init", type=int, default=10)
@@ -366,10 +451,6 @@ def main():
     parser.add_argument("--mock_llm", action="store_true")
     parser.add_argument("--w_acq", type=float, default=0.9)
     parser.add_argument("--w_nov", type=float, default=0.1)
-    # Was hardcoded to /mnt/results/benchmark_phase3 (a path from a
-    # different environment — not writable, not even present, here).
-    # Relative to the repo root, alongside the other results/benchmark_*
-    # directories this project already uses.
     parser.add_argument("--out_dir", default="results/benchmark_phase3")
     args = parser.parse_args()
 
@@ -378,26 +459,28 @@ def main():
     ckpt_path = out_dir / "phase3_raw_results.csv"
 
     print(f"\n{'='*60}")
-    print(f"PHASE 3: Coatings generalisability (synthetic 4D)")
+    print(f"PHASE 3: Coatings generalisability (real ADA data, multi-objective)")
     print(f"{'='*60}")
     print(f"  Seeds: {args.n_seeds}, Budget: {args.budget}")
     print(f"  N_init: {args.n_init}, Batch: {args.batch_size}")
     print(f"  Mock LLM: {args.mock_llm}")
 
-    oracle = SyntheticCoatingsOracle(seed=42, noise_level=0.05)
-    disc = oracle.make_discrete_oracle(n_samples=200, seed=42)
-    global_best = disc.global_best()
-    print(f"  Pool: {len(disc._X_raw)}, Global best: {global_best:.4f}")
+    oracle = DiscreteADACoatingsOracle.build()
+    print(f"  Oracle: {len(oracle)} real samples, {oracle.objective_names()} "
+          f"({oracle.objective_directions()})")
+    pool_hv = compute_pool_hv(oracle)
+    print(f"  Full-pool Pareto-front HV (ceiling): {pool_hv:.4g}")
 
-    shared_inits = make_shared_inits_coatings(disc, args.n_seeds, args.n_init, rng_seed=42)
+    shared_inits = make_shared_inits(oracle, args.n_seeds, args.n_init, rng_seed=42)
 
     conditions = {
-        "random": (strategy_coatings_random, {}, False),
-        "egbo": (strategy_coatings_egbo, {}, False),
-        "egbo_novelty": (strategy_coatings_egbo_novelty, {}, False),
-        "ls_na_egbo": (strategy_coatings_ls_na_egbo,
+        "random": (strategy_mo_random, {}, False),
+        "egbo": (strategy_mo_egbo_real, {}, False),
+        "egbo_novelty": (strategy_mo_egbo_novelty,
+                          {"w_acq": args.w_acq, "w_nov": args.w_nov}, False),
+        "ls_na_egbo": (strategy_mo_egbo_novelty,
                         {"w_acq": args.w_acq, "w_nov": args.w_nov}, True),
-        "llm_labo": (strategy_coatings_llm_labo,
+        "llm_labo": (strategy_mo_llm_coatings,
                       {"mock_llm": args.mock_llm, "model": args.model,
                        "n_llm_candidates": 20}, False),
     }
@@ -408,6 +491,7 @@ def main():
     print(f"  Progress: {len(results)}/{total_combos} combos completed")
 
     t_start = time.time()
+    directions = oracle.objective_directions()
 
     for cond_name, (fn, kwargs, is_warmstart) in conditions.items():
         t0 = time.time()
@@ -418,49 +502,43 @@ def main():
               end="", flush=True)
 
         for seed_idx in pending:
-            disc_seed = oracle.make_discrete_oracle(n_samples=200, seed=42)
-
-            llm_fallback_used, llm_retry_count = False, 0
             if is_warmstart:
-                # LLM warm-start for coatings
-                X_init, y_init, warmstart_meta = llm_warmstart_init_coatings(
-                    disc_seed, n_propose=25, n_select=args.n_init,
-                    model=args.model, mock=args.mock_llm, seed=seed_idx,
+                result = run_ls_na_egbo_campaign_coatings(
+                    oracle, args.budget, fn, kwargs,
+                    batch_size=args.batch_size, seed=seed_idx, n_init=args.n_init,
+                    n_propose=25, model=args.model, mock_llm=args.mock_llm,
                 )
-                llm_fallback_used = warmstart_meta["llm_fallback_used"]
-                llm_retry_count = warmstart_meta["llm_retry_count"]
             else:
-                X_init, y_init = shared_inits[seed_idx]
+                X_init, Y_init = shared_inits[seed_idx]
+                result = run_mo_campaign(
+                    oracle, X_init, Y_init, args.budget, fn, kwargs,
+                    batch_size=args.batch_size, seed=seed_idx,
+                )
 
-            result = run_coatings_campaign(
-                disc_seed, X_init, y_init, args.budget, fn, kwargs,
-                batch_size=args.batch_size, seed=seed_idx,
-            )
+            final_hv = result["hv_trajectory"][-1] if result["hv_trajectory"] else float("nan")
+            hv_frac = final_hv / pool_hv if pool_hv else float("nan")
 
-            final_best = float(result["y_obs"].max())
-            best_frac = final_best / global_best
-
-            # Experiments to 90% of global best
             exp_to_90 = args.budget
-            for i, val in enumerate(result["running_best"]):
-                if val >= 0.9 * global_best:
-                    exp_to_90 = i + 1
+            for i, hv in enumerate(result["hv_trajectory"]):
+                if hv >= 0.9 * pool_hv:
+                    exp_to_90 = min(args.budget, args.n_init + (i + 1) * args.batch_size)
                     break
+
+            final_pf_size = len(pareto_front_of(result["Y_obs"], directions=directions))
 
             results.append({
                 "phase": 3, "condition": cond_name, "seed": seed_idx,
                 "budget": args.budget, "n_init": args.n_init,
-                "final_best": final_best, "best_frac": best_frac,
-                "exp_to_90pct": exp_to_90,
-                "n_obs": len(result["y_obs"]),
-                "llm_fallback_used": llm_fallback_used,
-                "llm_retry_count": llm_retry_count,
+                "final_hv": final_hv, "hv_frac": hv_frac,
+                "exp_to_90pct_hv": exp_to_90,
+                "n_obs": len(result["Y_obs"]),
+                "final_pf_size": final_pf_size,
+                "llm_fallback_used": result.get("llm_fallback_used", False),
+                "llm_retry_count": result.get("llm_retry_count", 0),
             })
-            # Checkpoint after every single (condition, seed) combo, not just
-            # at the end — real-LLM runs here are long enough (~20hrs full
-            # scale) that losing all progress to a crash/disconnect would be
-            # expensive. ckpt_df is intentionally NOT refreshed from this
-            # save within the loop (matches run_benchmark_resumable.py's
+            # Checkpoint after every single (condition, seed) combo — see
+            # module docstring. ckpt_df is intentionally NOT refreshed from
+            # this save within the loop (matches run_benchmark_resumable.py's
             # pattern) -- is_completed() is only consulted once per
             # condition above, so this is safe within a single process run;
             # a concurrent second process against the same out_dir is not
@@ -474,26 +552,27 @@ def main():
 
     df = pd.DataFrame(results)
 
-    # Summary
     summary = df.groupby("condition").agg(
-        best_mean=("final_best", "mean"),
-        best_std=("final_best", "std"),
-        frac_mean=("best_frac", "mean"),
-        frac_std=("best_frac", "std"),
-        exp90_mean=("exp_to_90pct", "mean"),
-        exp90_std=("exp_to_90pct", "std"),
-    ).sort_values("best_mean", ascending=False)
+        hv_mean=("final_hv", "mean"),
+        hv_std=("final_hv", "std"),
+        frac_mean=("hv_frac", "mean"),
+        frac_std=("hv_frac", "std"),
+        exp90_mean=("exp_to_90pct_hv", "mean"),
+        exp90_std=("exp_to_90pct_hv", "std"),
+        pf_mean=("final_pf_size", "mean"),
+    ).sort_values("hv_mean", ascending=False)
     summary.to_csv(out_dir / "phase3_summary.csv")
 
     print(f"\n{'='*60}")
     print(f"PHASE 3 RESULTS")
     print(f"{'='*60}")
-    print(f"  {'Condition':<20} {'Best mean±std':>15} {'Frac of GB':>12} {'Exp→90%':>10}")
-    print(f"  {'-'*60}")
+    print(f"  {'Condition':<20} {'HV mean±std':>15} {'Frac of ceiling':>16} {'Exp→90%':>10} {'PF size':>8}")
+    print(f"  {'-'*75}")
     for cond, row in summary.iterrows():
-        print(f"  {cond:<20} {row['best_mean']:>8.4f}±{row['best_std']:<5.4f} "
-              f"{row['frac_mean']:>8.1%}±{row['frac_std']:<4.1%} "
-              f"{row['exp90_mean']:>8.1f}±{row['exp90_std']:<4.1f}")
+        print(f"  {cond:<20} {row['hv_mean']:>8.4g}±{row['hv_std']:<5.4g} "
+              f"{row['frac_mean']:>10.1%}±{row['frac_std']:<4.1%} "
+              f"{row['exp90_mean']:>8.1f}±{row['exp90_std']:<4.1f} "
+              f"{row['pf_mean']:>8.1f}")
 
     print(f"\nSaved to {out_dir}/")
 
