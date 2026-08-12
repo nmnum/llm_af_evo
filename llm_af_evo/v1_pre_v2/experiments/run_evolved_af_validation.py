@@ -106,24 +106,29 @@ def score_pool(context):
     return scores
 '''.strip("\n")
 
-# evolve_af.py's best evolved AF for DTLZ2 (evolution_runs/gate3_coreg_dtlz2_v2/
-# best_af.py, fitness=0.3894, win_rate=0.419 on its per-step proxy), generated
-# AFTER the objective_names plumbing fix — domain-generic (no hardcoded names),
-# loaded from disk below rather than pasted verbatim so it always reflects
-# whatever the latest evolution run actually produced.
-_DTLZ2_BEST_AF_PATH = (_LLM_AF_EVO / "v1_pre_v2" / "src" / "evolution_runs" /
-                       "gate3_coreg_dtlz2_v2" / "best_af.py")
+# evolve_af.py's best evolved AF for each post-objective_names-fix domain,
+# loaded from disk rather than pasted verbatim so it always reflects whatever
+# the latest evolution run actually produced (domain-generic AFs — no
+# hardcoded names). mab's EVOLVED_AF above predates the fix and stays
+# hardcoded inline since it's unaffected (mab's names were always the
+# sandbox default).
+_EVOLUTION_RUNS = _LLM_AF_EVO / "v1_pre_v2" / "src" / "evolution_runs"
+_BEST_AF_OUT_DIRS = {
+    "dtlz2": _EVOLUTION_RUNS / "gate3_coreg_dtlz2_v2",
+    "zdt1": _EVOLUTION_RUNS / "gate3_coreg_zdt1",
+}
 
 
 def _evolved_af_for(domain: str) -> str:
     if domain == "mab":
         return EVOLVED_AF
-    if domain == "dtlz2":
-        if not _DTLZ2_BEST_AF_PATH.exists():
+    if domain in _BEST_AF_OUT_DIRS:
+        path = _BEST_AF_OUT_DIRS[domain] / "best_af.py"
+        if not path.exists():
             raise FileNotFoundError(
-                f"{_DTLZ2_BEST_AF_PATH} not found — run evolve_af.py with "
-                f"--out_dir evolution_runs/gate3_coreg_dtlz2_v2 first.")
-        return _DTLZ2_BEST_AF_PATH.read_text().strip("\n")
+                f"{path} not found — run evolve_af.py with "
+                f"--out_dir {_BEST_AF_OUT_DIRS[domain].relative_to(_LLM_AF_EVO)} first.")
+        return path.read_text().strip("\n")
     raise ValueError(f"no evolved AF known for domain {domain!r}")
 
 
@@ -223,7 +228,16 @@ def main():
     # evolved against mAb training data before the objective_names fix).
     # dtlz2 loads its evolved AF fresh from evolution_runs/gate3_coreg_dtlz2_v2/
     # best_af.py, which is domain-generic (post-fix).
-    ap.add_argument("--domain", choices=["mab", "dtlz2"], default="mab")
+    ap.add_argument("--domain", choices=["mab", "dtlz2", "coatings", "zdt1"], default="mab",
+                     help="which oracle to run closed-loop campaigns on")
+    ap.add_argument("--af_domain", choices=["mab", "dtlz2"], default=None,
+                     help="which domain's evolved best_af.py to test (default: "
+                          "same as --domain). Set differently from --domain to "
+                          "run a cross-domain transfer check — e.g. "
+                          "--domain zdt1 --af_domain dtlz2 tests whether the "
+                          "DTLZ2-evolved AF (domain-generic, no hardcoded "
+                          "names) generalizes to zdt1's oracle without any "
+                          "zdt1-specific evolution.")
     ap.add_argument("--n_replicates", type=int, default=1)
     ap.add_argument("--n_campaigns", type=int, default=5)
     ap.add_argument("--budget", type=int, default=40)
@@ -235,16 +249,21 @@ def main():
     ap.add_argument("--out_path", default=None)
     args = ap.parse_args()
 
-    out_path = args.out_path or str(HERE / f"evolved_af_validation_{args.domain}_results.json")
+    af_domain = args.af_domain or args.domain
+    tag = args.domain if af_domain == args.domain else f"{args.domain}_af-from-{af_domain}"
+    out_path = args.out_path or str(HERE / f"evolved_af_validation_{tag}_results.json")
 
     oracle = build_oracle(args.domain)
-    conditions = build_conditions(args.domain)
+    conditions = build_conditions(af_domain)
     print(f"Domain: {args.domain} — {len(oracle)} pool points, {oracle.objective_names()} "
           f"({oracle.objective_directions()})")
     print("Both conditions: UNSGA3-only candidates, DA-COREG surrogate, top-k "
           "select — no qLogNEHVI/optimize_acqf call anywhere. Only score_pool "
           "differs: trust_only baseline (pure exploitation, un-evolved) vs "
-          f"evolve_af.py's best output for --domain {args.domain}.\n")
+          f"evolve_af.py's best output for --domain {af_domain}"
+          + (f" (cross-domain transfer check: AF evolved on {af_domain}, "
+             f"run here on {args.domain}'s oracle, never trained on it)"
+             if af_domain != args.domain else "") + ".\n")
     print(f"Running {args.n_replicates} replicate(s) of {args.n_campaigns} campaigns "
           f"x 2 conditions x {args.n_fitness_seeds} fitness seed(s) each "
           f"(replicate_idx {args.replicate_start}..{args.replicate_start + args.n_replicates - 1})...\n")
