@@ -2413,4 +2413,138 @@ step 1, output standardization here) and neither closed the gap.
 
 ---
 
+## 24. Gate 3 on a Second Domain: An `objective_names` Bug and a Real DTLZ2 Win (2026-08-12)
+
+The DA-COREG shelving decision (§23 above) was scoped to mAb. Whether
+evolved-AF/Gate-3-style acquisition search pays off at all on a
+non-correlated synthetic domain (DTLZ2) had been left open — Addendum 2's
+Gate 3 run was mAb-only. This section covers a from-scratch DTLZ2 Gate 3
+attempt, a real bug it exposed in the general evolution pipeline (not
+DA-COREG-specific), and the clean positive result once fixed.
+
+**Setup.** `generate_coreg_steps.py --domain dtlz2` (already extended for
+non-mAb domains per an earlier fix) produced 360 DTLZ2 training steps under
+DA-COREG. First `evolve_af.py --real_llm` run against it
+(`--pop_size 16 --n_generations 20 --n_offspring 8 --patience 6`) converged
+in 6 generations: `fitness=0.3894`, `win_rate=0.419`, 0% sandbox failures —
+looked clean. Its `best_af.py`, however, hardcoded `names = ["Tm", "kD",
+"viscosity"]` inside its `score_pool` body, despite having trained
+exclusively on DTLZ2 data (whose real objective keys are `f1`/`f2`/`f3`) —
+immediately suspicious, since a DTLZ2-trained AF should never see those
+mAb-specific strings anywhere in its context.
+
+**Root cause — two-part bug in `evolve_af.py`, not in the sandbox or the
+training data.**
+  1. `evaluate_af()`'s call into `run_af_in_sandbox()` never passed
+     `objective_names=`, so every training step, *regardless of domain*,
+     silently fell back to `sandbox.py`'s hardcoded
+     `["Tm", "kD", "viscosity"]` default. Labels were applied positionally
+     consistently across an entire run, so `win_rate`/`fitness` numbers
+     were still legitimately computed against real DTLZ2 `pool_mu`/
+     `pool_sigma` data — evolution itself wasn't invalidated — but the
+     LLM-authored `score_pool` naturally echoed whatever literal key names
+     appeared in its training context, making the output non-portable: it
+     `KeyError`s immediately against a real DTLZ2 deployment context.
+  2. `_LLM_SYSTEM_PROMPT` (the system prompt actually sent to the LLM in
+     `llm_propose_child`) was itself hardcoded to mAb's `Tm`/`kD`/
+     `viscosity` throughout its context-schema documentation and worked
+     example, and explicitly instructed the model to "Access objectives BY
+     NAME (e.g. `cand["gp_posterior"]["viscosity"]["std"]`)" — never
+     mentioning `context["objective_names"]` as the generic mechanism, even
+     though `af_interface.py`'s own `SEED_TRUST_ONLY` seed program already
+     demonstrated the correct pattern (with an explicit comment: "use
+     `context["objective_names"]` rather than hardcoding Tm/kD/viscosity,
+     so this works on any oracle's objective set").
+
+Verified in both directions before trusting the diagnosis: a hand-written
+generic AF ran cleanly (0 sandbox failures) against real DTLZ2 steps once
+`objective_names` was threaded through; the *old* buggy `best_af.py`
+correctly failed loudly (10/10 sandbox failures) under the fixed pipeline —
+confirming the previous "clean" 0.3894/0.419 result was an artifact of the
+bug, not a real success.
+
+**Fix.** `load_training_steps()` now derives `objective_names` per training
+log from its `"domain"` key (`dtlz2`/`zdt1` → `[f"f{i+1}" for i in
+range(Y_running.shape[1])]`; anything else, including legacy/mab logs with
+no `"domain"` key → unchanged `["Tm", "kD", "viscosity"]` default) and
+stores it per step; `evaluate_af()` now passes `objective_names=s[...]`
+through to the sandbox. `_LLM_SYSTEM_PROMPT` was rewritten to be
+domain-agnostic throughout — schema block documents `objective_names`
+generically, the worked example iterates `context["objective_names"]`
+instead of three hardcoded keys, and the "never hardcode objective names"
+instruction is now explicit up front, matching `SEED_TRUST_ONLY`'s existing
+pattern.
+
+**Re-run 1 (immediately post-fix, same small config) — genuine but
+premature convergence, not a bug.** `fitness=0.3894`, `win_rate=0.419`,
+already flat at generation 0 and never improved for 6 generations (the full
+`patience` budget) — 0% sandbox failures throughout, confirming the fix
+didn't just move the crash elsewhere. `final_population.json`: all 16
+individuals clustered tightly (fitness 0.357–0.389, win_rate 0.42–0.46),
+every variant a minor tweak on "novelty distance + uncertainty," no
+qualitatively different strategy emerged, and every win_rate sat *below*
+0.5 — the population as a whole was losing to the logged historical pick
+more often than winning. Diagnosis: not a bug, but too little search
+budget/diversity (`pop_size=16`, `n_offspring=8`, `patience=6`) for the LLM
+to escape an early local optimum in 6 generations.
+
+**Re-run 2 — wider, non-stagnating search: a real win.**
+`--pop_size 32 --n_generations 40 --n_offspring 16 --patience 40` (patience
+set equal to `n_generations`, disabling early stopping entirely). Ran to
+completion (26 generations logged, no `patience` break triggered) —
+`fitness` climbed steadily 0.396→0.542, `win_rate` 0.461→0.622, complexity
+grew from LOC 6→16 as genuinely richer logic emerged: adaptive
+uncertainty/exploitation/novelty weighting keyed off both `progress` and
+`stagnant_batches`, reading `context["objective_names"]` generically
+throughout (no hardcoded keys anywhere in the winning program). Sandbox
+failures stayed ~0% for the entire run (one generation blipped to 6.2%,
+immediately recovered).
+
+**Closed-loop validation — the fitness-proxy edge survived contact with
+real campaigns, unlike mAb's Gate 3 (§21 item 5).**
+`run_evolved_af_validation.py` was extended with `--domain dtlz2` (loading
+the evolved AF fresh from `evolution_runs/gate3_coreg_dtlz2_v2/best_af.py`
+rather than pasting it inline, since it's expected to be regenerated by
+future runs) and run seed-averaged, `--n_campaigns 20 --n_replicates 3`,
+against the same `trust_only` baseline used throughout this document, both
+under DA-COREG:
+
+| Replicate | % HV diff vs `trust_only` | Wins | p |
+|---|---|---|---|
+| 0 | +8.2% | 19/20 | 5.7×10⁻⁶ |
+| 1 | +10.6% | 20/20 | 1.9×10⁻⁶ |
+| 2 | +8.0% | 20/20 | 1.9×10⁻⁶ |
+
+All three replicates positive, consistently large (+8–11%), highly
+significant, wins 19–20/20 every time, and **zero DA-COREG fallback
+batches across all 360** (120×3) — nothing here is an artifact of surrogate
+instability. This is the first evolved-AF Gate 3 result in this document
+that clears closed-loop validation on its first genuinely-fixed attempt:
+mAb's Gate 3 (§21 item 5) plateaued near chance on the fitness proxy and
+lost −0.7% closed-loop; DTLZ2's Gate 3, once the `objective_names` bug was
+fixed and given a wider non-stagnating search, both trained to a real
+fitness edge (0.542/0.622) *and* translated it into a large, clean,
+reproducible closed-loop hypervolume gain.
+
+**Takeaways.**
+  1. The `objective_names` bug was silent and metric-preserving — training
+     fitness/win_rate looked fine throughout, and the only tell was reading
+     the evolved code itself and noticing domain-inconsistent literals.
+     Any future new-domain Gate 3 run should sanity-check the winning
+     `score_pool`'s source for hardcoded strings before trusting its
+     training metrics, not just its `n_sandbox_failures` count.
+  2. `patience` is the only stagnation control `evolve_af.py` exposes
+     (no separate mutation-rate knob) — setting `--patience` equal to
+     `--n_generations` is the mechanism to force a full-budget, no-early-
+     exit search when the smaller default (6) converges prematurely, as it
+     did on the first DTLZ2 attempt here.
+  3. Whether an evolved Gate-3 AF beats `trust_only` in closed-loop
+     campaigns now looks domain-dependent rather than uniformly
+     negative or positive: a clean win on DTLZ2, a clean loss on mAb
+     (pre-bugfix data, not yet re-run post-fix — worth revisiting mAb's
+     Gate 3 under the corrected pipeline before treating its earlier
+     negative as final, since it predates this section's bug fix).
+
+---
+
 *End of document.*
