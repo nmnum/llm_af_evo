@@ -2569,6 +2569,55 @@ mAb's clean loss stand side by side as the actual result: whether
 Gate-3-evolved acquisition search helps depends on the domain, and neither
 outcome was a measurement artifact.
 
+**Cross-domain transfer check (2026-08-12) — DTLZ2's evolved AF does not
+generalize.** DTLZ2's Gate 3 evolved AF (fitness=0.5422, win_rate=0.622,
+the one that produced the clean +8–11% same-domain win above) was run
+unmodified — no re-evolution, no domain-specific training — against two
+oracles it had never seen during evolution: mAb's real oracle and zdt1's
+synthetic oracle. This isolates whether the evolved AF encodes a broadly
+better acquisition *strategy* or just a DTLZ2-specific optimization,
+using the `--af_domain` flag added to `run_evolved_af_validation.py`
+(`--domain <oracle> --af_domain dtlz2`), same seed-averaged protocol
+(`--n_campaigns 20 --n_replicates 3`):
+
+*DTLZ2 AF on mAb's oracle:*
+
+| Replicate | % HV diff vs `trust_only` | Wins | p |
+|---|---|---|---|
+| 0 | +1.3% | 11/20 | 0.571 |
+| 1 | −6.2% | 6/20 | 0.012 |
+| 2 | −7.1% | 8/20 | 0.058 |
+
+Directionally positive in 1/3 replicates, two of three replicates negative
+and one of those significant. 0/360 DA-COREG fallback batches.
+
+*DTLZ2 AF on zdt1's oracle:*
+
+| Replicate | % HV diff vs `trust_only` | Wins | p |
+|---|---|---|---|
+| 0 | −3.1% | 5/20 | 0.024 |
+| 1 | −2.6% | 7/20 | 0.076 |
+| 2 | −0.2% | 9/20 | 0.870 |
+
+Directionally positive in 0/3 replicates, one significant negative, the
+other two flat/noise. 0/360 DA-COREG fallback batches.
+
+**Takeaway:** the DTLZ2 win does not transfer to either mAb's real oracle
+or zdt1's synthetic oracle — in both cases the evolved AF is flat-to-negative
+rather than replicating anything like its +8–11% same-domain performance.
+Combined with mAb's own clean same-domain loss above, the full picture is:
+
+| AF evolved on | Tested on | Result |
+|---|---|---|
+| dtlz2 | dtlz2 (same-domain) | **+8–11%, p~1e-6, strong win** |
+| mab | mab (same-domain) | −3% to −6%, p<0.05 in 2/3, clean loss |
+| dtlz2 | mab (transfer) | mixed/negative, not a win |
+| dtlz2 | zdt1 (transfer) | flat/negative, not a win |
+
+Gate 3's DTLZ2 result looks like a genuine same-domain search win, not
+evidence of a generally-better acquisition function — it should not be
+deployed outside DTLZ2 without domain-specific re-evolution.
+
 ---
 
 *End of document.*
