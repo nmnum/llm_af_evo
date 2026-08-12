@@ -2539,11 +2539,35 @@ reproducible closed-loop hypervolume gain.
      exit search when the smaller default (6) converges prematurely, as it
      did on the first DTLZ2 attempt here.
   3. Whether an evolved Gate-3 AF beats `trust_only` in closed-loop
-     campaigns now looks domain-dependent rather than uniformly
-     negative or positive: a clean win on DTLZ2, a clean loss on mAb
-     (pre-bugfix data, not yet re-run post-fix — worth revisiting mAb's
-     Gate 3 under the corrected pipeline before treating its earlier
-     negative as final, since it predates this section's bug fix).
+     campaigns is genuinely domain-dependent, not an artifact of the
+     bug above: a clean win on DTLZ2, a clean loss on mAb.
+
+**mAb re-check (2026-08-12) — confirmed negative, not a power problem.**
+mAb's Gate 3 evolved AF (fitness=0.4656/win_rate=0.531) was never affected
+by the `objective_names` bug in the first place — `sandbox.py`'s hardcoded
+default (`["Tm", "kD", "viscosity"]`) already matched mAb's real labels, so
+no re-evolution was needed. What mAb's Gate 3 *had* only ever gotten was a
+5-campaign smoke check (`diff=-0.7%, wins=2/5, p=1` — no statistical power
+at n=5). Ran the same seed-averaged protocol DTLZ2 got,
+`--n_campaigns 20 --n_replicates 3 --n_fitness_seeds 3`:
+
+| Replicate | % HV diff vs `trust_only` | Wins | p |
+|---|---|---|---|
+| 0 | −3.0% | 7/20 | 0.090 |
+| 1 | −3.1% | 6/20 | 0.036 |
+| 2 | −5.7% | 6/20 | 0.014 |
+
+0/3 replicates directionally positive, consistently negative (−3 to −6%),
+2/3 individually significant at p<0.05, wins 6–7/20 every time, 0/360
+DA-COREG fallback batches — a clean, reproducible negative, not the noisy
+near-chance result the n=5 smoke check's p=1 suggested. **Confirmed: mAb's
+Gate 3 evolved AF genuinely underperforms `trust_only` in closed-loop
+campaigns** despite training to a real per-step fitness edge — same
+"fitness proxy doesn't transfer" pattern flagged in §21 item 5, now backed
+by real power rather than a 5-campaign spot check. DTLZ2's clean win and
+mAb's clean loss stand side by side as the actual result: whether
+Gate-3-evolved acquisition search helps depends on the domain, and neither
+outcome was a measurement artifact.
 
 ---
 
