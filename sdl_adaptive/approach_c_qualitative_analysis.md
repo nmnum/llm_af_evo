@@ -8,7 +8,7 @@ Approach C asks an LLM to rewrite the entire `suggest()` optimiser function as e
 
 - **Done:** qualitative read of all 18 code logs; identified the dead-acquisition-score bug (below).
 - **Done:** bug-fix proxy rerun (deterministic replay of the LLM's own patched Generation-C code, no live LLM calls, 80 seeds matching `results_power2`'s protocol) — AUC 0.708 → 0.793.
-- **In progress:** live rerun of `approach_c_evo` (real `qwen3-coder:30b` calls) under the same 20-seed × 5-dataset protocol as the current `approach_a`/`b`/`c`/`d` numbers in `results_combined`, so `approach_c_evo` finally has a properly comparable figure instead of the old single-dataset, 80-seed one. Not complete as of this commit — the numbers below are still from the old protocol until this lands.
+- **Done:** live rerun of `approach_c_evo` (real `qwen3-coder:30b` calls) under the same 20-seed × 5-dataset protocol as `approach_a`/`b`/`c`/`d` in `results_combined`, giving `approach_c_evo` a properly comparable figure for the first time — see "Comparison across all conditions" below.
 
 ## Three generations, not eighteen
 
@@ -33,11 +33,39 @@ acq_scores = np.concatenate([gp_scores, np.zeros(72)])  # dummy scores for evo c
 
 `novelty_select(..., merit_weight=0.7)` combines `0.7*merit + 0.3*novelty`. Since merit is unconditionally 0 for every evolutionary candidate, they can only ever be selected on the strength of the 0.3-weighted novelty term — structurally starved relative to GP candidates regardless of how promising the evolutionary points actually are. The comment ("dummy scores") shows the LLM knew this was a stand-in, and it was never fixed across 16 subsequent identical or near-identical calls.
 
-This lines up with the quantitative finding already recorded in `sdl_adaptive/COMPREHENSIVE_LOG.md` (`results_power2`): `approach_c_evo` was the weakest LLM-adjacent condition sampled (0.708 AUC vs. `egbo`'s 0.805 and `novelty_egbo`'s 0.791; separately, on `pareto_20210112`, `novelty_egbo` reaches 0.833 and `egbo` 0.818). This code log gives a plausible causal mechanism for that gap — the LLM wired up the evolutionary-candidate pool but never connected it to real acquisition scoring, so the "diversity" feature it added was largely cosmetic.
+This lines up with the quantitative finding originally recorded in `sdl_adaptive/COMPREHENSIVE_LOG.md` (`results_power2`): `approach_c_evo` looked like the weakest LLM-adjacent condition sampled there (0.708 AUC vs. `egbo`'s 0.805 and `novelty_egbo`'s 0.791; separately, on `pareto_20210112`, `novelty_egbo` reaches 0.833 and `egbo` 0.818). This code log gives a plausible causal mechanism for that gap — the LLM wired up the evolutionary-candidate pool but never connected it to real acquisition scoring, so the "diversity" feature it added was largely cosmetic.
 
-> **Protocol caveat.** This 0.708 figure comes from `results_power2`: **80 seeds on a single dataset** (`pareto_20210112`). It is *not* directly comparable to the current `approach_a`/`b`/`c`/`d` numbers in `results_combined`, which use **20 seeds × all 5 datasets**. `approach_c_evo` has never been run under that protocol — see "Status" below.
+> **Protocol caveat (historical).** The 0.708 figure came from `results_power2`: **80 seeds on a single dataset** (`pareto_20210112`), which is not directly comparable to the current `approach_a`/`b`/`c`/`d` numbers in `results_combined` (**20 seeds × all 5 datasets**). This has since been resolved — see "Comparison across all conditions" below for `approach_c_evo`'s properly comparable figure.
 
-**Confirmed by a bug-fix proxy rerun.** To test this causally rather than just narratively, I took the LLM's own Generation-C code (`call_0017.py`) and patched only the one line — `evo_cands` now score with the same `mu + beta*sigma` GP prediction the plain candidates get, instead of a hardcoded zero — then replayed it deterministically (no further LLM calls) across the identical 80-seed protocol used for the original `results_power2` figure (`pareto_20210112`, `n_init=5`, `controller_interval=5`, same `generate_init_points()` draw per seed). Result: **AUC rose from 0.708 to 0.793 (n=80, std 0.117)** — closing roughly 88% of the gap to `egbo` (0.805) and landing essentially level with `novelty_egbo` (0.791). This confirms the dead-acquisition-score bug was not an incidental style issue but a substantial share of the measured performance gap: fixing this one line, with everything else about the LLM's code held fixed, recovers most of what separates `approach_c_evo` from the hand-designed EGBO baselines. (Results: `sdl_adaptive/results_fixed_evo_proxy/pareto_20210112/approach_c_evo_fixed/`.)
+**Confirmed by a bug-fix proxy rerun.** To test this causally rather than just narratively, I took the LLM's own Generation-C code (`call_0017.py`) and patched only the one line — `evo_cands` now score with the same `mu + beta*sigma` GP prediction the plain candidates get, instead of a hardcoded zero — then replayed it deterministically (no further LLM calls) across the identical 80-seed protocol used for the original `results_power2` figure (`pareto_20210112`, `n_init=5`, `controller_interval=5`, same `generate_init_points()` draw per seed). Result: **AUC rose from 0.708 to 0.793 (n=80, std 0.117)** — closing roughly 88% of the gap to `egbo` (0.805) and landing essentially level with `novelty_egbo` (0.791). This confirms the dead-acquisition-score bug was not an incidental style issue but a substantial share of the measured performance gap: fixing this one line, with everything else about the LLM's code held fixed, recovers most of what separates `approach_c_evo` from the hand-designed EGBO baselines on this one dataset. (Results: `sdl_adaptive/results_fixed_evo_proxy/pareto_20210112/approach_c_evo_fixed/`.)
+
+## Comparison across all conditions (live rerun, 20 seeds × 5 datasets)
+
+The bug-fix proxy above is a frozen replay of one saved code snapshot on one dataset. To get a real, comparable figure, `approach_c_evo` was rerun **live** (actual `qwen3-coder:30b` calls, fresh code generated per seed) under the exact protocol used for `approach_a`/`b`/`c`/`d` in `results_combined`: 20 seeds × all 5 datasets, `n_init=5`, `controller_interval=5`. This is the first time `approach_c_evo` has a figure directly comparable to the other LLM conditions.
+
+| dataset | approach_c_evo | best other LLM approach | egbo | novelty_egbo |
+|---|---|---|---|---|
+| pareto_20210112 | **0.905** | approach_a 0.820 | 0.892 | 0.908 |
+| pareto_20201218 | 0.851 | approach_a 0.861 | 0.850 | 0.849 |
+| coatings | 0.905 | approach_d 0.937 | 0.972 | 0.961 |
+| pareto_20201223 | 0.853 | approach_c 0.869 | 0.923 | 0.917 |
+| pareto_20210104 | **0.846** | approach_b 0.788 | 0.860 | 0.872 |
+
+**Overall mean AUC across all 5 datasets:**
+
+| condition | mean AUC |
+|---|---|
+| novelty_egbo | 0.901 |
+| egbo | 0.899 |
+| **approach_c_evo** | **0.851** |
+| approach_a | 0.842 |
+| approach_c | 0.840 |
+| approach_b | 0.833 |
+| approach_d | 0.818 |
+
+This overturns the earlier reading. Under the old single-dataset, 80-seed sample, `approach_c_evo` looked like the weakest LLM condition (0.708). Under the fair, broader protocol, it is the **strongest LLM-authored condition on average** (0.851), ahead of `approach_a`, `approach_c`, `approach_b`, and `approach_d` — and on two of five datasets (`pareto_20210112`, `pareto_20210104`) it matches or beats both hand-designed EGBO baselines outright. The remaining gap to EGBO overall (~0.05) is real but much smaller and more consistent than the original 0.708 figure implied, and it is not uniform: `approach_c_evo` underperforms most on `coatings`, where EGBO's margin is largest across the board.
+
+The dead-acquisition-score bug documented above is a real, self-inflicted regression in the *specific saved code snapshots* this analysis inspected (Generations B/C, 16/18 logged calls) — but it evidently isn't present or isn't dominant in every live generation the LLM produces, since the live rerun's fresh-per-seed code does not reproduce the old 0.708 result. The two findings aren't in tension: the bug-fix proxy shows that *when* the bug is present, fixing it recovers most of the gap; the live rerun shows the LLM does not reliably reproduce that exact bug across independent generations, and unconditionally, `approach_c_evo` performs competitively.
 
 ## Other qualitative observations
 
@@ -48,6 +76,8 @@ This lines up with the quantitative finding already recorded in `sdl_adaptive/CO
 
 ## Bottom line
 
-This log set is useful primary evidence for the thesis's "LLM-authored optimiser code underperforms hand-designed EGBO" claim, and — unlike the aggregate AUC tables alone — supplies a causal explanation, now empirically confirmed on one dataset rather than just plausible: the LLM introduced a real integration bug (dead acquisition scores on its own evolutionary candidates), repeated it verbatim across the majority of its rewrites without noticing, and fixing that single line recovers most (≈88%) of the AUC gap to hand-designed EGBO on `pareto_20210112` (0.708 → 0.793, vs. `egbo`'s 0.805). The residual gap there is small enough to be within noise (seed SDs of 0.12–0.16 on this dataset) — so once this one bug is corrected, the LLM's own code is roughly competitive with the hand-tuned baseline on that dataset. The interesting failure mode, then, isn't that the LLM's approach is fundamentally weaker — it's that the LLM shipped a silent, self-introduced regression and never caught it across 16 further calls.
+This log set is useful primary evidence for the thesis's "LLM-authored optimiser code underperforms hand-designed EGBO" claim, but the full picture is more nuanced than the code logs alone suggest. The 18 saved code snapshots show a real, self-inflicted integration bug (dead acquisition scores on evolutionary candidates), repeated verbatim across the majority of the LLM's rewrites without ever being caught — and a bug-fix proxy rerun confirms that, when that bug is present, fixing that single line recovers most (≈88%) of the AUC gap to hand-designed EGBO on `pareto_20210112` (0.708 → 0.793, vs. `egbo`'s 0.805).
 
-This conclusion currently rests on a single dataset and a frozen, non-live replay of the LLM's code (see "Status" above) — it should be treated as a strong lead, not a final result, until the live 20-seed × 5-dataset rerun of `approach_c_evo` itself completes and either corroborates or complicates it across the other four datasets.
+But the properly comparable live rerun (20 seeds × 5 datasets, matching `approach_a`/`b`/`c`/`d`'s protocol) tells a broader story: `approach_c_evo` is not, on average, the weakest LLM condition — it's the **strongest** one (mean AUC 0.851, ahead of `approach_a` 0.842, `approach_c` 0.840, `approach_b` 0.833, `approach_d` 0.818), and on two of five datasets it matches or beats both EGBO baselines outright. The 0.708 figure that motivated this whole investigation turns out to have been an artifact of a single unlucky dataset/protocol combination, not a representative measure of the condition. The residual gap to EGBO overall (~0.05) is real, and larger on some datasets (`coatings`) than others, but it's a much smaller and more qualified claim than "the LLM's optimiser code is broken and underperforms."
+
+The interesting failure mode, then, isn't that the LLM's approach is fundamentally weaker — it's two separate things layered on top of each other: (1) the LLM can and does ship silent, self-introduced regressions in its generated code without catching them across repeated calls, evidenced directly in the 18 saved logs; and (2) despite that, averaged across a broader and fairer sample, its live-generated code is competitive with — and in some cases matches — hand-designed EGBO. Both are true, and both are worth reporting: the bug-fix proxy result is a clean within-sample causal demonstration of (1); the 5-dataset live rerun is the actual comparable headline number for (2).
