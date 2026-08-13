@@ -5,7 +5,7 @@
 **Author**: Neha Mungale
 **Supervisor**: David Shorthouse (UCL School of Pharmacy)
 **Date compiled**: 2026-08-01
-**Date updated**: 2026-08-02 — supersedes `project_comprehensive_log_previous.md`. Sections 1–11 are carried over unchanged (see that file for full detail); this version rewrites Section 12 onward to incorporate the Phase 1/2/sensitivity benchmark suite that was run after the previous log was compiled, including the missing mAb_aggregation WRONG/blank multi-objective comparison the previous log flagged as outstanding.
+**Date updated**: 2026-08-13 — added the Phase 3 (cross-domain, ADA coatings) results, run with the real LLM at n=20 seeds including the `egbo_warmstart`/`ucb_warmstart` ablations, with full Holm-corrected significance table; updated C4 and the file inventory accordingly. Previous update: 2026-08-02, superseding `project_comprehensive_log_previous.md`. Sections 1–11 are carried over unchanged (see that file for full detail); this version rewrites Section 12 onward to incorporate the Phase 1/2/sensitivity benchmark suite that was run after the previous log was compiled, including the missing mAb_aggregation WRONG/blank multi-objective comparison the previous log flagged as outstanding.
 **Scope**: Everything — from the original cancer drug screening work through the pharmaceutical formulation pivot, single-objective stress tests, multi-objective oracle construction, bug diagnosis and fixing, the wrong-prior findings, and the subsequent LS-NA-EGBO / novelty-aware benchmark suite.
 
 ---
@@ -34,7 +34,7 @@ Three benchmark runs exist in `results/`:
 | `results/benchmark_phase2/` | `run_benchmark_resumable.py --phase 2` | mo_random, mo_egbo, mo_egbo_real, mo_egbo_novelty, mo_ls_na_egbo, mo_llm_candidate_gen | 25 | 40 |
 | `results/benchmark_sensitivity/` | `run_sensitivity.py` | mo_egbo_novelty and mo_ls_na_egbo at w_nov ∈ {0.00, 0.10, 0.15, 0.20, 0.30}, plus mo_ls_egbo | 15 | 30 |
 
-Phase 1 used the reduced formulation space; Phase 2 used the full 14-excipient space and is the one that matters for the thesis's headline numbers. **Phase 3 (cross-domain generalisation to synthetic coatings, `run_phase3.py`) was written but never run — there are no results for it in `results/`.** Treat any Phase 3 claims as design-only, not evidence.
+Phase 1 used the reduced formulation space; Phase 2 used the full 14-excipient space and is the one that matters for the thesis's headline numbers. **Phase 3 (cross-domain generalisation to the ADA coatings oracle, `run_phase3.py`) has since been run with the real LLM (n=20 seeds) — see "Phase 3 results (cross-domain generalisation)" below.**
 
 All of `run_benchmark.py`, `run_benchmark_resumable.py`, `run_sensitivity.py`, `run_phase3.py`, `novelty_selection.py`, `strategy_ls_na_egbo.py`, `strategy_llm_candidate_gen.py`, `llm_warmstart.py` are currently **untracked** in git (`git status` at time of writing shows them as `??`) — they exist on disk but have never been committed. Commit them before relying on this log surviving a `git clean` or fresh checkout.
 
@@ -132,6 +132,68 @@ Phase 2 (25 seeds, budget=40, full 14-excipient space) is the more representativ
 
 `mo_ls_na_egbo` is at or above `mo_egbo_real` and `mo_egbo_novelty` in every row shown, and has the lowest variance across seeds in 3 of 4 rows — but per `phase2_stats_vs_egbo_novelty.csv`, none of these differences against the `mo_egbo_novelty` baseline reach significance after Holm correction (all corrected p ≈ 1.0). The only significant comparisons anywhere in Phase 1 or Phase 2 are informed-strategy-vs-`mo_random` (p < 0.006 across the board). **The honest headline claim from this benchmark suite is "informed strategies (of any kind — EGBO, novelty-EGBO, LLM-warm-started) reliably beat random search; no informed strategy is yet shown to reliably beat any other informed strategy at n=15–25 seeds."** Higher seed counts or a paired/blocked design would be needed to detect the smaller inter-strategy gaps if they are real.
 
+### Phase 3 results (cross-domain generalisation, ADA coatings oracle, real LLM, n=20)
+
+`run_phase3.py` was run to completion against the real LLM (`qwen3:32b`, `--n_seeds 20`), testing whether the LS-NA-EGBO architecture transfers to a different physical domain (spray-drying/ADA coatings, 4D input space, mixed physical-unit bounds — fuel:oxidizer ratio, acac amount, g/mL concentration, °C temperature) rather than the mAb formulation space Phase 1/2 use. Two additional conditions were added beyond the original design to complete a 2×2 {warm-start × novelty-aware selection} ablation and to test a cheaper acquisition alternative:
+
+- `egbo_warmstart` — LLM warm-start init + plain qLogNEHVI EGBO (no novelty term). Isolates warm-start's effect alone.
+- `ucb_warmstart` — LLM warm-start init + a simple scalarised (equal-weight-sum, per-objective-std-normalised) UCB acquisition, in `excipient_campaign_mo.py`/`strategy_mo_scalarized_ucb`. Tests whether a much cheaper acquisition still benefits from warm-start.
+
+Both conditions use one LLM call (Stage-1 warm-start only), matching `ls_na_egbo`'s cost profile, not `llm_labo`'s (LLM called every batch).
+
+**Mean final hypervolume, all 7 conditions (n=20 seeds each), ranked:**
+
+| condition | mean | std | min | max |
+|---|---|---|---|---|
+| ucb_warmstart | 458.18 | 47.48 | 383.57 | 525.24 |
+| ls_na_egbo | 453.09 | 45.38 | 395.61 | 525.46 |
+| egbo_warmstart | 449.83 | 47.90 | 387.73 | 525.46 |
+| egbo | 449.16 | 34.92 | 405.97 | 525.35 |
+| llm_labo | 439.39 | 40.80 | 399.50 | 525.28 |
+| egbo_novelty | 435.42 | 34.89 | 399.55 | 524.91 |
+| random | 422.23 | 58.39 | 353.24 | 524.93 |
+
+**2×2 warm-start × novelty design** (isolating which factor drives `ls_na_egbo`'s position):
+
+| | no warm-start | warm-start |
+|---|---|---|
+| **no novelty** | egbo: 449.2 | egbo_warmstart: 449.8 |
+| **novelty** | egbo_novelty: 435.4 | ls_na_egbo: 453.1 |
+
+Full pairwise comparisons (Wilcoxon signed-rank, matched by seed via `make_shared_inits`), with Holm correction applied across all 21 tests:
+
+| comparison | mean_diff | t | raw_p | holm_p |
+|---|---|---|---|---|
+| egbo vs egbo_novelty | 13.74 | 1.31 | 0.0479 | 0.7657 |
+| egbo vs egbo_warmstart | -0.67 | -0.06 | 0.6274 | 1.0000 |
+| egbo vs llm_labo | 9.77 | 0.75 | 0.2180 | 1.0000 |
+| egbo vs ls_na_egbo | -3.92 | -0.31 | 0.6542 | 1.0000 |
+| egbo vs random | 26.93 | 1.67 | 0.1259 | 1.0000 |
+| egbo vs ucb_warmstart | -9.02 | -0.72 | 0.7369 | 1.0000 |
+| egbo_novelty vs egbo_warmstart | -14.42 | -1.41 | 0.1169 | 1.0000 |
+| egbo_novelty vs llm_labo | -3.97 | -0.32 | 0.5016 | 1.0000 |
+| egbo_novelty vs ls_na_egbo | -17.67 | -1.27 | 0.1672 | 1.0000 |
+| egbo_novelty vs random | 13.19 | 0.85 | 0.3507 | 1.0000 |
+| egbo_novelty vs ucb_warmstart | -22.76 | -1.67 | 0.0793 | 1.0000 |
+| egbo_warmstart vs llm_labo | 10.44 | 0.86 | 0.5503 | 1.0000 |
+| egbo_warmstart vs ls_na_egbo | -3.25 | -0.26 | 0.9702 | 1.0000 |
+| egbo_warmstart vs random | 27.61 | 2.02 | 0.0276 | 0.5524 |
+| egbo_warmstart vs ucb_warmstart | -8.35 | -0.54 | 0.6813 | 1.0000 |
+| llm_labo vs ls_na_egbo | -13.70 | -1.17 | 0.2322 | 1.0000 |
+| llm_labo vs random | 17.16 | 1.61 | 0.0304 | 0.5769 |
+| llm_labo vs ucb_warmstart | -18.79 | -1.72 | 0.0304 | 0.5769 |
+| ls_na_egbo vs random | 30.86 | 2.58 | 0.0400 | 0.6807 |
+| ls_na_egbo vs ucb_warmstart | -5.10 | -0.42 | 0.4781 | 1.0000 |
+| random vs ucb_warmstart | -35.95 | -2.81 | 0.0057 | 0.1204 |
+
+**No pairwise comparison survives Holm correction at α=0.05** (best case: `random vs ucb_warmstart`, holm_p=0.1204). A companion power analysis (Cohen's dz on the `ls_na_egbo`-anchored comparisons) estimates ~97–114 seeds would be needed for 80% power on the `ls_na_egbo` vs `egbo_novelty` / `llm_labo` gaps at their current observed effect sizes (dz≈0.26–0.28); the `ls_na_egbo` vs `random` gap needs only ~23 seeds (dz≈0.58). At n=20, treat every ranking claim below as descriptive/directional, not confirmatory.
+
+**Interpretation.** The mechanistically interesting result is an interaction, not a main effect: LLM warm-start alone (`egbo_warmstart` vs `egbo`, diff=0.7 HV) does essentially nothing on top of plain qLogNEHVI EGBO, and novelty-aware selection alone (`egbo_novelty` vs `egbo`) is the single worst-performing deviation from `egbo` in the whole table (uncorrected p=0.048, though it doesn't survive Holm). But warm-start *combined with* a novelty-sensitive acquisition — either the explicit novelty term (`ls_na_egbo`) or the cheaper scalarised UCB (`ucb_warmstart`) — recovers to the top of the ranking. Neither ingredient helps in isolation on this domain; together they're the best performers. `ucb_warmstart` topping the ranking is the most actionable single takeaway even though it isn't statistically proven: it suggests the LLM warm-start's exploration diversity is doing most of the real work, and once that diversity exists, the more expensive qLogNEHVI+novelty machinery may be largely redundant with a much cheaper acquisition function — a compute-cost argument independent of whether the HV gap itself is significant.
+
+A separate check (prompted by the ADA coatings oracle's mixed physical units — fuel:oxidizer ratio, g/mL concentration, °C temperature) confirmed `strategy_mo_egbo_novelty`'s novelty-distance computation is not scale-biased by these raw units: `X_obs` is min-max normalised to [0,1] per-dimension (`strategy_ls_na_egbo.py`) before being passed into `novelty_aware_select_vectorised`, and the candidate pool it's compared against is independently already in matching [0,1]-normalised space (via `optimize_acqf`'s `standard_bounds` and pymoo's `xl=0,xu=1` problem bounds). So the `egbo_novelty` underperformance above is a genuine domain/budget effect, not a normalisation artifact.
+
+**For the thesis**: this is suggestive, directionally-consistent-with-Phase-1/2 evidence that the LS-NA-EGBO architecture generalises across domains, not standalone proof — lead with the interaction finding (warm-start needs a novelty-sensitive acquisition to pay off) framed as a qualitative/mechanistic result, report the Holm-corrected table so the significance caveat is explicit, and note the power-analysis seed counts as future work rather than implying they'll be run.
+
 ---
 
 ## Updated Section 13: The Four Claims — Status Assessment (supersedes previous log's table)
@@ -141,7 +203,7 @@ Phase 2 (25 seeds, budget=40, full 14-excipient space) is the more representativ
 | **C1**: LLM knowledge beats GP-only | **Validated (SO); validated for beating random (MO), not yet for beating other informed strategies (MO)** | SO: clean gradient on mAb_agg. MO Phase 1/2: `mo_ls_na_egbo` and all informed strategies significantly beat `mo_random` (p<0.006) on both profiles; no informed-vs-informed comparison reaches significance at current seed counts. | More seeds, or a paired statistical design, to resolve informed-vs-informed gaps |
 | **C2**: Per-objective trust diagnostic | **Not validated, no longer load-bearing** | Still collapses to 0.700 for all objectives at budget=40/d=16 (unchanged from previous log — not re-tested since). The current best architecture (LS-NA-EGBO) does not use this diagnostic at all, having replaced per-batch trust-weighted mixing with one-shot LLM warm-start + autonomous EGBO. | If C2 is kept in the thesis, either validate at budget≥80 or explicitly reframe it as "attempted and superseded" rather than "pending" |
 | **C3**: Wrong-prior / mixing-weight behaviour | **Reframed and now evidenced on two profiles; strategy choice resolved** | The missing mAb_aggregation WRONG/blank comparison (Section 12 above) is resolved: wrong-prior effect is profile-dependent, not universal, consistent with the multi-objective reward-structure argument. **Resolved (2026-08-11)**: the thesis claims `mo_llm_candidate_gen` (Phase 2, WRONG=2572, indistinguishable from L1), not the old trust-weighted `mo_llm` (WRONG=2763, dramatic) — the latter's persistent per-batch prior injection sits on the never-validated C2 trust diagnostic (see row above), so its magnitude isn't trustworthy. The strategy-dependence itself is now framed as an additional finding: a persistently-injected wrong-mechanism prior can manufacture a hypervolume advantage that disappears once the same prior is just one candidate-source scored by acquisition value. | None — see §12 "Caveat for the thesis — resolved" for the full reasoning |
-| **C4**: End-to-end pipeline | **Partially validated, architecture changed** | Two full pipelines now exist and run end-to-end with real/mock LLM across 30+ seeds each: the original trust-weighted `mo_llm` (previous log, Phase 5–8) and the new warm-start `mo_ls_na_egbo` (this log, Phase 1/2). Real Waibel data (33 formulations) still untested. Phase 3 cross-domain generalisation was designed (`run_phase3.py`) but never run — no evidence for or against cross-domain transfer. | Run against real Waibel data; run Phase 3 or drop cross-domain generalisation claims from the thesis |
+| **C4**: End-to-end pipeline | **Partially validated, architecture changed; cross-domain generalisation now has directional (not significant) support** | Two full pipelines now exist and run end-to-end with real/mock LLM across 30+ seeds each: the original trust-weighted `mo_llm` (previous log, Phase 5–8) and the new warm-start `mo_ls_na_egbo` (this log, Phase 1/2). Real Waibel data (33 formulations) still untested. Phase 3 cross-domain generalisation (ADA coatings, real LLM, n=20) has been run — see "Phase 3 results" above; warm-start + novelty-sensitive acquisition ranks top of 7 conditions but no pairwise comparison survives Holm correction at n=20. | Run against real Waibel data; more Phase 3 seeds (~100, per power analysis) if a confirmatory cross-domain claim is needed for the thesis |
 
 ---
 
@@ -149,17 +211,19 @@ Phase 2 (25 seeds, budget=40, full 14-excipient space) is the more representativ
 
 | File | Description |
 |------|-------------|
-| `run_benchmark.py` | Unified benchmark runner, 7 conditions × 3 phases (Phase 3 defined but unrun) |
-| `run_benchmark_resumable.py` | Checkpointed version of the above, used to produce `results/benchmark_phase1/` and `results/benchmark_phase2/` |
+| `run_benchmark.py` | Unified benchmark runner, 7 conditions × 3 phases |
+| `run_benchmark_resumable.py` | Checkpointed version of the above, used to produce `results/benchmark_phase1/` and `results/benchmark_phase2/`; now 8 conditions after adding `mo_ucb_warmstart` |
 | `run_sensitivity.py` | Novelty-weight sensitivity sweep + `mo_ls_egbo` ablation, produced `results/benchmark_sensitivity/` |
-| `run_phase3.py` | Cross-domain (coatings) generalisation test — written, **not yet run**, no results exist |
+| `run_phase3.py` | Cross-domain (ADA coatings) generalisation test — run to completion with real LLM, n=20 seeds, 7 conditions (see "Phase 3 results" above) |
 | `novelty_selection.py` | Aqeeli-et-al.-style novelty-aware batch selection, `w_nov` default 0.1 (see sensitivity sweep for why not the literature 0.3) |
 | `strategy_ls_na_egbo.py` | LS-NA-EGBO: LLM warm-start once + autonomous novelty-aware EGBO. Also defines `mo_egbo_novelty` (no-LLM ablation) |
 | `strategy_llm_candidate_gen.py` | LLM-as-candidate-generator strategy, formerly mislabelled "LABO" — see naming correction above |
 | `llm_warmstart.py` | One-shot LLM warm-start module, three-layer prompt (reasoning protocol / domain physics / materials) |
-| `synthetic_coatings_oracle.py` | Cross-domain oracle for the unrun Phase 3 |
+| `excipient_campaign_mo.py` | Shared MO strategy module; also defines `strategy_mo_scalarized_ucb` (warm-start + cheap scalarised-UCB ablation, used by both `run_phase3.py` and `run_benchmark_resumable.py`) |
+| `llm_af_evo/shared/ada_coatings_oracle.py` | Cross-domain oracle used by Phase 3 (`DiscreteADACoatingsOracle`, real multi-objective ADA coatings oracle, replacing the earlier placeholder `synthetic_coatings_oracle.py`) |
 | `results/benchmark_phase1/` | Reduced formulation space, 15 seeds, budget=30 |
 | `results/benchmark_phase2/` | Full 14-excipient space, 25 seeds, budget=40 — the headline benchmark numbers |
+| `results/benchmark_phase3/` | Cross-domain ADA coatings, real LLM, 20 seeds, 7 conditions — see "Phase 3 results" above |
 | `results/benchmark_sensitivity/` | Novelty-weight sweep, 15 seeds, budget=30 |
 
 All of the above (plus `run_phase3.py`) are currently untracked in git — commit before this becomes a reproducibility gap.
