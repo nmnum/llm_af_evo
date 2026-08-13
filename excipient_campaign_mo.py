@@ -762,6 +762,42 @@ def strategy_mo_egbo_real(oracle, X_obs, Y_obs, bounds, batch_size, rng, **kw):
         return cands, extra
 
 
+def strategy_mo_scalarized_ucb(oracle, X_obs, Y_obs, bounds, batch_size, rng,
+                                beta=2.0, **kw):
+    """Baseline: scalarised (equal-weight-sum) UCB acquisition across all
+    objectives, ranked and truncated to batch_size -- the classic single-
+    scalar-acquisition MO baseline, in contrast to egbo/egbo_novelty/
+    egbo_real's Pareto-dominance or qLogNEHVI-based selection. Per-objective
+    GP mean/std are standardised by that objective's observed std before
+    summing, so raw-unit mismatches across objectives (e.g. mAb's Tm in
+    Celsius vs. kD vs. viscosity, or coatings' S/m conductivity vs. Siemens
+    conductance_std) don't let one objective dominate the scalarisation.
+    Dimension- and domain-agnostic (uses oracle.objective_directions() and
+    Y_obs.shape[1] dynamically, not the hardcoded module-level
+    OBJECTIVE_DIRECTIONS) -- originally added in run_phase3.py for the
+    coatings warm-start-with-a-simpler-acquisition ablation, promoted here
+    so run_benchmark_resumable.py's mAb-domain phases can use the identical
+    function for the same ablation."""
+    directions = oracle.objective_directions() if oracle is not None else OBJECTIVE_DIRECTIONS
+    M = Y_obs.shape[1]
+    lo, hi = bounds[:, 0], bounds[:, 1]
+    X_obs_n = (X_obs - lo) / (hi - lo + 1e-12)
+    pool_n = _make_pool(X_obs_n, Y_obs, bounds, rng, n=60, directions=directions)
+    pool_raw = pool_n * (hi - lo) + lo
+
+    scores = np.zeros(len(pool_raw))
+    for j in range(M):
+        sign = 1.0 if directions[j] == "max" else -1.0
+        y_sig = sign * Y_obs[:, j]
+        y_std = float(np.std(y_sig)) or 1.0
+        gp, sc = _fit_gp_1d(X_obs, y_sig)
+        mu, sigma = gp.predict(sc.transform(pool_raw), return_std=True)
+        scores += (mu + beta * sigma) / y_std
+
+    top_idx = np.argsort(scores)[-batch_size:]
+    return pool_raw[top_idx], {"scalarized_ucb": True}
+
+
 def strategy_mo_llm(oracle, X_obs, Y_obs, bounds, batch_size, rng,
                     prior_text="", model="qwen3:32b",
                     mock_llm=False, dataset="", **kw):

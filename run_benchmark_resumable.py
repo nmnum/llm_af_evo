@@ -37,8 +37,8 @@ from excipient_oracle import (
 )
 from excipient_campaign_mo import (
     strategy_mo_random, strategy_mo_egbo, strategy_mo_egbo_real,
-    strategy_mo_llm, run_mo_campaign, make_shared_inits,
-    pareto_front_of, OBJECTIVE_DIRECTIONS, OBJECTIVE_NAMES,
+    strategy_mo_llm, strategy_mo_scalarized_ucb, run_mo_campaign,
+    make_shared_inits, pareto_front_of, OBJECTIVE_DIRECTIONS, OBJECTIVE_NAMES,
     MO_PRIORS,
 )
 from strategy_ls_na_egbo import (
@@ -168,7 +168,7 @@ def run_phase(args, phase_num, n_propose, n_llm_cands):
     ckpt_df = load_checkpoint(ckpt_path)
     results = ckpt_df.to_dict("records")
 
-    n_conditions = len(args.conditions) if args.conditions else 7
+    n_conditions = len(args.conditions) if args.conditions else 8
     total_combos = len(args.proteins) * len(args.priors) * n_conditions * args.n_seeds
     done_combos = len(results)
     print(f"  Progress: {done_combos}/{total_combos} combos completed")
@@ -211,6 +211,15 @@ def run_phase(args, phase_num, n_propose, n_llm_cands):
                 "mo_ls_egbo": (strategy_mo_egbo_real, {}, True),  # LLM warm-start + real EGBO, no novelty
                 "mo_ls_na_egbo": (strategy_mo_ls_na_egbo,
                                   {"w_acq": args.w_acq, "w_nov": args.w_nov}, True),
+                # LLM warm-start + scalarised UCB (simpler acquisition than
+                # the full qLogNEHVI/novelty backbone) -- does warm-start
+                # help independent of acquisition strength? Same ablation
+                # added to run_phase3.py's coatings conditions; seeds here
+                # are already comparable across conditions since every
+                # condition in this dict runs seed_idx 0..n_seeds-1 through
+                # either the same shared_inits or the same warm-start seed.
+                "mo_ucb_warmstart": (strategy_mo_scalarized_ucb,
+                                      {"beta": 2.0}, True),
                 "mo_llm_candidate_gen": (strategy_mo_llm_candidate_gen,
                                 {"prior_text": prior_text, "mock_llm": args.mock_llm,
                                  "model": args.model, "n_llm_candidates": n_llm_cands,
@@ -384,9 +393,10 @@ def main():
     parser.add_argument("--proteins", nargs="+", default=["mAb_aggregation", "mAb_oxidation"])
     parser.add_argument("--priors", nargs="+", default=["L1", "blank"])
     parser.add_argument("--conditions", nargs="+", default=None,
-                        help="Subset of conditions to run (default: all 7). Choices: "
+                        help="Subset of conditions to run (default: all 8). Choices: "
                              "mo_random, mo_egbo, mo_egbo_real, mo_egbo_novelty, "
-                             "mo_ls_egbo, mo_ls_na_egbo, mo_llm_candidate_gen")
+                             "mo_ls_egbo, mo_ls_na_egbo, mo_ucb_warmstart, "
+                             "mo_llm_candidate_gen")
     parser.add_argument("--w_acq", type=float, default=0.9)
     parser.add_argument("--w_nov", type=float, default=0.1,
                         help="Novelty weight (0.1 = sweet spot from sensitivity sweep)")

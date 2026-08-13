@@ -89,8 +89,8 @@ sys.path.insert(0, str(_ROOT / "llm_af_evo" / "shared"))
 from ada_coatings_oracle import DiscreteADACoatingsOracle
 from excipient_campaign_mo import (
     run_mo_campaign, make_shared_inits, pareto_front_of,
-    strategy_mo_random, strategy_mo_egbo_real,
-    mixing_weight, pareto_filter_candidates, _fit_gp_1d, _make_pool,
+    strategy_mo_random, strategy_mo_egbo_real, strategy_mo_scalarized_ucb,
+    mixing_weight, pareto_filter_candidates, _fit_gp_1d,
 )
 from strategy_ls_na_egbo import strategy_mo_egbo_novelty
 from llm_warmstart import diversity_select, parse_llm_coatings, _mock_warmstart_coatings
@@ -448,39 +448,6 @@ def strategy_mo_llm_coatings(oracle, X_obs, Y_obs, bounds, batch_size, rng,
         "labo": True, "trust": trust, "mixing_weight": weight,
         "n_llm_proposed": len(llm_cands_n), "n_llm_in_pool": n_llm_in_pool,
     }
-
-
-def strategy_mo_scalarized_ucb(oracle, X_obs, Y_obs, bounds, batch_size, rng,
-                                beta=2.0, **kw):
-    """Baseline: scalarised (equal-weight-sum) UCB acquisition across all
-    objectives, ranked and truncated to batch_size — the classic single-
-    scalar-acquisition MO baseline, in contrast to egbo/egbo_novelty/
-    egbo_real's Pareto-dominance or qLogNEHVI-based selection. Per-objective
-    GP mean/std are standardised by that objective's observed std before
-    summing, so raw-unit mismatches (S/m conductivity vs. Siemens
-    conductance_std) don't let one objective dominate the scalarisation.
-    Dimension-agnostic (uses oracle.objective_directions() and
-    Y_obs.shape[1] dynamically) -- local to this file rather than added to
-    excipient_campaign_mo.py since it's coatings-specific, added for the
-    warm-start-with-a-simpler-acquisition ablation."""
-    directions = oracle.objective_directions()
-    M = Y_obs.shape[1]
-    lo, hi = bounds[:, 0], bounds[:, 1]
-    X_obs_n = (X_obs - lo) / (hi - lo + 1e-12)
-    pool_n = _make_pool(X_obs_n, Y_obs, bounds, rng, n=60, directions=directions)
-    pool_raw = pool_n * (hi - lo) + lo
-
-    scores = np.zeros(len(pool_raw))
-    for j in range(M):
-        sign = 1.0 if directions[j] == "max" else -1.0
-        y_sig = sign * Y_obs[:, j]
-        y_std = float(np.std(y_sig)) or 1.0
-        gp, sc = _fit_gp_1d(X_obs, y_sig)
-        mu, sigma = gp.predict(sc.transform(pool_raw), return_std=True)
-        scores += (mu + beta * sigma) / y_std
-
-    top_idx = np.argsort(scores)[-batch_size:]
-    return pool_raw[top_idx], {"scalarized_ucb": True}
 
 
 def main():
