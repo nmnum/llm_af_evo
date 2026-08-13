@@ -37,6 +37,15 @@ Conditions:
                  novelty-aware selection — the mAb domain's own EGBO)
   ls_na_egbo   — LLM warm-start (once, real ADA-domain prompt) + unmodified
                  strategy_mo_egbo_novelty for the rest of the campaign
+  egbo_warmstart — LLM warm-start + strategy_mo_egbo_real (no novelty term).
+                 4th cell of the {warm-start, novelty} 2x2: egbo=no/no,
+                 egbo_novelty=no/yes, egbo_warmstart=yes/no, ls_na_egbo=
+                 yes/yes -- isolates whether warm-start alone (vs. warm-
+                 start x novelty interaction) explains ls_na_egbo's
+                 recovery over egbo_novelty.
+  ucb_warmstart — LLM warm-start + strategy_mo_scalarized_ucb (equal-weight
+                 scalarised UCB, not the full qLogNEHVI/novelty backbone) --
+                 does warm-start help with a much simpler MO acquisition?
   llm_labo     — LLM proposes raw candidates every batch, trust-weighted
                  mixing with strategy_mo_egbo candidates (mirrors mAb's own
                  mo_llm condition, just with raw x-vectors instead of named
@@ -81,7 +90,7 @@ from ada_coatings_oracle import DiscreteADACoatingsOracle
 from excipient_campaign_mo import (
     run_mo_campaign, make_shared_inits, pareto_front_of,
     strategy_mo_random, strategy_mo_egbo_real,
-    mixing_weight, pareto_filter_candidates, _fit_gp_1d,
+    mixing_weight, pareto_filter_candidates, _fit_gp_1d, _make_pool,
 )
 from strategy_ls_na_egbo import strategy_mo_egbo_novelty
 from llm_warmstart import diversity_select, parse_llm_coatings, _mock_warmstart_coatings
@@ -441,6 +450,39 @@ def strategy_mo_llm_coatings(oracle, X_obs, Y_obs, bounds, batch_size, rng,
     }
 
 
+def strategy_mo_scalarized_ucb(oracle, X_obs, Y_obs, bounds, batch_size, rng,
+                                beta=2.0, **kw):
+    """Baseline: scalarised (equal-weight-sum) UCB acquisition across all
+    objectives, ranked and truncated to batch_size — the classic single-
+    scalar-acquisition MO baseline, in contrast to egbo/egbo_novelty/
+    egbo_real's Pareto-dominance or qLogNEHVI-based selection. Per-objective
+    GP mean/std are standardised by that objective's observed std before
+    summing, so raw-unit mismatches (S/m conductivity vs. Siemens
+    conductance_std) don't let one objective dominate the scalarisation.
+    Dimension-agnostic (uses oracle.objective_directions() and
+    Y_obs.shape[1] dynamically) -- local to this file rather than added to
+    excipient_campaign_mo.py since it's coatings-specific, added for the
+    warm-start-with-a-simpler-acquisition ablation."""
+    directions = oracle.objective_directions()
+    M = Y_obs.shape[1]
+    lo, hi = bounds[:, 0], bounds[:, 1]
+    X_obs_n = (X_obs - lo) / (hi - lo + 1e-12)
+    pool_n = _make_pool(X_obs_n, Y_obs, bounds, rng, n=60, directions=directions)
+    pool_raw = pool_n * (hi - lo) + lo
+
+    scores = np.zeros(len(pool_raw))
+    for j in range(M):
+        sign = 1.0 if directions[j] == "max" else -1.0
+        y_sig = sign * Y_obs[:, j]
+        y_std = float(np.std(y_sig)) or 1.0
+        gp, sc = _fit_gp_1d(X_obs, y_sig)
+        mu, sigma = gp.predict(sc.transform(pool_raw), return_std=True)
+        scores += (mu + beta * sigma) / y_std
+
+    top_idx = np.argsort(scores)[-batch_size:]
+    return pool_raw[top_idx], {"scalarized_ucb": True}
+
+
 def main():
     parser = argparse.ArgumentParser(description="Phase 3: Coatings generalisability benchmark (real MO data)")
     parser.add_argument("--n_seeds", type=int, default=20)
@@ -480,6 +522,15 @@ def main():
                           {"w_acq": args.w_acq, "w_nov": args.w_nov}, False),
         "ls_na_egbo": (strategy_mo_egbo_novelty,
                         {"w_acq": args.w_acq, "w_nov": args.w_nov}, True),
+        # 4th cell of the 2x2 {warm-start, novelty} design -- egbo (no
+        # novelty) + LLM warm-start, isolating whether the ls_na_egbo
+        # recovery over egbo_novelty is warm-start alone or a warm-start x
+        # novelty interaction.
+        "egbo_warmstart": (strategy_mo_egbo_real, {}, True),
+        # LLM warm-start + a simpler scalarised-UCB acquisition instead of
+        # the full qLogNEHVI/novelty EGBO backbone -- does warm-start help
+        # independent of a strong MO acquisition strategy?
+        "ucb_warmstart": (strategy_mo_scalarized_ucb, {"beta": 2.0}, True),
         "llm_labo": (strategy_mo_llm_coatings,
                       {"mock_llm": args.mock_llm, "model": args.model,
                        "n_llm_candidates": 20}, False),
