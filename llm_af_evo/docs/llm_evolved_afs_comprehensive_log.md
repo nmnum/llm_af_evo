@@ -2620,4 +2620,51 @@ deployed outside DTLZ2 without domain-specific re-evolution.
 
 ---
 
+## 25. Front-Range Growth Check, Third Domain: DTLZ2 (2026-08-15)
+
+§22 (tunable synthetic domain) and §23 (coatings, the real domain
+`gen6_child0` was evolved and selected on) both tracked `pareto_front_range`
+per batch across a campaign and found it **grows**, not shrinks — running
+front-range normalisation's self-annealing premise backward. `track_front_range.py`
+had already established DTLZ2 as the cheap synthetic gate for other Gate-3
+questions in this doc (§24), so it's the natural third domain to run the
+same per-batch trace against, alongside the mAb oracle (untested for this
+specific diagnostic — no `track_front_range_mab.py` exists; only the
+tunable-domain and coatings variants were built before this).
+
+Added `track_front_range_dtlz2.py`, a verbatim duplicate of
+`track_front_range_coatings.py`'s `run_one_tracked` loop (same `_queried`
+reset, same `_front_range` convention: `np.ptp` over the observed Pareto
+front, or over all observations if fewer than 2 points are on it) with only
+the oracle swapped for `DiscreteSyntheticMOOracle.build_dtlz2()` (3
+objectives, `n_obj=3` default, 500-sample discretized pool). Same two AF
+conditions as the other two front-range traces: `hint_fixed_ucb`
+(fixed-weight UCB, raw sigma, beta=2.0) vs `gen6_child0_tuned`
+(front-range-normalised sigma, beta=15.0). Ran the real config
+(`--n_campaigns 5 --budget 40`, 6 batches/campaign, seed-averaged over the
+5 campaigns):
+
+| Objective | `hint_fixed_ucb`: init → final | `gen6_child0_tuned`: init → final |
+|---|---|---|
+| f1 | 1.168 → 1.585 (+35.8%) | 1.168 → 1.488 (+27.4%) |
+| f2 | 1.073 → 1.398 (+30.3%) | 1.073 → 1.547 (+44.1%) |
+| f3 | 1.099 → 1.440 (+31.0%) | 1.099 → 1.401 (+27.4%) |
+
+Front range **grows** in all 3 objectives, under both AF conditions,
+matching the direction (not just the qualitative conclusion) of §22's
+tunable-domain result (+16.5–29.0%) and §23's coatings result. This is a
+different question from §22 step 1's DTLZ2 result (front-range-normalized
+DA-COREG surrogate fitting tied unnormalized, "ruled out on DTLZ2" —
+that tested whether normalizing objective scales before kernel fitting
+helps HV, not whether front_range itself shrinks over a campaign) and from
+§24's DTLZ2 Gate-3 win (a different AF, a different question). Three for
+three: front-range normalisation's self-annealing premise (front_range
+shrinking as the campaign converges, so the sigma-normalisation term
+naturally sharpens exploitation late) does not hold on any domain checked
+so far — tunable synthetic, coatings (real), or DTLZ2 (real). Consistent
+with treating front-range normalisation as closed pending a domain where
+front_range is actually observed to shrink.
+
+---
+
 *End of document.*
