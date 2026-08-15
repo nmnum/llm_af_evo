@@ -112,6 +112,26 @@ def score_pool(context):
     return scores
 '''.strip("\n")
 
+_GEN6_CHILD0_FROZEN_DENOM = '''
+def score_pool(context):
+    """Front-range-normalised sigma UCB, FROZEN denominator (§25 follow-up:
+    divides by the front's range AT INIT ONLY, context["pareto_front_range_init"],
+    not the growing per-batch context["pareto_front_range"] gen6_child0 uses
+    — directly targets §23's root cause (the denominator growing over the
+    campaign is what breaks the self-annealing premise) while keeping the
+    cross-objective scale normalisation. beta={beta}."""
+    names = context["objective_names"]
+    front_range_init = context["pareto_front_range_init"]
+    beta = {beta}
+    scores = []
+    for cand in context["pool"]:
+        gp = cand["gp_posterior"]
+        mu_sum = sum(gp[name]["mean"] for name in names)
+        sigma_norm = sum(gp[name]["std"] / front_range_init[name] for name in names)
+        scores.append(mu_sum + beta * sigma_norm)
+    return scores
+'''.strip("\n")
+
 CONDITIONS = {
     "random": (strategy_evolved_af, {"af_code": SEED_RANDOM}),
     "trust_only": (strategy_evolved_af, {"af_code": SEED_PROGRAMS["trust_only"]}),
@@ -120,15 +140,19 @@ CONDITIONS = {
                              {"af_code": _GEN6_CHILD0_TEMPLATE.format(beta=0.5)}),
     "gen6_child0_tuned": (strategy_evolved_af,
                            {"af_code": _GEN6_CHILD0_TEMPLATE.format(beta=15.0)}),
+    "gen6_child0_frozen_denom": (strategy_evolved_af,
+                                  {"af_code": _GEN6_CHILD0_FROZEN_DENOM.format(beta=15.0)}),
 }
 BASELINE = "trust_only"
 
 
-def run_one(oracle, X_init, Y_init, budget, batch_size, seed, fn, kwargs):
+def run_one(oracle, X_init, Y_init, budget, batch_size, seed, fn, kwargs, n_init=None):
     torch.manual_seed(seed)
     kwargs = dict(kwargs)
     if fn is strategy_evolved_af:
         kwargs["budget"] = budget
+        kwargs["n_init"] = n_init  # only gen6_child0_frozen_denom reads this;
+                                    # harmless no-op for every other condition
     result = run_mo_campaign(oracle, X_init, Y_init, budget, fn, kwargs,
                               batch_size=batch_size, seed=seed)
     return result["hv_trajectory"][-1] if result["hv_trajectory"] else float("nan")
@@ -158,7 +182,7 @@ def main():
         for i, (X_init, Y_init) in enumerate(inits):
             t0 = time.perf_counter()
             final_hv = run_one(oracle, X_init, Y_init, args.budget, args.batch_size,
-                                i, fn, kwargs)
+                                i, fn, kwargs, n_init=args.n_init)
             elapsed = time.perf_counter() - t0
             n_batches = max(1, (args.budget - args.n_init) // args.batch_size)
             results[cond_name].append(final_hv)

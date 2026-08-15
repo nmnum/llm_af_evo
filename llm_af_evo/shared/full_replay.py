@@ -164,7 +164,8 @@ def reconstruct_oracle(log: dict, oracle_family: str = "excipient"):
 
 def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
                          af_code: str, budget: int, sandbox_log_dir=None,
-                         evo_candidates: int = 20, hv_history: list = None, **kw):
+                         evo_candidates: int = 20, hv_history: list = None,
+                         n_init: int = None, **kw):
     """
     Candidate generation identical to strategy_mo_egbo_novelty (see module
     docstring). Final selection: the evolved AF via the sandbox, not
@@ -301,6 +302,13 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             pool_sigma = post.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
 
         front_allmax = to_allmax(Y_obs.copy(), directions=directions)
+        # n_init opt-in: the front AT INIT ONLY, for AFs wanting a frozen
+        # (non-growing) normalisation denominator — see sandbox.py's
+        # front_allmax_init docstring. Y_obs's first n_init rows are always
+        # the campaign's init points regardless of which batch this call
+        # is for (run_mo_campaign only ever appends to X_obs/Y_obs).
+        front_allmax_init = (to_allmax(Y_obs[:n_init].copy(), directions=directions)
+                              if n_init else None)
         ref_point_allmax = ref_point.cpu().numpy()
         step = len(X_obs)
         # See this function's docstring / module docstring's "FIXED" note.
@@ -333,6 +341,7 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             front_allmax,
             objective_names=oracle.objective_names(),
             log_dir=sandbox_log_dir,
+            front_allmax_init=front_allmax_init,
         )
         selected_idx = select_batch(scores, batch_size)
 
