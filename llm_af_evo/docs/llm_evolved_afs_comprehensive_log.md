@@ -2665,6 +2665,38 @@ so far — tunable synthetic, coatings (real), or DTLZ2 (real). Consistent
 with treating front-range normalisation as closed pending a domain where
 front_range is actually observed to shrink.
 
+**Follow-up: does the front-range-normalised AF actually win in closed-loop
+HV, on DTLZ2?** The front_range-growth trace above is a proxy for the
+mechanism failing, not a direct HV comparison. Added
+`run_dtlz2_generalization.py` — a direct port of
+`run_tunable_domain_generalization.py`'s 5-condition spec
+(`random`/`trust_only`/`hint_fixed_ucb`/`gen6_child0_beta0.5`/
+`gen6_child0_tuned`, `trust_only` as baseline, Wilcoxon signed-rank) onto
+`DiscreteSyntheticMOOracle.build_dtlz2()`. Ran the real comparison
+(`--n_campaigns 20 --budget 40`):
+
+| Condition | mean HV | diff vs `trust_only` | wins | p |
+|---|---|---|---|---|
+| random | 4.718 | +2.4% | 12/20 | 0.064 |
+| hint_fixed_ucb | 4.746 | +3.0% | 12/20 | 0.076 |
+| gen6_child0_beta0.5 (as-evolved) | 4.707 | +2.1% | 14/20 | 0.097 |
+| gen6_child0_tuned (β=15) | 4.707 | +2.1% | 11/20 | 0.133 |
+
+None of the four conditions beat `trust_only` significantly at n=20 (all
+p>0.05) — matching the `random`-floor comparison's purpose: even pure
+random scoring is statistically indistinguishable from the other three,
+suggesting `trust_only` is simply a weak baseline on DTLZ2 rather than
+uncertainty-weighting (front-range-normalised or not) being a real win.
+More directly on the mechanism itself: `gen6_child0_tuned` (4.707) does
+not beat `hint_fixed_ucb`, the RAW (non-normalised) UCB it's supposed to
+improve on (4.746) — tied at best, with the weakest win rate of the three
+non-random conditions (11/20, ≈chance). **Confirmed directly (not just via
+the front_range-growth proxy): front-range normalisation does not win on
+DTLZ2** — same conclusion as the tunable synthetic domain and coatings,
+now checked by the actual closed-loop HV comparison rather than inferred
+from front_range's trend alone. Three domains, one consistent negative
+result for this mechanism specifically.
+
 ---
 
 *End of document.*
