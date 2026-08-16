@@ -114,6 +114,15 @@ if __name__ == "__main__":
     # keys, not alternatives to each other.
     pareto_front_boundary_std = (
         json.loads(sys.argv[14]) if len(sys.argv) > 14 else {})
+    # front_allmax_init (argv[15]): the Pareto/observation front AT INIT
+    # ONLY (batch 0, before any evolved-AF-chosen batch was appended), for
+    # AFs that want a normalisation denominator that doesn't grow with the
+    # campaign — see af_interface.py's pareto_front_range_init doc. []
+    # sentinel (not omitted) means "caller didn't opt in" -> falls back to
+    # the ordinary (growing) pareto_front_range below, same as if this key
+    # didn't exist. Independent of pareto_front_boundary_std above (argv[14]).
+    _front_init_raw = json.loads(sys.argv[15]) if len(sys.argv) > 15 else []
+    front_allmax_init = np.array(_front_init_raw) if len(_front_init_raw) > 0 else None
 
     # Translate flat, positional arrays into the self-documenting nested
     # context dict per af_interface.py's contract, BEFORE candidate code
@@ -137,6 +146,18 @@ if __name__ == "__main__":
     else:
         pareto_front_range = {name: 1e-6 for name in OBJECTIVE_NAMES}
 
+    if front_allmax_init is not None:
+        pareto_front_range_init = {
+            name: max(float(front_allmax_init[:, j].max() - front_allmax_init[:, j].min()), 1e-6)
+            for j, name in enumerate(OBJECTIVE_NAMES)
+        }
+    else:
+        # Not opted in by this caller — fall back to the ordinary (growing)
+        # range, so AF code reading pareto_front_range_init behaves exactly
+        # like pareto_front_range for any caller that never threads n_init
+        # through (offline evaluate_af, older campaign call sites, etc.).
+        pareto_front_range_init = pareto_front_range
+
     context = {
         "pool": pool,
         "X_obs": X_obs,
@@ -145,6 +166,7 @@ if __name__ == "__main__":
         "pareto_front": front_allmax,
         "pareto_front_range": pareto_front_range,
         "pareto_front_boundary_std": pareto_front_boundary_std,
+        "pareto_front_range_init": pareto_front_range_init,
         "ref_point": ref_point_allmax,
         "ref_point_by_name": {name: float(ref_point_allmax[j])
                                for j, name in enumerate(OBJECTIVE_NAMES)},
@@ -194,7 +216,8 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
                        log_dir: pathlib.Path = None,
                        fail_log_dir: pathlib.Path = None,
                        obj_correlation: dict = None,
-                       front_boundary_std: dict = None) -> np.ndarray:
+                       front_boundary_std: dict = None,
+                       front_allmax_init: np.ndarray = None) -> np.ndarray:
     """
     Execute af_code (must define score_pool per af_interface.py's contract)
     in a subprocess and return the resulting (N,) score array. Raises
@@ -233,6 +256,17 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
     callers are unaffected; only af_code that explicitly reads this new
     key changes behaviour). Independent of obj_correlation above — both
     are additive context keys, not alternatives to each other.
+
+    front_allmax_init: optional, the campaign's Pareto/observation front AT
+    INIT ONLY (batch 0, before any AF-chosen batch was appended), already
+    in all-maximise convention like front_allmax. Exposed to AF code as
+    context["pareto_front_range_init"] — a normalisation denominator that
+    does NOT grow over the campaign the way context["pareto_front_range"]
+    does (see docs/llm_evolved_afs_comprehensive_log.md §22/§23: the
+    growing denominator is what breaks front-range normalisation's
+    self-annealing premise). Defaults to None (not opted in), in which
+    case pareto_front_range_init falls back to the same value as
+    pareto_front_range, i.e. behaves exactly as if this key didn't exist.
     """
     if objective_names is None:
         objective_names = ["Tm", "kD", "viscosity"]
@@ -277,7 +311,8 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
              json.dumps(int(n_obs)), json.dumps(int(stagnant_batches)),
              json.dumps(list(objective_names)), json.dumps(Y_obs.tolist()),
              json.dumps(obj_correlation),
-             json.dumps({k: float(v) for k, v in front_boundary_std.items()})],
+             json.dumps({k: float(v) for k, v in front_boundary_std.items()}),
+             json.dumps(front_allmax_init.tolist() if front_allmax_init is not None else [])],
             capture_output=True, text=True, timeout=SANDBOX_TIMEOUT,
         )
 

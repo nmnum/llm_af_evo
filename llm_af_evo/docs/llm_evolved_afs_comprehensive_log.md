@@ -2620,4 +2620,155 @@ deployed outside DTLZ2 without domain-specific re-evolution.
 
 ---
 
+## 25. Front-Range Growth Check, Third Domain: DTLZ2 (2026-08-15)
+
+§22 (tunable synthetic domain) and §23 (coatings, the real domain
+`gen6_child0` was evolved and selected on) both tracked `pareto_front_range`
+per batch across a campaign and found it **grows**, not shrinks — running
+front-range normalisation's self-annealing premise backward. `track_front_range.py`
+had already established DTLZ2 as the cheap synthetic gate for other Gate-3
+questions in this doc (§24), so it's the natural third domain to run the
+same per-batch trace against, alongside the mAb oracle (untested for this
+specific diagnostic — no `track_front_range_mab.py` exists; only the
+tunable-domain and coatings variants were built before this).
+
+Added `track_front_range_dtlz2.py`, a verbatim duplicate of
+`track_front_range_coatings.py`'s `run_one_tracked` loop (same `_queried`
+reset, same `_front_range` convention: `np.ptp` over the observed Pareto
+front, or over all observations if fewer than 2 points are on it) with only
+the oracle swapped for `DiscreteSyntheticMOOracle.build_dtlz2()` (3
+objectives, `n_obj=3` default, 500-sample discretized pool). Same two AF
+conditions as the other two front-range traces: `hint_fixed_ucb`
+(fixed-weight UCB, raw sigma, beta=2.0) vs `gen6_child0_tuned`
+(front-range-normalised sigma, beta=15.0). Ran the real config
+(`--n_campaigns 5 --budget 40`, 6 batches/campaign, seed-averaged over the
+5 campaigns):
+
+| Objective | `hint_fixed_ucb`: init → final | `gen6_child0_tuned`: init → final |
+|---|---|---|
+| f1 | 1.168 → 1.585 (+35.8%) | 1.168 → 1.488 (+27.4%) |
+| f2 | 1.073 → 1.398 (+30.3%) | 1.073 → 1.547 (+44.1%) |
+| f3 | 1.099 → 1.440 (+31.0%) | 1.099 → 1.401 (+27.4%) |
+
+Front range **grows** in all 3 objectives, under both AF conditions,
+matching the direction (not just the qualitative conclusion) of §22's
+tunable-domain result (+16.5–29.0%) and §23's coatings result. This is a
+different question from §22 step 1's DTLZ2 result (front-range-normalized
+DA-COREG surrogate fitting tied unnormalized, "ruled out on DTLZ2" —
+that tested whether normalizing objective scales before kernel fitting
+helps HV, not whether front_range itself shrinks over a campaign) and from
+§24's DTLZ2 Gate-3 win (a different AF, a different question). Three for
+three: front-range normalisation's self-annealing premise (front_range
+shrinking as the campaign converges, so the sigma-normalisation term
+naturally sharpens exploitation late) does not hold on any domain checked
+so far — tunable synthetic, coatings (real), or DTLZ2 (real). Consistent
+with treating front-range normalisation as closed pending a domain where
+front_range is actually observed to shrink.
+
+**Follow-up: does the front-range-normalised AF actually win in closed-loop
+HV, on DTLZ2?** The front_range-growth trace above is a proxy for the
+mechanism failing, not a direct HV comparison. Added
+`run_dtlz2_generalization.py` — a direct port of
+`run_tunable_domain_generalization.py`'s 5-condition spec
+(`random`/`trust_only`/`hint_fixed_ucb`/`gen6_child0_beta0.5`/
+`gen6_child0_tuned`, `trust_only` as baseline, Wilcoxon signed-rank) onto
+`DiscreteSyntheticMOOracle.build_dtlz2()`. Ran the real comparison
+(`--n_campaigns 20 --budget 40`):
+
+| Condition | mean HV | diff vs `trust_only` | wins | p |
+|---|---|---|---|---|
+| random | 4.718 | +2.4% | 12/20 | 0.064 |
+| hint_fixed_ucb | 4.746 | +3.0% | 12/20 | 0.076 |
+| gen6_child0_beta0.5 (as-evolved) | 4.707 | +2.1% | 14/20 | 0.097 |
+| gen6_child0_tuned (β=15) | 4.707 | +2.1% | 11/20 | 0.133 |
+
+None of the four conditions beat `trust_only` significantly at n=20 (all
+p>0.05) — matching the `random`-floor comparison's purpose: even pure
+random scoring is statistically indistinguishable from the other three,
+suggesting `trust_only` is simply a weak baseline on DTLZ2 rather than
+uncertainty-weighting (front-range-normalised or not) being a real win.
+More directly on the mechanism itself: `gen6_child0_tuned` (4.707) does
+not beat `hint_fixed_ucb`, the RAW (non-normalised) UCB it's supposed to
+improve on (4.746) — tied at best, with the weakest win rate of the three
+non-random conditions (11/20, ≈chance). **Confirmed directly (not just via
+the front_range-growth proxy): front-range normalisation does not win on
+DTLZ2** — same conclusion as the tunable synthetic domain and coatings,
+now checked by the actual closed-loop HV comparison rather than inferred
+from front_range's trend alone. Three domains, one consistent negative
+result for this mechanism specifically.
+
+**Second follow-up: does freezing the normalisation denominator at init
+rescue it? (2026-08-15)** Before considering whether to seed an evolution
+run with front-range normalisation (mirroring §24's Gate 3 process for
+DA-COREG on DTLZ2), the cheaper and more direct question: §23 pinned the
+exact root cause of every failure in this thread down to one mechanism —
+`front_range` (the denominator) grows over a campaign, so
+`effective_beta = beta/front_range` *shrinks* instead of rising, the
+opposite of the self-annealing the design needs — and three independently-
+built growth-aware correction terms (v1/v2/v3) all failed to outrun that
+growth. None of them tried the simplest fix implied by that diagnosis:
+freeze the denominator at its init-batch value instead of recomputing it
+from the growing observed front every batch, keeping only the
+cross-objective scale normalisation (the mechanism's one genuinely useful
+property — coatings' conductivity σ and conductance_std σ differ by orders
+of magnitude).
+
+This isn't expressible in `score_pool` alone (stateless per batch, no
+memory of batch 0 across calls) — implemented as a small additive harness
+change instead: `sandbox.py` gained an optional `front_allmax_init` input,
+exposed to AF code as `context["pareto_front_range_init"]`
+(falls back to the existing growing `pareto_front_range` for any caller
+that doesn't opt in, so no existing AF/campaign path changes behaviour);
+`full_replay.strategy_evolved_af` gained an `n_init` kwarg to compute it
+(`Y_obs`'s first `n_init` rows are always the campaign's init points,
+regardless of which batch a given call is for). New condition
+`gen6_child0_frozen_denom` in `run_dtlz2_generalization.py`: identical to
+`gen6_child0_tuned` except dividing by `pareto_front_range_init` instead
+of `pareto_front_range`. 3-campaign pilot confirmed the wiring is correct
+(campaign 0's value is identical to `gen6_child0_tuned`'s, since the frozen
+and growing ranges are equal before any batch has been appended; later
+campaigns diverge as the growing range pulls ahead, as expected).
+
+**Result (n=20, same run as above, `gen6_child0_frozen_denom` added as a
+6th condition):**
+
+| Condition | mean HV | % diff vs `trust_only` | Wins | p |
+|---|---|---|---|---|
+| `trust_only` (baseline) | 4.636 | — | — | — |
+| `random` | 4.718 | +1.8% | 12/20 | 0.083 |
+| `hint_fixed_ucb` | 4.745 | +2.4% | 10/20 | 0.231 |
+| `gen6_child0_beta0.5` | 4.707 | +1.5% | 13/20 | 0.294 |
+| `gen6_child0_tuned` | 4.709 | +1.6% | 11/20 | 0.231 |
+| `gen6_child0_frozen_denom` | 4.712 | +1.6% | 11/20 | 0.294 |
+
+Statistically indistinguishable from `gen6_child0_tuned` (same win rate,
+same effect size to one decimal, same non-significance) and still does not
+beat `hint_fixed_ucb` (4.712 vs 4.745). Freezing the denominator neutralises
+the specific backward-annealing defect §23 diagnosed, but produces no
+detectable improvement — confirming §23's own final read on this thread:
+"no growth correction can outrun the normalization... the front-range
+normalization itself is the defect, not a fixable side-effect." This was
+the fourth distinct corrective variant tried against that diagnosis (after
+v1/v2/v3's growth-aware additive terms) and the first that directly
+addresses the mechanism (removing the growth entirely, not compensating
+for it) — it still doesn't move the needle, which is stronger evidence
+against a fixable defect than another growth-compensation attempt would
+have been.
+
+**Decision: evolution not pursued.** The original question this thread
+opened with — "should we evolve an AF seeded with front-range
+normalisation, mirroring §24's Gate 3 DA-COREG/DTLZ2 process, to see if a
+working variant can be found?" — is answered no. Seeding a search with a
+mechanism that has now failed under a fixed β-grid (§23, 7 values), a
+no-tuning theoretically-derived schedule (§23), three growth-aware
+correction terms (§23), two real domains plus one synthetic benchmark
+purpose-built to favor it (§22/§23/here), and now a direct fix for its
+diagnosed root cause, is very unlikely to discover anything a much more
+targeted, hypothesis-driven search already missed — and §24 already showed
+generic (unseeded) Gate-3 evolution finds real DTLZ2 wins without needing
+front-range normalisation at all. Front-range normalisation is closed as a
+mechanism, on every domain and every variant tested in this project.
+
+---
+
 *End of document.*
