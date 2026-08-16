@@ -69,7 +69,7 @@ class OllamaController:
                 }
                 if self.stop:
                     options["stop"] = self.stop
-                response = ollama.chat(
+                chat_kwargs = dict(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": self.system_prompt},
@@ -77,6 +77,16 @@ class OllamaController:
                     ],
                     options=options,
                 )
+                if "qwen3" in self.model.lower():
+                    # qwen3 thinking models stream reasoning into a separate
+                    # `message.thinking` field; with a short num_predict the
+                    # model can burn its whole budget there and leave
+                    # `message.content` empty. Turn thinking off — these
+                    # controllers only need a short JSON/param decision, not
+                    # a reasoning trace (matches the check already used in
+                    # approach_d.py for the same model family).
+                    chat_kwargs["think"] = False
+                response = ollama.chat(**chat_kwargs)
                 text = response["message"]["content"]
                 decision = self._parse_response(text, context)
                 return decision
