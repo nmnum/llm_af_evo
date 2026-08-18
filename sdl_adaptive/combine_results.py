@@ -4,14 +4,25 @@ from the metrics_per_seed.json files already on disk (no re-running needed).
 Conditions/datasets that haven't finished yet (approach_c on the 4 pareto_* sets)
 are simply absent -- left blank until that process catches up.
 """
-import json, pathlib, shutil
+import argparse, json, pathlib, shutil
 import pandas as pd
 from oracle import NNOracle
 from run_experiment import ALL_DATASETS
 
-OUT_DIRS = ["results_baselines", "results_a", "results_b", "results_c", "results_d_fixed", "results_egbo"]
+DEFAULT_OUT_DIRS = ["results_baselines", "results_a", "results_b", "results_c", "results_d_fixed", "results_egbo"]
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--out_dirs", nargs="+", default=DEFAULT_OUT_DIRS,
+                     help="Source run_experiment.py/shared_seed_experiment.py out_dirs to combine "
+                          "(default: the original Table 3.2 qwen3-coder:30b dirs)")
+parser.add_argument("--combined_dir", default="results_combined",
+                     help="Destination combined dir (default: results_combined — the one Table 3.2's "
+                          "figures read from; pass a different name to avoid overwriting it)")
+args = parser.parse_args()
+
+OUT_DIRS = args.out_dirs
 DATA_DIR = pathlib.Path("data") if pathlib.Path("data").exists() else pathlib.Path(".")
-COMBINED = pathlib.Path("results_combined")
+COMBINED = pathlib.Path(args.combined_dir)
 
 if COMBINED.exists():
     shutil.rmtree(COMBINED)
