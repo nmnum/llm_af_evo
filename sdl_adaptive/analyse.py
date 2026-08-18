@@ -43,6 +43,10 @@ COND_LABELS = {
     'approach_a':      'LLM-A',
     'approach_b':      'LLM-B',
     'approach_c':      'LLM-C',
+    'approach_c_evo':  'LLM-C-evo',
+    'approach_d':      'LLM-D',
+    'egbo':            'EGBO',
+    'novelty_egbo':    'Novelty-EGBO',
 }
 
 # Okabe-Ito colorblind-safe palette (extended to 12)
@@ -73,6 +77,8 @@ LINESTYLES = {
     'fixed_ucb_high': '-.', 'fixed_ei': '-', 'ada_original': (0, (3, 1, 1, 1)),
     'mock_approach_a': '-', 'mock_approach_b': '-', 'mock_approach_c': '-',
     'approach_a': '-', 'approach_b': '-', 'approach_c': '-',
+    'approach_c_evo': '-', 'approach_d': '-',
+    'egbo': '--', 'novelty_egbo': '--',
 }
 
 
