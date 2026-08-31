@@ -102,6 +102,7 @@ import argparse
 import hashlib
 import json
 import pathlib
+import re
 import sys
 import traceback
 import warnings
@@ -766,6 +767,63 @@ def classify_mechanism_families(docstring: str) -> list:
             if any(kw in text for kw in keywords)]
 
 
+# ── Anti-mode-collapse, part 2: rehashing the incumbent champion ───────────
+#
+# Found on run2 (the first run with the MECHANISM_FAMILIES fix above): the
+# fix worked exactly as designed — family_attempt_counts showed genuine
+# rotation through all four suggested families (diversity_repulsion=7,
+# pareto_probability=5, proximity_suppression=4, posterior_resampling=2)
+# instead of run1's ~90%-one-family collapse — but ALL FOUR were tried,
+# evaluated, and correctly rejected (none survived into the final
+# population), and the run still went on to stagnate for 30 straight
+# generations anyway. Reading the docstrings showed why: once every
+# suggested family was "worn out", the fallback instruction ("compose two
+# together or invent something new") gave the model room to just keep
+# rewording the CURRENT CHAMPION'S OWN idea instead — the entire final
+# population (gen12 through gen47) is cosmetic restatements of one
+# "progress-adaptive exploitation + uncertainty scaling + hypervolume
+# normalization" formula, dressed in different vocabulary each time
+# ("dynamic reward shaping", "sigmoidal blending", "exponential decay").
+# That's literally the "small weight variation" behavior the annealing
+# note already tells the model not to do — MECHANISM_FAMILIES just never
+# measured it because it isn't one of the four suggested exemplars, it's
+# a moving target (whatever the current best_so_far happens to be).
+#
+# CHAMPION_REHASH_NAME is tracked the same way as MECHANISM_FAMILIES
+# entries (counted per stagnation streak, reset on improvement, persisted
+# through checkpoint/resume) but classified differently: not by fixed
+# keywords, but by word-overlap similarity to best_so_far's OWN docstring
+# at proposal time. Threshold picked by direct measurement against run2's
+# actual docstrings: genuine rehashes of run2's champion scored 0.36-0.64,
+# genuinely different ideas scored 0.00-0.07 — 0.3 sits cleanly in the gap.
+CHAMPION_REHASH_NAME = "champion_rehash"
+CHAMPION_REHASH_THRESHOLD = 0.3
+_REHASH_STOPWORDS = {
+    "with", "and", "the", "based", "using", "from", "that", "this", "their",
+    "then", "than", "into", "onto", "over", "under", "each", "some", "more",
+    "less", "most", "also", "such", "like", "when", "while", "where", "does",
+    "doesnt", "via", "per", "for", "not", "are", "has", "have", "can", "will",
+    "all", "any", "own", "due",
+}
+
+
+def _rehash_words(docstring: str) -> set:
+    words = re.findall(r"[a-z]+", (docstring or "").lower())
+    return {w for w in words if w not in _REHASH_STOPWORDS and len(w) > 3}
+
+
+def champion_rehash_similarity(child_docstring: str, champion_docstring: str) -> float:
+    """Jaccard similarity of meaningful words between a child's docstring
+    and the current champion's — see CHAMPION_REHASH_NAME's note above.
+    0.0 if either docstring is missing/has no meaningful words (never
+    falsely flags a rehash from empty input)."""
+    words_a = _rehash_words(child_docstring)
+    words_b = _rehash_words(champion_docstring)
+    if not words_a or not words_b:
+        return 0.0
+    return len(words_a & words_b) / len(words_a | words_b)
+
+
 def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
                        model: str, rng: np.random.Generator,
                        objective_names: list, domain_description: str,
@@ -848,6 +906,22 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
                 f"that idea has already been retried {FAMILY_REPEAT_LIMIT}+ "
                 f"times this stagnation streak without improving fitness, "
                 f"so another restatement of it is very unlikely to help."
+            )
+        # Champion-rehash guard (added after run2 — see CHAMPION_REHASH_NAME's
+        # docstring): fires independently of the worn_out/fresh family list
+        # above, because rewording the incumbent's own idea isn't one of the
+        # suggested families, it's whatever the current best_so_far happens
+        # to be — a moving target the keyword classifier above can't see.
+        if family_attempt_counts.get(CHAMPION_REHASH_NAME, 0) >= FAMILY_REPEAT_LIMIT:
+            note += (
+                f" Also: do NOT just reword the current best's own idea "
+                f"(\"{best_doc}\") in different vocabulary — {family_attempt_counts[CHAMPION_REHASH_NAME]} "
+                f"of your recent proposals this streak were already just "
+                f"restatements of that same mechanism (same core "
+                f"formula/terms, different wording) and none of them "
+                f"improved fitness either. A new mechanism means different "
+                f"underlying math, not a renamed version of the current "
+                f"best's math."
             )
         if fresh:
             fresh_descs = "; or ".join(desc for _name, desc in fresh)
@@ -1169,6 +1243,14 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
         if not mock and used_llm and stagnant_generations >= 2:
             for family_name in classify_mechanism_families(result.get("docstring")):
                 family_attempt_counts[family_name] = family_attempt_counts.get(family_name, 0) + 1
+            # Champion-rehash tally (see CHAMPION_REHASH_NAME's docstring) —
+            # compared against THIS generation's best_so_far, the same
+            # docstring the child was actually prompted against.
+            rehash_sim = champion_rehash_similarity(result.get("docstring"),
+                                                      best_so_far.get("docstring"))
+            if rehash_sim >= CHAMPION_REHASH_THRESHOLD:
+                family_attempt_counts[CHAMPION_REHASH_NAME] = (
+                    family_attempt_counts.get(CHAMPION_REHASH_NAME, 0) + 1)
 
     existing_sigs = {p["selection_signature"] for p in population}
     novel_children, n_duplicate = [], 0
