@@ -836,6 +836,43 @@ def make_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
             return render_program(crossover(tw_a, tw_b, rng)), None, False
 
 
+def save_checkpoint(checkpoint_path: pathlib.Path, generation: int, population: list,
+                     history: list, rng: np.random.Generator, stagnant_generations: int,
+                     best_fitness_ever: float, n_llm_calls: int, n_llm_failures: int) -> None:
+    """
+    Writes ONE checkpoint file (overwritten every generation, not
+    accumulated) capturing everything --resume needs to continue this run
+    from exactly where it left off: the full population (including
+    term_weights — a plain {str: float} dict per mock_mutator.py, so it's
+    JSON-serializable with no special handling), history, the RNG's own
+    bit-generator state (so --resume doesn't just reseed from scratch and
+    silently replay the same tournament/mutation draws already used), and
+    the two pieces of loop state (stagnant_generations, best_fitness_ever)
+    that live outside `history`/`population` and would otherwise reset to
+    their gen-0 defaults on resume, silently breaking annealing.
+    """
+    payload = {
+        "generation": generation,
+        "population": population,
+        "history": history,
+        "rng_state": rng.bit_generator.state,
+        "stagnant_generations": stagnant_generations,
+        "best_fitness_ever": best_fitness_ever,
+        "n_llm_calls": n_llm_calls,
+        "n_llm_failures": n_llm_failures,
+    }
+    tmp = checkpoint_path.with_suffix(".json.tmp")
+    with open(tmp, "w") as f:
+        json.dump(payload, f)
+    tmp.replace(checkpoint_path)  # atomic on POSIX — a crash mid-write never
+                                    # corrupts the last good checkpoint
+
+
+def load_checkpoint(checkpoint_path: pathlib.Path) -> dict:
+    with open(checkpoint_path) as f:
+        return json.load(f)
+
+
 def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
                    n_generations: int, n_offspring: int, gamma: float,
                    mock: bool, model: str, seed: int,
@@ -843,11 +880,67 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
                    feature_dim: int = 16, directions: list = None,
                    oracle_family: str = "excipient",
                    log_dir: pathlib.Path = None,
-                   n_fitness_seeds: int = 1) -> dict:
-    rng = np.random.default_rng(seed)
+                   n_fitness_seeds: int = 1,
+                   checkpoint_path: pathlib.Path = None,
+                   resume_state: dict = None) -> dict:
+    """
+    checkpoint_path: if given, a checkpoint is written (overwriting any
+    previous one at this path) after gen 0's initial population AND after
+    every subsequent generation — so stopping the run at any point (Ctrl-C,
+    a crash, or just letting --n_generations finish) always leaves a
+    resumable, complete-generation checkpoint, never a half-written one.
+
+    resume_state: if given (the dict load_checkpoint returns), skips
+    building a fresh population entirely and continues from this state's
+    generation/population/history/rng/stagnant_generations/
+    best_fitness_ever. n_generations is interpreted as the TOTAL target
+    generation count in this case (matching the same flag's meaning on a
+    fresh run) — e.g. run once with --n_generations 3, inspect the
+    checkpoint, then rerun with --resume <path> --n_generations 10 to
+    continue on to generation 10, not "10 more" on top of the 3 already
+    done. If the resumed generation is already >= n_generations, the run
+    exits immediately after re-reporting the loaded state — a no-op, not
+    an error, so re-running the same command twice is harmless.
+    """
     objective_names = objective_names or ORACLE_DEFAULTS["excipient"]["objective_names"]
     domain_description = domain_description or ORACLE_DEFAULTS["excipient"]["domain_description"]
     pseudo_steps = build_pseudo_steps(training_logs, baseline_hvs, directions=directions)
+
+    if resume_state is not None:
+        rng = np.random.default_rng()
+        rng.bit_generator.state = resume_state["rng_state"]
+        population = resume_state["population"]
+        history = resume_state["history"]
+        stagnant_generations = resume_state["stagnant_generations"]
+        best_fitness_ever = resume_state["best_fitness_ever"]
+        n_llm_calls = resume_state["n_llm_calls"]
+        n_llm_failures = resume_state["n_llm_failures"]
+        start_gen = resume_state["generation"] + 1
+        print(f"Resumed from checkpoint at generation {resume_state['generation']} "
+              f"(best fitness={population[0]['fitness']:.4f}, id={population[0]['id']!r}). "
+              f"Continuing to generation {n_generations}.")
+        if start_gen > n_generations:
+            print(f"Resumed generation ({resume_state['generation']}) already >= "
+                  f"--n_generations ({n_generations}) — nothing to do.")
+            return {"population": population, "history": history,
+                    "n_llm_calls": n_llm_calls, "n_llm_failures": n_llm_failures}
+        for gen in range(start_gen, n_generations + 1):
+            population, history, stagnant_generations, best_fitness_ever, n_llm_calls, \
+                n_llm_failures = _run_one_generation(
+                    gen, population, history, stagnant_generations, best_fitness_ever,
+                    n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
+                    pop_size, n_offspring, mock, model, rng, objective_names,
+                    domain_description, feature_dim, oracle_family, log_dir,
+                    n_fitness_seeds, pseudo_steps)
+            if checkpoint_path is not None:
+                save_checkpoint(checkpoint_path, gen, population, history, rng,
+                                 stagnant_generations, best_fitness_ever,
+                                 n_llm_calls, n_llm_failures)
+        _print_llm_summary(mock, n_llm_calls, n_llm_failures)
+        return {"population": population, "history": history,
+                "n_llm_calls": n_llm_calls, "n_llm_failures": n_llm_failures}
+
+    rng = np.random.default_rng(seed)
 
     population = []
     for name, code in SEED_PROGRAMS.items():
@@ -907,61 +1000,96 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
     n_llm_calls, n_llm_failures = 0, 0
     best_fitness_ever = population[0]["fitness"]
     stagnant_generations = 0
+
+    if checkpoint_path is not None:
+        save_checkpoint(checkpoint_path, 0, population, history, rng,
+                         stagnant_generations, best_fitness_ever, n_llm_calls, n_llm_failures)
+
     for gen in range(1, n_generations + 1):
-        best_so_far = max(population, key=lambda p: p["fitness"])
-        children = []
-        for i in range(n_offspring):
-            parent_a = tournament_select(population, rng)
-            parent_b = tournament_select(population, rng)
-            code, term_weights, used_llm = make_child(parent_a, parent_b, best_so_far,
-                                                        pseudo_steps, mock, model, rng,
-                                                        objective_names, domain_description,
-                                                        feature_dim,
-                                                        stagnant_generations=stagnant_generations)
-            if not mock:
-                n_llm_calls += 1
-                n_llm_failures += (not used_llm)
-            result = evaluate_af_2b(code, training_logs, baseline_hvs, gamma, log_dir=log_dir,
-                                     oracle_family=oracle_family,
-                                     n_fitness_seeds=n_fitness_seeds)
-            children.append({"id": f"gen{gen}_child{i}", "code": code,
-                              "term_weights": term_weights, "used_llm": used_llm, **result})
+        population, history, stagnant_generations, best_fitness_ever, n_llm_calls, \
+            n_llm_failures = _run_one_generation(
+                gen, population, history, stagnant_generations, best_fitness_ever,
+                n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
+                pop_size, n_offspring, mock, model, rng, objective_names,
+                domain_description, feature_dim, oracle_family, log_dir,
+                n_fitness_seeds, pseudo_steps)
+        if checkpoint_path is not None:
+            save_checkpoint(checkpoint_path, gen, population, history, rng,
+                             stagnant_generations, best_fitness_ever,
+                             n_llm_calls, n_llm_failures)
 
-        existing_sigs = {p["selection_signature"] for p in population}
-        novel_children, n_duplicate = [], 0
-        for c in children:
-            if c["selection_signature"] in existing_sigs:
-                n_duplicate += 1
-                continue
-            existing_sigs.add(c["selection_signature"])
-            novel_children.append(c)
+    _print_llm_summary(mock, n_llm_calls, n_llm_failures)
+    return {"population": population, "history": history,
+            "n_llm_calls": n_llm_calls, "n_llm_failures": n_llm_failures}
 
-        population = sorted(population + novel_children, key=lambda p: -p["fitness"])[:pop_size]
 
-        # Stagnation tracking for next generation's annealing (see
-        # llm_propose_child's docstring) — small epsilon tolerance so
-        # floating-point-noise-level "improvement" doesn't reset the
-        # counter and mask genuine stagnation.
-        if population[0]["fitness"] > best_fitness_ever + 1e-9:
-            best_fitness_ever = population[0]["fitness"]
-            stagnant_generations = 0
-        else:
-            stagnant_generations += 1
+def _run_one_generation(gen, population, history, stagnant_generations, best_fitness_ever,
+                         n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
+                         pop_size, n_offspring, mock, model, rng, objective_names,
+                         domain_description, feature_dim, oracle_family, log_dir,
+                         n_fitness_seeds, pseudo_steps):
+    """One generation's worth of run_evolution's loop body, factored out so
+    both the fresh-run path and the --resume path (which needs to run an
+    arbitrary sub-range of generations, not always starting at 1) share the
+    exact same logic rather than two copies that could drift apart."""
+    best_so_far = max(population, key=lambda p: p["fitness"])
+    children = []
+    for i in range(n_offspring):
+        parent_a = tournament_select(population, rng)
+        parent_b = tournament_select(population, rng)
+        code, term_weights, used_llm = make_child(parent_a, parent_b, best_so_far,
+                                                    pseudo_steps, mock, model, rng,
+                                                    objective_names, domain_description,
+                                                    feature_dim,
+                                                    stagnant_generations=stagnant_generations)
+        if not mock:
+            n_llm_calls += 1
+            n_llm_failures += (not used_llm)
+        result = evaluate_af_2b(code, training_logs, baseline_hvs, gamma, log_dir=log_dir,
+                                 oracle_family=oracle_family,
+                                 n_fitness_seeds=n_fitness_seeds)
+        children.append({"id": f"gen{gen}_child{i}", "code": code,
+                          "term_weights": term_weights, "used_llm": used_llm, **result})
 
-        history.append({"generation": gen, "best_fitness": population[0]["fitness"],
-                         "best_mean_margin": population[0]["mean_margin"],
-                         "best_win_rate": population[0]["win_rate"],
-                         "best_mean_hv": population[0]["mean_hv"],
-                         "n_llm_failures_this_gen": sum(
-                             (not c["used_llm"]) for c in children),
-                         "n_rank_equivalent_duplicates": n_duplicate,
-                         "stagnant_generations": stagnant_generations})
-        anneal_note = f"  [stagnant={stagnant_generations}, annealing]" if stagnant_generations >= 2 else ""
-        print(f"gen {gen}: best fitness={population[0]['fitness']:.4f} "
-              f"mean_margin={population[0]['mean_margin']:+.3%} "
-              f"win_rate={population[0]['win_rate']:.3f} mean_hv={population[0]['mean_hv']:.1f} "
-              f"({population[0]['id']})  duplicates={n_duplicate}/{len(children)}{anneal_note}")
+    existing_sigs = {p["selection_signature"] for p in population}
+    novel_children, n_duplicate = [], 0
+    for c in children:
+        if c["selection_signature"] in existing_sigs:
+            n_duplicate += 1
+            continue
+        existing_sigs.add(c["selection_signature"])
+        novel_children.append(c)
 
+    population = sorted(population + novel_children, key=lambda p: -p["fitness"])[:pop_size]
+
+    # Stagnation tracking for next generation's annealing (see
+    # llm_propose_child's docstring) — small epsilon tolerance so
+    # floating-point-noise-level "improvement" doesn't reset the
+    # counter and mask genuine stagnation.
+    if population[0]["fitness"] > best_fitness_ever + 1e-9:
+        best_fitness_ever = population[0]["fitness"]
+        stagnant_generations = 0
+    else:
+        stagnant_generations += 1
+
+    history.append({"generation": gen, "best_fitness": population[0]["fitness"],
+                     "best_mean_margin": population[0]["mean_margin"],
+                     "best_win_rate": population[0]["win_rate"],
+                     "best_mean_hv": population[0]["mean_hv"],
+                     "n_llm_failures_this_gen": sum(
+                         (not c["used_llm"]) for c in children),
+                     "n_rank_equivalent_duplicates": n_duplicate,
+                     "stagnant_generations": stagnant_generations})
+    anneal_note = f"  [stagnant={stagnant_generations}, annealing]" if stagnant_generations >= 2 else ""
+    print(f"gen {gen}: best fitness={population[0]['fitness']:.4f} "
+          f"mean_margin={population[0]['mean_margin']:+.3%} "
+          f"win_rate={population[0]['win_rate']:.3f} mean_hv={population[0]['mean_hv']:.1f} "
+          f"({population[0]['id']})  duplicates={n_duplicate}/{len(children)}{anneal_note}")
+
+    return population, history, stagnant_generations, best_fitness_ever, n_llm_calls, n_llm_failures
+
+
+def _print_llm_summary(mock, n_llm_calls, n_llm_failures):
     if not mock:
         print(f"\nReal-LLM calls: {n_llm_calls}, fell back to mock crossover: "
               f"{n_llm_failures} ({100 * n_llm_failures / max(1, n_llm_calls):.0f}%)")
@@ -972,9 +1100,6 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
         elif n_llm_failures > 0:
             print("=> Some children fell back to mock crossover — see warnings "
                   "above for which calls failed and why.")
-
-    return {"population": population, "history": history,
-            "n_llm_calls": n_llm_calls, "n_llm_failures": n_llm_failures}
 
 
 def main():
@@ -1050,6 +1175,19 @@ def main():
                           "multiplies the cost of every fitness evaluation by this "
                           "factor (baseline compute too).")
     ap.add_argument("--out_dir", default=str(HERE / "evolution_runs" / "run_v3"))
+    ap.add_argument("--resume", action="store_true",
+                     help="Continue a previous run from <out_dir>/checkpoint.json instead "
+                          "of starting a fresh population. --n_generations is the TOTAL "
+                          "target generation (not 'N more') — e.g. run once with "
+                          "--n_generations 3 to see gen 0-3, inspect best_af.py, then rerun "
+                          "the SAME command with --resume --n_generations 10 added to "
+                          "continue on to generation 10. Requires --out_dir, --train_dir, "
+                          "--oracle, --n_campaigns, --seed to match the original run — "
+                          "training_logs/baseline_hvs are recomputed fresh each time (cheap, "
+                          "not cached in the checkpoint) and must select the SAME campaigns "
+                          "for fitness comparisons across generations to stay meaningful; "
+                          "a checkpoint is written after EVERY generation (including gen 0), "
+                          "always, on any run — not something you have to opt into.")
     args = ap.parse_args()
 
     if args.gamma is None:
@@ -1101,6 +1239,15 @@ def main():
     baseline_hvs = compute_baseline_hvs(training_logs, oracle_family=args.oracle,
                                          n_fitness_seeds=args.n_fitness_seeds)
 
+    checkpoint_path = out_dir / "checkpoint.json"
+    resume_state = None
+    if args.resume:
+        if not checkpoint_path.exists():
+            print(f"--resume given but no checkpoint found at {checkpoint_path} — "
+                  f"nothing to resume from. Run without --resume first.")
+            return
+        resume_state = load_checkpoint(checkpoint_path)
+
     result = run_evolution(
         training_logs, baseline_hvs, args.pop_size, args.n_generations, args.n_offspring,
         args.gamma, args.mock, args.model, args.seed,
@@ -1108,6 +1255,8 @@ def main():
         feature_dim=feature_dim, directions=directions, oracle_family=args.oracle,
         log_dir=code_log_dir,
         n_fitness_seeds=args.n_fitness_seeds,
+        checkpoint_path=checkpoint_path,
+        resume_state=resume_state,
     )
 
     best = result["population"][0]
