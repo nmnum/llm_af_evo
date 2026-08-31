@@ -952,13 +952,81 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
         # long GP-fit/optimize_acqf gap between LLM calls.
         keep_alive="30m",
     )
-    code = resp["message"]["content"].strip()
-    for fence in ["```python", "```"]:
-        if code.startswith(fence):
-            code = code[len(fence):]
-    if code.endswith("```"):
-        code = code[:-3]
-    return code.strip()
+
+    def _clean(raw: str) -> str:
+        raw = raw.strip()
+        for fence in ["```python", "```"]:
+            if raw.startswith(fence):
+                raw = raw[len(fence):]
+        if raw.endswith("```"):
+            raw = raw[:-3]
+        return raw.strip()
+
+    code = _clean(resp["message"]["content"])
+
+    # Hard redirect — found necessary on run2's --resume continuation: the
+    # champion-rehash TEXTUAL ban above (added after run2's first 50
+    # generations) fires correctly (family_attempt_counts["champion_rehash"]
+    # climbed 0->11 over the next 14 generations) but the model kept
+    # producing near-identical rehashes ANYWAY (rehash_sim 0.35-0.73)
+    # even several calls after the ban text was already in its prompt —
+    # telling this model "don't do X" in prose is not a reliable
+    # enforcement mechanism once it's fixated on an idea, likely because
+    # the anchor (best_so_far's own docstring/code, quoted verbatim in
+    # every prompt) is stronger than the negative instruction telling it
+    # not to use it. Rather than adding a THIRD round of "please don't"
+    # text, this checks the actual output post-hoc and, if it's still a
+    # rehash after the ban was already active, throws it away and
+    # regenerates ONCE from a prompt that structurally removes the anchor
+    # (no parent code, no best-so-far reference) and hands the model one
+    # concrete, least-tried idea to implement instead of leaving the
+    # choice open to drift back to what it just read.
+    if stagnant_generations >= STAGNATION_THRESHOLD:
+        family_attempt_counts = family_attempt_counts or {}
+        already_banned = (
+            family_attempt_counts.get(CHAMPION_REHASH_NAME, 0) >= FAMILY_REPEAT_LIMIT)
+        if already_banned:
+            doc = extract_af_docstring(code)
+            sim = champion_rehash_similarity(doc, best_doc)
+            if sim >= CHAMPION_REHASH_THRESHOLD:
+                worn_out_now = {name for name, _desc, _kw in MECHANISM_FAMILIES
+                                 if family_attempt_counts.get(name, 0) >= FAMILY_REPEAT_LIMIT}
+                fresh_now = [desc for name, desc, _kw in MECHANISM_FAMILIES
+                             if name not in worn_out_now]
+                if fresh_now:
+                    redirect_desc = fresh_now[int(rng.integers(len(fresh_now)))]
+                else:
+                    redirect_desc = list(STRATEGY_HINTS.values())[
+                        int(rng.integers(len(STRATEGY_HINTS)))]
+                redirect_prompt = (
+                    f"Implement the following acquisition strategy as "
+                    f"score_pool, for a {domain_description} with "
+                    f"objectives {objective_names} (feature_dim={feature_dim}):"
+                    f"\n\n\"{redirect_desc}\"\n\n"
+                    f"This is a hard requirement, not a suggestion: your "
+                    f"last {family_attempt_counts.get(CHAMPION_REHASH_NAME, 0)} "
+                    f"proposals this stagnation streak were all just "
+                    f"reworded versions of the current best "
+                    f"(\"{best_doc}\") — different vocabulary, same "
+                    f"underlying mean/uncertainty/progress formula — and "
+                    f"none of them improved fitness. Do NOT reference, "
+                    f"resemble, or partially reuse that formula this time. "
+                    f"Implement ONLY the strategy described above, built "
+                    f"from scratch."
+                )
+                resp2 = ollama.chat(
+                    model=model,
+                    messages=[{"role": "system", "content": system_prompt},
+                              {"role": "user", "content": redirect_prompt}],
+                    options={"temperature": min(1.2, temperature + 0.1),
+                             "num_predict": 1024, "repeat_penalty": 1.3,
+                             "num_ctx": 8192,
+                             "seed": int(rng.integers(1_000_000))},
+                    keep_alive="30m",
+                )
+                code = _clean(resp2["message"]["content"])
+
+    return code
 
 
 # ── Evolution loop ──────────────────────────────────────────────────────────
