@@ -711,10 +711,66 @@ def llm_generate_seed_from_hint(hint: str, model: str, rng: np.random.Generator,
     return code
 
 
+# ── Anti-mode-collapse: stagnation-mechanism rotation ───────────────────────
+#
+# Found on the tunable-domain run1 (see run1's history.json/af_code_logs):
+# 25 of 30 generations were stagnant, and every one of those ~50 LLM calls
+# proposed near-verbatim restatements of ONE idea — "resample the GP
+# posterior under noise and count dominance/HV-expansion frequency" — which
+# is literally one of the annealing note's own suggested examples below. The
+# model anchored on that one exemplar and never tried the others as a
+# PRIMARY mechanism, despite the note's instruction to pick a structurally
+# different one each time. This registry + classify_mechanism_families let
+# the loop notice that anchoring is happening (by classifying each
+# stagnation-triggered child's docstring) and explicitly forbid/deprioritize
+# whichever family has already been retried, forcing rotation instead of
+# repetition.
+MECHANISM_FAMILIES = [
+    ("diversity_repulsion",
+     "diversity/repulsion between top-ranked candidates",
+     ["repuls", "diversity", "repel", "spread out", "penal", "crowd"]),
+    ("proximity_suppression",
+     "greedy proximity-based suppression of near-duplicates",
+     ["proximity", "suppress", "greedy", "near-duplicate", "near duplicate",
+      "nearest neighbor", "iterative"]),
+    ("posterior_resampling",
+     "resampling the observed history/candidates' posteriors under noise "
+     "to estimate improvement or dominance",
+     ["resampl", "monte carlo", "mc sampl", "sampled objective",
+      "sampling from", "under noise"]),
+    ("pareto_probability",
+     "estimating each candidate's probability of being Pareto-optimal or "
+     "of expanding the hypervolume",
+     ["pareto-optim", "pareto optim", "dominance probability",
+      "hypervolume improvement", "hypervolume expansion", "expand hypervolume",
+      "dominate", "non-dominat"]),
+]
+# A family counts as "worn out" this stagnation streak once it's been the
+# dominant idea in this many stagnation-triggered children without
+# producing an improvement — 2 lets the model try a family once, retry it
+# once (in case the first attempt was just a bad implementation), then
+# forces a switch.
+FAMILY_REPEAT_LIMIT = 2
+
+
+def classify_mechanism_families(docstring: str) -> list:
+    """Best-effort keyword classification of which MECHANISM_FAMILIES a
+    child's one-line docstring belongs to (can match more than one, e.g. a
+    child that blends resampling with a repulsion term — see run1's
+    gen8_child1). Returns [] for anything that doesn't match a listed
+    family (e.g. plain UCB/novelty variants), which is fine: this registry
+    only exists to stop repetition of the specific families the annealing
+    note suggests, not to classify every possible idea."""
+    text = (docstring or "").lower()
+    return [name for name, _desc, keywords in MECHANISM_FAMILIES
+            if any(kw in text for kw in keywords)]
+
+
 def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
                        model: str, rng: np.random.Generator,
                        objective_names: list, domain_description: str,
-                       feature_dim: int = 16, stagnant_generations: int = 0) -> str:
+                       feature_dim: int = 16, stagnant_generations: int = 0,
+                       family_attempt_counts: dict = None) -> str:
     """Real-LLM crossover/mutation — same shape as evolve_af.py's
     llm_propose_child, but mean_margin/LOC in the prompt now refer to
     campaign-level, margin-based fitness (see evaluate_af_2b's FITNESS
@@ -733,6 +789,17 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
     survived past gen 0) — rather than a stagnation-based EARLY STOP, which
     would have just given up before finding out whether a bigger nudge
     could have escaped the plateau.
+
+    family_attempt_counts: {family_name: count}, how many stagnation-
+    triggered children THIS stagnation streak have already been classified
+    into each MECHANISM_FAMILIES entry (run_evolution resets this to {}
+    every time the population's best fitness improves — see
+    _run_one_generation). Fixes a mode-collapse failure found on the
+    tunable-domain run1: without this, the annealing note below just lists
+    ALL example mechanisms every time, and the model anchors on whichever
+    one it tried first, re-proposing near-verbatim restatements of it for
+    dozens of generations (see MECHANISM_FAMILIES' docstring above) instead
+    of actually rotating through the list as intended.
     """
     import ollama
     system_prompt = _build_system_prompt(objective_names, domain_description, feature_dim)
@@ -756,23 +823,48 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
     STAGNATION_THRESHOLD = 2
     temperature = min(1.2, 0.7 + 0.06 * max(0, stagnant_generations - STAGNATION_THRESHOLD))
     if stagnant_generations >= STAGNATION_THRESHOLD:
-        prompt += (
+        family_attempt_counts = family_attempt_counts or {}
+        worn_out = [name for name, _desc, _kw in MECHANISM_FAMILIES
+                    if family_attempt_counts.get(name, 0) >= FAMILY_REPEAT_LIMIT]
+        fresh = [(name, desc) for name, desc, _kw in MECHANISM_FAMILIES
+                 if name not in worn_out]
+        # Sort remaining families least-tried-first so the note always
+        # leads with whatever the model hasn't converged on yet.
+        fresh.sort(key=lambda nd: family_attempt_counts.get(nd[0], 0))
+
+        note = (
             f"\n\nNOTE: the population's best fitness has not improved for "
             f"{stagnant_generations} generations — small variations on the "
             f"current best (different fixed/decaying uncertainty weights, "
             f"minor novelty tweaks) have stopped working. Do NOT propose "
             f"another small weight variation this time. Instead, try a "
-            f"STRUCTURALLY different mechanism from what's shown above — "
-            f"e.g. diversity/repulsion between top-ranked candidates, "
-            f"greedy proximity-based suppression of near-duplicates, "
-            f"resampling the observed history to estimate improvement "
-            f"under noise rather than trusting the current front as fixed, "
-            f"or estimating each candidate's probability of being "
-            f"Pareto-optimal via sampling from its own posterior — pick "
-            f"ONE such mechanism and implement it as the dominant idea, "
-            f"not as a minor addition to the mu_sum+uncertainty pattern "
-            f"above."
+            f"STRUCTURALLY different mechanism from what's shown above."
         )
+        if worn_out:
+            worn_out_descs = "; ".join(
+                desc for name, desc, _kw in MECHANISM_FAMILIES if name in worn_out)
+            note += (
+                f" Do NOT propose another variant of: {worn_out_descs} — "
+                f"that idea has already been retried {FAMILY_REPEAT_LIMIT}+ "
+                f"times this stagnation streak without improving fitness, "
+                f"so another restatement of it is very unlikely to help."
+            )
+        if fresh:
+            fresh_descs = "; or ".join(desc for _name, desc in fresh)
+            note += (
+                f" Try one of these instead (pick ONE, implement it as the "
+                f"dominant idea, not a minor addition to the "
+                f"mu_sum+uncertainty pattern above): {fresh_descs}."
+            )
+        else:
+            note += (
+                " Every listed mechanism above has already been tried "
+                "repeatedly this streak without improving fitness — either "
+                "compose two of them together in a genuinely new way, or "
+                "invent a different mechanism entirely that doesn't match "
+                "any of them."
+            )
+        prompt += note
 
     resp = ollama.chat(
         model=model,
@@ -806,7 +898,7 @@ def tournament_select(population: list, rng: np.random.Generator, k: int = 3) ->
 def make_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
                mock: bool, model: str, rng: np.random.Generator,
                objective_names: list, domain_description: str, feature_dim: int = 16,
-               stagnant_generations: int = 0):
+               stagnant_generations: int = 0, family_attempt_counts: dict = None):
     """Identical mechanism to evolve_af.py's make_child, plus annealing
     under stagnation — see llm_propose_child's docstring. mock mode has no
     LLM to anneal a prompt for, so it gets a light structural analog
@@ -824,7 +916,8 @@ def make_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
         try:
             code = llm_propose_child(parent_a, parent_b, best_so_far, steps, model, rng,
                                       objective_names, domain_description, feature_dim,
-                                      stagnant_generations=stagnant_generations)
+                                      stagnant_generations=stagnant_generations,
+                                      family_attempt_counts=family_attempt_counts)
             return code, None, True
         except Exception as e:
             warnings.warn(
@@ -838,7 +931,8 @@ def make_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
 
 def save_checkpoint(checkpoint_path: pathlib.Path, generation: int, population: list,
                      history: list, rng: np.random.Generator, stagnant_generations: int,
-                     best_fitness_ever: float, n_llm_calls: int, n_llm_failures: int) -> None:
+                     best_fitness_ever: float, n_llm_calls: int, n_llm_failures: int,
+                     family_attempt_counts: dict = None) -> None:
     """
     Writes ONE checkpoint file (overwritten every generation, not
     accumulated) capturing everything --resume needs to continue this run
@@ -847,9 +941,12 @@ def save_checkpoint(checkpoint_path: pathlib.Path, generation: int, population: 
     JSON-serializable with no special handling), history, the RNG's own
     bit-generator state (so --resume doesn't just reseed from scratch and
     silently replay the same tournament/mutation draws already used), and
-    the two pieces of loop state (stagnant_generations, best_fitness_ever)
-    that live outside `history`/`population` and would otherwise reset to
-    their gen-0 defaults on resume, silently breaking annealing.
+    the pieces of loop state (stagnant_generations, best_fitness_ever,
+    family_attempt_counts) that live outside `history`/`population` and
+    would otherwise reset to their gen-0 defaults on resume, silently
+    breaking annealing (and, for family_attempt_counts, re-enabling the
+    exact mode-collapse repetition it exists to stop — see
+    MECHANISM_FAMILIES' docstring).
     """
     payload = {
         "generation": generation,
@@ -860,6 +957,7 @@ def save_checkpoint(checkpoint_path: pathlib.Path, generation: int, population: 
         "best_fitness_ever": best_fitness_ever,
         "n_llm_calls": n_llm_calls,
         "n_llm_failures": n_llm_failures,
+        "family_attempt_counts": family_attempt_counts or {},
     }
     tmp = checkpoint_path.with_suffix(".json.tmp")
     with open(tmp, "w") as f:
@@ -915,6 +1013,9 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
         best_fitness_ever = resume_state["best_fitness_ever"]
         n_llm_calls = resume_state["n_llm_calls"]
         n_llm_failures = resume_state["n_llm_failures"]
+        # .get(..., {}) for backward compatibility with checkpoints written
+        # before family_attempt_counts existed.
+        family_attempt_counts = resume_state.get("family_attempt_counts", {})
         start_gen = resume_state["generation"] + 1
         print(f"Resumed from checkpoint at generation {resume_state['generation']} "
               f"(best fitness={population[0]['fitness']:.4f}, id={population[0]['id']!r}). "
@@ -926,16 +1027,16 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
                     "n_llm_calls": n_llm_calls, "n_llm_failures": n_llm_failures}
         for gen in range(start_gen, n_generations + 1):
             population, history, stagnant_generations, best_fitness_ever, n_llm_calls, \
-                n_llm_failures = _run_one_generation(
+                n_llm_failures, family_attempt_counts = _run_one_generation(
                     gen, population, history, stagnant_generations, best_fitness_ever,
                     n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
                     pop_size, n_offspring, mock, model, rng, objective_names,
                     domain_description, feature_dim, oracle_family, log_dir,
-                    n_fitness_seeds, pseudo_steps)
+                    n_fitness_seeds, pseudo_steps, family_attempt_counts)
             if checkpoint_path is not None:
                 save_checkpoint(checkpoint_path, gen, population, history, rng,
                                  stagnant_generations, best_fitness_ever,
-                                 n_llm_calls, n_llm_failures)
+                                 n_llm_calls, n_llm_failures, family_attempt_counts)
         _print_llm_summary(mock, n_llm_calls, n_llm_failures)
         return {"population": population, "history": history,
                 "n_llm_calls": n_llm_calls, "n_llm_failures": n_llm_failures}
@@ -1000,23 +1101,25 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
     n_llm_calls, n_llm_failures = 0, 0
     best_fitness_ever = population[0]["fitness"]
     stagnant_generations = 0
+    family_attempt_counts = {}
 
     if checkpoint_path is not None:
         save_checkpoint(checkpoint_path, 0, population, history, rng,
-                         stagnant_generations, best_fitness_ever, n_llm_calls, n_llm_failures)
+                         stagnant_generations, best_fitness_ever, n_llm_calls, n_llm_failures,
+                         family_attempt_counts)
 
     for gen in range(1, n_generations + 1):
         population, history, stagnant_generations, best_fitness_ever, n_llm_calls, \
-            n_llm_failures = _run_one_generation(
+            n_llm_failures, family_attempt_counts = _run_one_generation(
                 gen, population, history, stagnant_generations, best_fitness_ever,
                 n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
                 pop_size, n_offspring, mock, model, rng, objective_names,
                 domain_description, feature_dim, oracle_family, log_dir,
-                n_fitness_seeds, pseudo_steps)
+                n_fitness_seeds, pseudo_steps, family_attempt_counts)
         if checkpoint_path is not None:
             save_checkpoint(checkpoint_path, gen, population, history, rng,
                              stagnant_generations, best_fitness_ever,
-                             n_llm_calls, n_llm_failures)
+                             n_llm_calls, n_llm_failures, family_attempt_counts)
 
     _print_llm_summary(mock, n_llm_calls, n_llm_failures)
     return {"population": population, "history": history,
@@ -1027,11 +1130,18 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
                          n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
                          pop_size, n_offspring, mock, model, rng, objective_names,
                          domain_description, feature_dim, oracle_family, log_dir,
-                         n_fitness_seeds, pseudo_steps):
+                         n_fitness_seeds, pseudo_steps, family_attempt_counts=None):
     """One generation's worth of run_evolution's loop body, factored out so
     both the fresh-run path and the --resume path (which needs to run an
     arbitrary sub-range of generations, not always starting at 1) share the
-    exact same logic rather than two copies that could drift apart."""
+    exact same logic rather than two copies that could drift apart.
+
+    family_attempt_counts: see llm_propose_child's docstring and
+    MECHANISM_FAMILIES above. Passed in read-only for this generation's
+    prompt-building, then updated below (by classifying each stagnation-
+    triggered child's docstring) and returned for the caller to persist.
+    """
+    family_attempt_counts = dict(family_attempt_counts or {})
     best_so_far = max(population, key=lambda p: p["fitness"])
     children = []
     for i in range(n_offspring):
@@ -1041,7 +1151,8 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
                                                     pseudo_steps, mock, model, rng,
                                                     objective_names, domain_description,
                                                     feature_dim,
-                                                    stagnant_generations=stagnant_generations)
+                                                    stagnant_generations=stagnant_generations,
+                                                    family_attempt_counts=family_attempt_counts)
         if not mock:
             n_llm_calls += 1
             n_llm_failures += (not used_llm)
@@ -1050,6 +1161,14 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
                                  n_fitness_seeds=n_fitness_seeds)
         children.append({"id": f"gen{gen}_child{i}", "code": code,
                           "term_weights": term_weights, "used_llm": used_llm, **result})
+        # Only tally this child against the anti-repetition counters if it
+        # was actually generated under the annealing note (mirrors
+        # llm_propose_child's STAGNATION_THRESHOLD) — pre-stagnation
+        # diversity is already healthy (see run1's calls 0-15) and doesn't
+        # need this pressure.
+        if not mock and used_llm and stagnant_generations >= 2:
+            for family_name in classify_mechanism_families(result.get("docstring")):
+                family_attempt_counts[family_name] = family_attempt_counts.get(family_name, 0) + 1
 
     existing_sigs = {p["selection_signature"] for p in population}
     novel_children, n_duplicate = [], 0
@@ -1069,6 +1188,10 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
     if population[0]["fitness"] > best_fitness_ever + 1e-9:
         best_fitness_ever = population[0]["fitness"]
         stagnant_generations = 0
+        # Fresh improvement found — the streak that produced it is over,
+        # so the anti-repetition counters reset: whatever family just
+        # worked (or didn't) shouldn't be held against the NEXT streak.
+        family_attempt_counts = {}
     else:
         stagnant_generations += 1
 
@@ -1080,13 +1203,20 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
                          (not c["used_llm"]) for c in children),
                      "n_rank_equivalent_duplicates": n_duplicate,
                      "stagnant_generations": stagnant_generations})
-    anneal_note = f"  [stagnant={stagnant_generations}, annealing]" if stagnant_generations >= 2 else ""
+    if stagnant_generations >= 2 and family_attempt_counts:
+        counts_str = ", ".join(f"{k}={v}" for k, v in sorted(family_attempt_counts.items()))
+        anneal_note = f"  [stagnant={stagnant_generations}, annealing, tried:{{{counts_str}}}]"
+    elif stagnant_generations >= 2:
+        anneal_note = f"  [stagnant={stagnant_generations}, annealing]"
+    else:
+        anneal_note = ""
     print(f"gen {gen}: best fitness={population[0]['fitness']:.4f} "
           f"mean_margin={population[0]['mean_margin']:+.3%} "
           f"win_rate={population[0]['win_rate']:.3f} mean_hv={population[0]['mean_hv']:.1f} "
           f"({population[0]['id']})  duplicates={n_duplicate}/{len(children)}{anneal_note}")
 
-    return population, history, stagnant_generations, best_fitness_ever, n_llm_calls, n_llm_failures
+    return (population, history, stagnant_generations, best_fitness_ever, n_llm_calls,
+            n_llm_failures, family_attempt_counts)
 
 
 def _print_llm_summary(mock, n_llm_calls, n_llm_failures):
