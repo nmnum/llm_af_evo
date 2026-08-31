@@ -3,11 +3,14 @@ evolve_af_v3.py — copy of evolve_af_v2.py (same minimal-seed design,
 af_interface_v3.py's SEED_PROGRAMS/STRATEGY_HINTS are an unmodified copy of
 af_interface_v2.py's), extended ONLY to add oracle_family="tunable" (the
 controlled synthetic domain in llm_af_evo/shared/tunable_synthetic_oracle.py)
-to ORACLE_DEFAULTS/N_FITNESS_SEEDS_DEFAULTS below — see full_replay.py's
-reconstruct_oracle "tunable" branch and its _TUNABLE_DEFAULTS comment for
-the still-open wiring gap (noise-realization determinism; no v3 training-
-set generator exists yet). evolve_af_v2.py itself is untouched — this is a
-separate file, same pattern as v2 being separate from evolve_af_2b.py.
+to ORACLE_DEFAULTS/N_FITNESS_SEEDS_DEFAULTS below. The noise-realization
+determinism gap is fixed (TunableSyntheticMOOracle.from_fixed_realization,
+used by full_replay.reconstruct_oracle's "tunable" branch) and a training-
+set generator exists (v3/experiments/generate_tunable_training_set.py,
+one shared oracle reused across campaigns — see its own docstring for why
+NOT a fresh oracle per campaign). evolve_af_v2.py itself is untouched —
+this is a separate file, same pattern as v2 being separate from
+evolve_af_2b.py.
 
 Everything below this note is evolve_af_v2.py's own original docstring,
 kept as-is since the fitness/design rationale it describes is unchanged:
@@ -676,7 +679,14 @@ def llm_generate_seed_from_hint(hint: str, model: str, rng: np.random.Generator,
                       {"role": "user", "content": prompt + extra_prompt}],
             options={"temperature": temperature, "num_predict": 1024,
                      "repeat_penalty": repeat_penalty,
+                     "num_ctx": 8192,
                      "seed": int(rng.integers(1_000_000))},
+            # Keep the model resident between calls: this run interleaves
+            # LLM calls with full_replay campaign evaluation (GP fits,
+            # optimize_acqf) that routinely exceeds Ollama's 5-minute
+            # default keep_alive, which would otherwise force a disk
+            # reload (multi-GB) on every subsequent call.
+            keep_alive="30m",
         )
         code = resp["message"]["content"].strip()
         for fence in ["```python", "```"]:
@@ -770,7 +780,11 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
                   {"role": "user", "content": prompt}],
         options={"temperature": temperature, "num_predict": 1024,
                  "repeat_penalty": 1.3,
+                 "num_ctx": 8192,
                  "seed": int(rng.integers(1_000_000))},
+        # See _generate's comment above: avoid eviction/reload during the
+        # long GP-fit/optimize_acqf gap between LLM calls.
+        keep_alive="30m",
     )
     code = resp["message"]["content"].strip()
     for fence in ["```python", "```"]:

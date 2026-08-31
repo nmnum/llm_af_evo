@@ -14,19 +14,31 @@ llm_af_evo/v3/README.md's audit note and tunable_synthetic_oracle.py's own
 docstring for why scale2 specifically should not be casually increased
 (mu_sum dominance risk above ~3-5x per that file's dominance_ratio sweep).
 
-DIFFERENCE from generate_coatings_training_set.py: coatings reuses ONE
-fixed real oracle (253 real measured points) across every campaign, so
-diversity comes only from different initial-point draws. This domain is
-synthetic and redrawable, so EVERY campaign gets its own freshly-built
-TunableSyntheticMOOracle (fresh --pool_size random X_raw, fresh noise
-draw) at seed=seed_idx — genuinely different pools per campaign, not
-resampled subsets of one fixed dataset. Both oracle_Y_raw (noisy,
-observed) AND oracle_Y_true (noiseless ground truth) are dumped per
-campaign, because full_replay.reconstruct_oracle(oracle_family="tunable")
-needs Y_true to reconstruct via TunableSyntheticMOOracle.
-from_fixed_realization WITHOUT re-drawing noise on top of an already-noisy
-Y_raw (see that constructor's docstring — this is the fix this session
-made specifically so this generator's output replays deterministically).
+SAME PATTERN as generate_coatings_training_set.py, deliberately: ONE
+TunableSyntheticMOOracle is built once (seed=--tunable_seed) and reused
+across every campaign — diversity comes only from different initial-point
+draws (make_shared_inits), exactly like coatings reusing its one fixed
+real 253-point pool. An earlier version of this generator built a FRESH
+oracle per campaign (different random --pool_size draw AND noise
+realization every time), reasoning that gave "genuinely different pools,
+not resampled subsets." Measured directly (see af-evolution branch
+history): that raised cross-campaign CV to 23.3% — close to coatings'
+~15%, far above the validated 1.5-2.9% from
+tunable_domain_generalization_results.json/run_tunable_domain_
+generalization.py (which use the one-shared-oracle design this generator
+now matches). Cause: this domain's Pareto-optimal region requires ALL of
+x2..xd (5 dims) simultaneously near zero — a sparse target for a small
+random pool — so different random 256-point draws land meaningfully
+different distances from it by chance. That's real pool-QUALITY
+variance, not GP-fit/strategy noise, and reintroducing it defeats the
+reason this domain was built. Both oracle_Y_raw (noisy, observed) AND
+oracle_Y_true (noiseless ground truth) are still dumped per campaign
+(identical across all of them now, same as coatings' oracle_X_raw/
+oracle_Y_raw being the same real data in every log) because
+full_replay.reconstruct_oracle(oracle_family="tunable") needs Y_true to
+reconstruct via TunableSyntheticMOOracle.from_fixed_realization WITHOUT
+re-drawing noise on top of an already-noisy Y_raw (see that constructor's
+docstring).
 
 CAMPAIGN COUNT: defaults to n_seeds=24, much smaller than excipient's
 n_campaigns~75 need. At this domain's measured CV~2.8%, SE(mean_margin) at
@@ -117,6 +129,10 @@ def main():
     ap.add_argument("--noise_mode", default=DEFAULT_NOISE_MODE,
                      choices=["homoscedastic", "proportional", "input_dependent"])
     ap.add_argument("--boundary_gain", type=float, default=DEFAULT_BOUNDARY_GAIN)
+    ap.add_argument("--tunable_seed", type=int, default=0,
+                     help="Seed for the ONE shared oracle build (X_raw pool draw + "
+                          "noise realization) reused across every campaign — see "
+                          "module docstring's design note. NOT a per-campaign seed.")
     ap.add_argument("--rng_seed", type=int, default=42,
                      help="Seed for drawing initial points (make_shared_inits).")
     ap.add_argument("--out_dir", default=str(pathlib.Path(__file__).parent /
@@ -136,20 +152,33 @@ def main():
           f"noise_level={args.noise_level} noise_mode={args.noise_mode!r} "
           f"boundary_gain={args.boundary_gain}")
 
-    for seed_idx in range(args.n_seeds):
-        # Fresh oracle per campaign — see module docstring's DIFFERENCE
-        # note. seed=seed_idx drives BOTH the random X_raw pool draw and
-        # the noise realization (see TunableSyntheticMOOracle.build).
-        oracle = TunableSyntheticMOOracle.build(
-            d=args.d, pool_size=args.pool_size,
-            scale1=args.scale1, scale2=args.scale2,
-            plateau_sharpness=args.plateau_sharpness,
-            noise_level=args.noise_level, noise_mode=args.noise_mode,
-            boundary_gain=args.boundary_gain, seed=seed_idx,
-        )
+    # ONE shared oracle for every campaign, built once with args.tunable_seed
+    # — matches run_tunable_domain_generalization.py's design (the script
+    # that produced the validated CV~1.5-2.9% measurement) and
+    # generate_coatings_training_set.py's pattern (one fixed real pool,
+    # diversity only from different initial-point draws), NOT a fresh
+    # oracle per campaign. An earlier version of this generator built a
+    # fresh oracle per campaign_idx (different random 256-point pool AND
+    # noise draw every time) reasoning that was "more diverse" — measured
+    # directly (see af-evolution branch history) that this raised
+    # cross-campaign CV to 23.3%, close to coatings' ~15% and far above the
+    # validated 1.5-2.9%, because a random 256-point pool in this domain's
+    # 6D space lands meaningfully different distances from the
+    # Pareto-optimal region (x2..xd all near zero, a sparse target for a
+    # small random pool) purely by chance — that's real pool-QUALITY
+    # variance, not GP-fit/strategy noise, and it wasn't present in the
+    # validated measurement because that measurement never varied the pool.
+    oracle = TunableSyntheticMOOracle.build(
+        d=args.d, pool_size=args.pool_size,
+        scale1=args.scale1, scale2=args.scale2,
+        plateau_sharpness=args.plateau_sharpness,
+        noise_level=args.noise_level, noise_mode=args.noise_mode,
+        boundary_gain=args.boundary_gain, seed=args.tunable_seed,
+    )
+    shared_inits = make_shared_inits(oracle, args.n_seeds, args.n_init, rng_seed=args.rng_seed)
 
-        shared_inits = make_shared_inits(oracle, 1, args.n_init, rng_seed=args.rng_seed + seed_idx)
-        X_init, Y_init = shared_inits[0]
+    for seed_idx in range(args.n_seeds):
+        X_init, Y_init = shared_inits[seed_idx]
 
         t0 = time.perf_counter()
         result = run_mo_campaign(
@@ -188,7 +217,9 @@ def main():
             "tunable_noise_level": args.noise_level,
             "tunable_noise_mode": args.noise_mode,
             "tunable_boundary_gain": args.boundary_gain,
-            "tunable_seed": seed_idx,
+            "tunable_seed": args.tunable_seed,  # the ONE shared oracle build's seed,
+                                                  # same value in every campaign's log —
+                                                  # NOT seed_idx (see design note above)
         }
 
         split_dir = heldout_dir if seed_idx < n_heldout else train_dir

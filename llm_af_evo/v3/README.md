@@ -93,12 +93,26 @@ failure modes.
    analysis of this domain's own noise floor should use a
    uncertainty-aware AF as the reference, not `trust_only`.
 
-   **Still not pinned down**: cross-*campaign* CV (different random pools,
-   not seed noise) was measured at 11.2% but only from `n=2` heldout
-   campaigns — not enough to trust. Generate a larger heldout set
-   (`--n_seeds` well above 8) before treating that number as final; this
-   is the number that actually determines how many `--n_campaigns` a real
-   evolution run needs.
+   **Cross-campaign CV — now pinned down, after fixing a real design bug.**
+   The n=2 estimate (11.2%) was too small a sample to trust, so a 64-seed
+   set (48 train / 16 heldout) was generated to get a real number — which
+   came back at **23.3%**, much worse than expected. Root cause: the
+   generator built a FRESH `TunableSyntheticMOOracle` per campaign
+   (reasoning: "genuinely different pools, not resampled subsets"), but
+   this domain's Pareto-optimal region requires ALL of `x2..xd` (5 of 6
+   dims) simultaneously near zero — a sparse target for a random 256-point
+   pool — so different random draws land meaningfully different distances
+   from it purely by chance (`final_hv` ranged 7.7-19.2 across the 16
+   heldout campaigns). That's real pool-QUALITY variance, not domain
+   noise, and the validated 1.5-2.9% number was never measured under that
+   design (`run_tunable_domain_generalization.py`, the script that
+   produced it, builds ONE oracle once and only varies initial-point
+   draws — same pattern as coatings' one-fixed-real-pool design).
+   `generate_tunable_training_set.py` now matches that: one shared oracle
+   (`--tunable_seed`, default 0) built once, `make_shared_inits` varies
+   only the initial points. Regenerated the same 64-seed set under the
+   fix and re-measured: **CV=1.2%** (`final_hv` now 10.65-11.02 across all
+   16 heldout campaigns) — matches the original validated range.
 
 4. **Concrete Slump dataset — NOT validated, likely fails the same audit
    coatings failed.** Checked directly against the project's own
@@ -126,8 +140,8 @@ failure modes.
 
 ## Recommended next step
 
-Generate a larger heldout set (`--n_seeds` well above 8) to pin down the
-real cross-campaign CV — the one number from Status item 3 still not
-resolved — before running a real evolution (`evolve_af_v3.py --oracle
-tunable`) and trusting its `--n_campaigns` sizing. Treat concrete/AgNP as
-secondary, gated on their own audits (item 4/5).
+Both noise sources are now validated: seed-noise std=0.64% (UCB-style
+reference AF), cross-campaign CV=1.2% (n=16, shared-oracle design). The
+domain is ready for a real `evolve_af_v3.py --oracle tunable` run against
+`experiments/training_logs_tunable/train` (48 campaigns available).
+Treat concrete/AgNP as secondary, gated on their own audits (item 4/5).
