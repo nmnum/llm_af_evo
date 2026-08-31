@@ -138,10 +138,48 @@ failure modes.
    could be used as a Method-2-style ("empirical surrogate benchmark")
    oracle if pursued, with that method's usual surrogate-artifact caveat.
 
+6. **First real evolution run (`experiments/evolution_runs/run1`, 30
+   generations, `pop_size=12`, `n_offspring=2`, real LLM) — champion found,
+   plus a mode-collapse bug found and fixed.**
+
+   Champion `gen5_child0` (13 LOC, an adaptive-UCB idea: progress-weighted
+   blend of front-range-normalized GP mean and std) reached mean_margin
+   +0.47%, win_rate 0.88, and was never beaten again — **25 of the
+   remaining 25 generations were stagnant**.
+
+   Reading all 72 logged `af_code_logs/call_*.py` docstrings in order
+   showed why: generations 0-15 covered genuinely diverse ideas, but from
+   ~generation 8 onward the LLM anchored on ONE family — "resample the GP
+   posterior under noise and count dominance/hypervolume-expansion
+   frequency" — and kept re-issuing near-verbatim restatements of it for
+   the rest of the run (several docstrings identical across 10+
+   generations apart). That family's bootstrap `ci_lower_16` was
+   consistently 2-5x lower than the champion's, so the fitness metric
+   correctly rejected it every time — the bug wasn't in the fitness
+   metric, it was that the LLM never tried anything else. Root cause:
+   `llm_propose_child`'s stagnation-annealing note (see its own docstring)
+   suggests a fixed list of example "structurally different" mechanisms
+   once stagnant, and the model latched onto one suggested exemplar
+   without rotating through the others as intended.
+
+   **Fixed**: added `MECHANISM_FAMILIES` + `classify_mechanism_families()`
+   and a per-stagnation-streak `family_attempt_counts` (persisted through
+   checkpoint/resume, reset on any fitness improvement) to
+   `evolve_af_v3.py`. The annealing note now explicitly forbids whichever
+   family has already been retried `FAMILY_REPEAT_LIMIT` (2) times this
+   streak and leads with the least-tried remaining ones, forcing rotation
+   instead of repetition. Verified via a mock-mode end-to-end smoke test
+   (checkpoint round-trip) and direct prompt inspection (both the
+   "one family worn out" and "all families worn out" note variants, plus
+   the classifier correctly tagging run1's actual dominant-family
+   docstrings while leaving the champion's UCB idea unclassified).
+
 ## Recommended next step
 
-Both noise sources are now validated: seed-noise std=0.64% (UCB-style
-reference AF), cross-campaign CV=1.2% (n=16, shared-oracle design). The
-domain is ready for a real `evolve_af_v3.py --oracle tunable` run against
-`experiments/training_logs_tunable/train` (48 campaigns available).
-Treat concrete/AgNP as secondary, gated on their own audits (item 4/5).
+Both noise sources are validated: seed-noise std=0.64% (UCB-style
+reference AF), cross-campaign CV=1.2% (n=16, shared-oracle design). Run1
+found a real, robust champion but also exposed and got a fix for a
+stagnation mode-collapse bug (item 6) — worth a second real evolution run
+to see whether the fix lets later generations actually diversify past the
+gen5 champion instead of plateauing again. Treat concrete/AgNP as
+secondary, gated on their own audits (item 4/5).
