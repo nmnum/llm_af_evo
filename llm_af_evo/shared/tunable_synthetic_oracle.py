@@ -158,6 +158,44 @@ class TunableSyntheticMOOracle:
         self._Y_raw = self._Y_true + self._rng.normal(0.0, obs_stds)
 
     @classmethod
+    def from_fixed_realization(cls, X_raw: np.ndarray, Y_true: np.ndarray,
+                                Y_raw: np.ndarray, objective_names: List[str],
+                                scale1: float, scale2: float, noise_level: float,
+                                noise_mode: NoiseMode, boundary_gain: float,
+                                seed: int) -> "TunableSyntheticMOOracle":
+        """
+        Reconstruct an oracle whose noisy observations are ALREADY FIXED
+        (e.g. dumped into a training-log JSON by a training-set generator),
+        rather than drawing a fresh noise realization from Y_true + seed the
+        way plain __init__ does (see __init__'s _Y_raw comment). Without
+        this, full_replay.reconstruct_oracle's "tunable" branch would call
+        __init__ directly on a log's dumped oracle_Y_raw-as-Y_true, which
+        REDRAWS noise on top of already-noisy data — a silent, different
+        random realization every reconstruction, breaking replay
+        determinism between training-set generation and 2b campaign replay
+        (same category of bug as full_replay.py's own BLAS-thread-
+        determinism fix — reproducibility that looks fine until checked
+        twice). Keeps Y_true too (not just Y_raw) so true_y() diagnostics
+        still work on a reconstructed oracle, exactly as on a freshly-built
+        one.
+        """
+        obj = cls.__new__(cls)
+        obj._X_raw = X_raw
+        obj._Y_true = Y_true
+        obj._scaler = StandardScaler().fit(X_raw)
+        obj._queried = set()
+        obj._objective_names = objective_names
+        obj._scale1 = scale1
+        obj._scale2 = scale2
+        obj._noise_level = noise_level
+        obj._noise_mode = noise_mode
+        obj._boundary_gain = boundary_gain
+        obj._rng = np.random.default_rng(seed + 1)  # kept for interface parity;
+                                                       # not used to redraw _Y_raw
+        obj._Y_raw = Y_raw
+        return obj
+
+    @classmethod
     def build(cls, d: int = 6, pool_size: int = POOL_SIZE,
               scale1: float = 1.0, scale2: float = 3.0,
               plateau_sharpness: float = 3.0,

@@ -221,24 +221,26 @@ def reconstruct_oracle(log: dict, oracle_family: str = "excipient"):
     if oracle_family == "coatings":
         return DiscreteADACoatingsOracle(X_raw, Y_raw)
     if oracle_family == "tunable":
-        # CAVEAT (see _TUNABLE_DEFAULTS's comment above): TunableSyntheticMOOracle
-        # normally DRAWS its own noisy _Y_raw from _Y_true + a fresh RNG draw
-        # inside __init__ (tunable_synthetic_oracle.py:157-158) — it does not
-        # accept a pre-realized noisy Y_raw the way DiscreteADACoatingsOracle/
-        # DiscreteMOExcipientOracle do for real, already-fixed experimental
-        # data. Passing this log's dumped oracle_Y_raw as Y_true here means
-        # the reconstructed oracle will draw a DIFFERENT noise realization
-        # than whatever the training-set generator originally saw for this
-        # campaign, even with the same seed/config — replay determinism for
-        # this oracle family is NOT yet guaranteed the way it is for
-        # excipient/coatings. Treat this branch as provisional until a v3
-        # training-set generator + a matching reconstruct fix (e.g. an
-        # alternate constructor that accepts a fixed Y_raw directly) exists;
-        # don't trust cross-run comparisons on "tunable" until then.
+        # Uses from_fixed_realization (not plain __init__) so the log's
+        # dumped oracle_Y_raw is used AS-IS, not treated as noiseless
+        # ground truth and re-noised — see that constructor's own
+        # docstring for why plain __init__ would silently break replay
+        # determinism here. Requires the log to also carry oracle_Y_true
+        # (the noiseless ground truth dumped alongside oracle_Y_raw by the
+        # training-set generator) plus the tunable_* config keys —
+        # see _TUNABLE_DEFAULTS's comment.
+        if "oracle_Y_true" not in log:
+            raise ValueError(
+                "reconstruct_oracle(oracle_family='tunable') requires the "
+                "log to carry 'oracle_Y_true' (noiseless ground truth) "
+                "alongside 'oracle_Y_raw' — this log doesn't have it, so "
+                "it wasn't produced by a tunable-domain training-set "
+                "generator built after the from_fixed_realization fix.")
+        Y_true = np.array(log["oracle_Y_true"])
         cfg = {**_TUNABLE_DEFAULTS, **{k[len("tunable_"):]: v for k, v in log.items()
                                         if k.startswith("tunable_")}}
-        return TunableSyntheticMOOracle(
-            X_raw, Y_raw, objective_names=["f1", "f2"],
+        return TunableSyntheticMOOracle.from_fixed_realization(
+            X_raw, Y_true, Y_raw, objective_names=["f1", "f2"],
             scale1=cfg["scale1"], scale2=cfg["scale2"],
             noise_level=cfg["noise_level"], noise_mode=cfg["noise_mode"],
             boundary_gain=cfg["boundary_gain"], seed=cfg["seed"])
