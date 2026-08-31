@@ -16,15 +16,18 @@ failure modes.
   (SEED_PROGRAMS/STRATEGY_HINTS).
 - `llm_af_evo/shared/tunable_synthetic_oracle.py` — moved here from
   `v1_pre_v2/src/` so `full_replay.py` (which lives in `shared/`) can
-  import it without reaching into `v1_pre_v2`. Unmodified otherwise.
+  import it without reaching into `v1_pre_v2`. Added
+  `from_fixed_realization()` (see Status item 2 below); otherwise
+  unmodified.
 - `llm_af_evo/shared/full_replay.py` — added an `oracle_family="tunable"`
-  branch to `reconstruct_oracle` (see `_TUNABLE_DEFAULTS` and the branch's
-  own comment for the **known gap**: `TunableSyntheticMOOracle.__init__`
-  draws a fresh noise realization from `(Y_true, seed)` rather than
-  accepting an already-fixed `Y_raw` the way the real oracles do, so
-  replay determinism across separate `reconstruct_oracle` calls for this
-  family is not yet guaranteed — needs either a v3-specific alternate
-  constructor or accepting non-determinism until fixed).
+  branch to `reconstruct_oracle` (see `_TUNABLE_DEFAULTS`).
+- `experiments/generate_tunable_training_set.py` — training-set generator
+  (see Status item 1).
+- `experiments/run_2b_diagnostic_v3.py` — `oracle_family`-generalized copy
+  of `v1_pre_v2/experiments/run_2b_diagnostic.py` plus a new Step C
+  seed-noise check (see Status item 3).
+- `experiments/training_logs_tunable/{train,heldout}/` — 8 generated
+  campaigns, checked in as a starting set.
 - `data/concrete/concrete_dataset.csv` — UCI Concrete Slump dataset (Yeh
   2007), pulled from the EGBO paper's own repo
   ([andrelowky/CMOO-Algorithm-Development](https://github.com/andrelowky/CMOO-Algorithm-Development),
@@ -33,19 +36,71 @@ failure modes.
   coarse/fine aggregate), 3 output properties (Slump, Flow, 28-day
   Compressive Strength).
 
-## Still open / not yet built
+## Status: DONE (this section) / validated with one caveat
 
-1. **A training-set generator for the tunable domain** (analogous to
-   `generate_training_set.py`/`generate_coatings_training_set.py`) —
-   `evolve_af_v3.py --oracle tunable` will fail today at
-   `load_training_campaigns` for lack of training-log JSON files in the
-   expected schema (`X_init`/`Y_init`/`oracle_X_raw`/`oracle_Y_raw`/
-   `budget`/`n_init`/`batch_size`, plus this domain's own
-   `tunable_scale1`/`tunable_scale2`/`tunable_noise_level`/
-   `tunable_noise_mode`/`tunable_boundary_gain`/`tunable_seed` config keys —
-   see `full_replay.py`'s `_TUNABLE_DEFAULTS` comment).
-2. **The `reconstruct_oracle` noise-determinism gap** noted above.
-3. **Concrete Slump dataset — NOT validated, likely fails the same audit
+1. **Training-set generator built**: `experiments/generate_tunable_training_set.py`.
+   Defaults (`plateau_sharpness=5.0`, `noise_level=0.08`,
+   `noise_mode="proportional"`, `scale2=3.0`) are the exact configuration
+   already measured favorable in `tunable_domain_generalization_results.json`.
+   `experiments/training_logs_tunable/{train,heldout}/*.json` — 8 campaigns
+   (6 train / 2 heldout), real config sizes (`budget=40`, `n_init=10`,
+   `batch_size=5`, `pool_size=256`) — is checked in as a starting set;
+   regenerate/extend with `--n_seeds` for a real run.
+
+2. **`reconstruct_oracle` noise-determinism gap — FIXED.**
+   `TunableSyntheticMOOracle.from_fixed_realization()` (new classmethod)
+   accepts an already-fixed `Y_raw` directly instead of `__init__`'s normal
+   behavior of drawing a fresh noisy realization from `(Y_true, seed)`.
+   Verified directly: two independent `reconstruct_oracle()` calls on the
+   same log now produce byte-identical `Y_raw`/`Y_true`. Requires the log
+   to carry `oracle_Y_true` (noiseless ground truth) alongside
+   `oracle_Y_raw` — `generate_tunable_training_set.py` dumps both.
+
+3. **`run_2b_diagnostic_v3.py` built and run against the real pipeline** —
+   `oracle_family`-threaded copy of `v1_pre_v2/experiments/run_2b_diagnostic.py`,
+   plus a new Step C (seed-noise check, mirroring `mab_noise_diagnostic.py`'s
+   Axis 3: same fixed campaign, N repeat seeds, paired margin vs. baseline).
+
+   **Timing**: ~0.5-0.6s/batch, ~3.6s/campaign — much cheaper than excipient
+   (~6.6-9.3s/campaign), since `d=6`/`pool_size=256` here vs. excipient's
+   `d=16`. Projected cost for a real evolution run (8 campaigns × 40
+   children) is **~20 minutes**.
+
+   **Seed-noise floor — validated, with one important nuance.** First pass
+   using `trust_only` as the reference AF gave a paired-margin std of
+   6.61% across 8 seeds, driven almost entirely by ONE outlier seed
+   (-19.6% margin; without it, std=1.89%). Investigated directly (pulled
+   both runs' per-batch decision logs, no exceptions/fallback-to-random on
+   either side) — **not a pipeline bug**: `trust_only` is pure exploitation
+   with no uncertainty term, and on that one seed it greedily locked onto a
+   poorly-GP-estimated high-mean region from batch 0 onward and never
+   recovered (hv_trajectory essentially flat: 8.65→8.77 over 6 batches),
+   while the baseline's novelty-aware exploration found a much better
+   front on the identical log/seed (10.56→10.91). Re-ran Step C with a
+   simple UCB-style AF (mean + 2×normalised-uncertainty, the same
+   worked-example formula in `evolve_af_v3.py`'s system prompt) instead:
+   **std=0.64% across all 8 seeds, no outliers.** That's the real noise
+   floor for this domain — ~40x cleaner than mAb's measured 25.57%
+   seed-margin-std, and for the first time in this project, SMALLER than
+   the ~1% margin gaps evolution is trying to detect (every other domain
+   tried so far has this backwards by 20-45x).
+
+   **Takeaway for future evolution runs on this domain**: `trust_only`
+   itself is a fragile, high-variance seed AF here (not because of noise —
+   because pure mu-only exploitation is a genuinely weak strategy that can
+   get stuck) — expect it to occasionally produce a real outlier campaign,
+   and don't mistake that for domain noise when reading results. Any
+   analysis of this domain's own noise floor should use a
+   uncertainty-aware AF as the reference, not `trust_only`.
+
+   **Still not pinned down**: cross-*campaign* CV (different random pools,
+   not seed noise) was measured at 11.2% but only from `n=2` heldout
+   campaigns — not enough to trust. Generate a larger heldout set
+   (`--n_seeds` well above 8) before treating that number as final; this
+   is the number that actually determines how many `--n_campaigns` a real
+   evolution run needs.
+
+4. **Concrete Slump dataset — NOT validated, likely fails the same audit
    coatings failed.** Checked directly against the project's own
    precedent (`ada_coatings_oracle.py`'s rationale for dropping a
    redundant objective): `slump` and `flow` are themselves nearly
@@ -61,7 +116,7 @@ failure modes.
    above is a necessary-but-not-sufficient red flag, not a full audit.
    Kept in the repo as a documented, parked option, not a recommended
    next domain.
-4. The AgNP self-driving-lab dataset (same EGBO-paper repo,
+5. The AgNP self-driving-lab dataset (same EGBO-paper repo,
    `AgNP self-driving lab/Results_Algo*_Run15.csv`) has too few real
    campaigns to build an independent training/held-out split the way
    excipient/coatings do; the repo also ships a GP-fitted 256-point
@@ -71,8 +126,8 @@ failure modes.
 
 ## Recommended next step
 
-Build (1) — the tunable-domain training-set generator — before anything
-else here, since it's the one domain with an actual measured, favorable
-noise/mu-dominance profile
-(`tunable_domain_generalization_results.json`: CV~1.5-2.9% vs. excipient's
-~50%). Treat concrete/AgNP as secondary, gated on their own audits.
+Generate a larger heldout set (`--n_seeds` well above 8) to pin down the
+real cross-campaign CV — the one number from Status item 3 still not
+resolved — before running a real evolution (`evolve_af_v3.py --oracle
+tunable`) and trusting its `--n_campaigns` sizing. Treat concrete/AgNP as
+secondary, gated on their own audits (item 4/5).
