@@ -432,6 +432,36 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             pool_mu = post.mean.detach().cpu().numpy()
             pool_sigma = post.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
 
+        # Per-candidate qLogNEHVI acquisition value — v4 addition (see
+        # sandbox.py's pool_acq_value docs). This is the SAME batched
+        # acq_fn(candidates.unsqueeze(1)) call strategy_mo_egbo_novelty
+        # itself uses to score its pool (see strategy_ls_na_egbo.py) —
+        # exposing it lets an evolved AF use EGBO's own MC-integrated,
+        # full-joint-posterior hypervolume-improvement estimate directly,
+        # instead of an evolved AF having to hand-approximate hypervolume
+        # improvement from per-objective mean/std alone (the "posterior
+        # resampling"/"pareto probability" mechanism families in
+        # evolve_af_v3.py's MECHANISM_FAMILIES — tried repeatedly by the
+        # LLM under stagnation on the tunable domain, always a much
+        # lower-fidelity approximation of this exact quantity). acq_fn is
+        # already built above for optimize_acqf, so this is one extra
+        # cheap batched forward pass, not a second model fit.
+        with warnings.catch_warnings(), torch.no_grad():
+            warnings.simplefilter("ignore")
+            try:
+                acq_vals = acq_fn(candidates.unsqueeze(1)).detach().cpu().numpy()
+            except Exception:
+                # Same fallback as strategy_mo_egbo_novelty's own code: a
+                # single degenerate candidate can break the batched call.
+                acq_vals = []
+                for i in range(candidates.shape[0]):
+                    try:
+                        v = float(acq_fn(candidates[i].unsqueeze(0)).item())
+                    except Exception:
+                        v = float("-inf")
+                    acq_vals.append(v)
+                acq_vals = np.array(acq_vals)
+
         if _POOL_TOP_DEBUG_LOG is not None:
             for j, name in enumerate(oracle.objective_names()):
                 front_range_j = max(
@@ -489,6 +519,7 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             log_dir=sandbox_log_dir,
             front_boundary_std=front_boundary_std,
             front_allmax_init=front_allmax_init,
+            pool_acq_value=acq_vals,
         )
         selected_idx = select_batch(scores, batch_size)
 

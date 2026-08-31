@@ -124,6 +124,18 @@ if __name__ == "__main__":
     _front_init_raw = json.loads(sys.argv[15]) if len(sys.argv) > 15 else []
     front_allmax_init = np.array(_front_init_raw) if len(_front_init_raw) > 0 else None
 
+    # pool_acq_value (argv[16]): v4 addition. Per-candidate qLogNEHVI
+    # acquisition value — EGBO's own scoring signal (see
+    # strategy_evolved_af's docstring for why this is exposed) — normalised
+    # here (min-max over the pool, [] sentinel -> caller didn't opt in)
+    # into context["pool"][i]["acq_value_norm"], SAME normalisation
+    # strategy_mo_egbo_novelty's own novelty_aware_select_vectorised uses
+    # for its acq_norm term, so an evolved AF reading this sees the exact
+    # scale EGBO itself operates on, not a raw log-scale value it would
+    # have to guess how to normalise.
+    _pool_acq_raw = json.loads(sys.argv[16]) if len(sys.argv) > 16 else []
+    pool_acq_value = np.array(_pool_acq_raw) if len(_pool_acq_raw) > 0 else None
+
     # Translate flat, positional arrays into the self-documenting nested
     # context dict per af_interface.py's contract, BEFORE candidate code
     # ever runs — this translation is trusted runner code (not sandboxed
@@ -132,11 +144,27 @@ if __name__ == "__main__":
     # caller) keeps run_af_in_sandbox's own signature — and every caller
     # of it — unchanged.
 
+    # Neutral, uninformative constant (0.5 for every candidate) when the
+    # caller doesn't pass pool_acq_value at all — matches
+    # novelty_aware_select_vectorised's own degenerate-range fallback, and
+    # means any AF that DOES read acq_value_norm degrades gracefully (a
+    # flat signal that changes nothing about its ranking) rather than
+    # crashing, for every caller that hasn't been updated to pass this.
+    if pool_acq_value is not None and len(pool_acq_value) > 0:
+        _a_min, _a_max = float(pool_acq_value.min()), float(pool_acq_value.max())
+        if _a_max - _a_min < 1e-12:
+            acq_value_norm = np.full(len(pool_x), 0.5)
+        else:
+            acq_value_norm = (pool_acq_value - _a_min) / (_a_max - _a_min)
+    else:
+        acq_value_norm = np.full(len(pool_x), 0.5)
+
     pool = []
     for i in range(len(pool_x)):
         gp = {name: {"mean": float(pool_mu[i, j]), "std": float(pool_sigma[i, j])}
               for j, name in enumerate(OBJECTIVE_NAMES)}
-        pool.append({"x": pool_x[i], "gp_posterior": gp})
+        pool.append({"x": pool_x[i], "gp_posterior": gp,
+                      "acq_value_norm": float(acq_value_norm[i])})
 
     if len(front_allmax) > 0:
         pareto_front_range = {
@@ -217,7 +245,8 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
                        fail_log_dir: pathlib.Path = None,
                        obj_correlation: dict = None,
                        front_boundary_std: dict = None,
-                       front_allmax_init: np.ndarray = None) -> np.ndarray:
+                       front_allmax_init: np.ndarray = None,
+                       pool_acq_value: np.ndarray = None) -> np.ndarray:
     """
     Execute af_code (must define score_pool per af_interface.py's contract)
     in a subprocess and return the resulting (N,) score array. Raises
@@ -267,6 +296,16 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
     self-annealing premise). Defaults to None (not opted in), in which
     case pareto_front_range_init falls back to the same value as
     pareto_front_range, i.e. behaves exactly as if this key didn't exist.
+
+    pool_acq_value: optional, one raw qLogNEHVI acquisition value per
+    candidate in pool_x (index-aligned) — v4 addition, see
+    strategy_evolved_af's docstring for why this is exposed (EGBO's own
+    scoring signal, not a hand-approximation from mean/std). Min-max
+    normalised here into context["pool"][i]["acq_value_norm"] (same
+    normalisation strategy_mo_egbo_novelty's own selection uses).
+    Defaults to None (not opted in), in which case every candidate gets a
+    flat, uninformative acq_value_norm=0.5 — existing AF code that doesn't
+    read this key is completely unaffected either way.
     """
     if objective_names is None:
         objective_names = ["Tm", "kD", "viscosity"]
@@ -312,7 +351,8 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
              json.dumps(list(objective_names)), json.dumps(Y_obs.tolist()),
              json.dumps(obj_correlation),
              json.dumps({k: float(v) for k, v in front_boundary_std.items()}),
-             json.dumps(front_allmax_init.tolist() if front_allmax_init is not None else [])],
+             json.dumps(front_allmax_init.tolist() if front_allmax_init is not None else []),
+             json.dumps(pool_acq_value.tolist() if pool_acq_value is not None else [])],
             capture_output=True, text=True, timeout=SANDBOX_TIMEOUT,
         )
 
