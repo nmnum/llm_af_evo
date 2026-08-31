@@ -94,6 +94,7 @@ from ada_coatings_oracle import (
     DiscreteADACoatingsOracle, FEATURE_DIM as _COATINGS_FEATURE_DIM,
     OBJECTIVE_NAMES as _COATINGS_OBJECTIVE_NAMES,
 )
+from tunable_synthetic_oracle import TunableSyntheticMOOracle
 
 # Opt-in diagnostic log for the growth-aware modification (1)'s
 # boundary_std / front_range / growth_weight per batch — off (None) by
@@ -148,7 +149,27 @@ _ORACLE_SHAPE_EXPECTATIONS = {
     "excipient": {"feature_dim": 16, "n_objectives": 3},  # Tm, kD, viscosity
     "coatings": {"feature_dim": _COATINGS_FEATURE_DIM,
                  "n_objectives": len(_COATINGS_OBJECTIVE_NAMES)},
+    "tunable": {"feature_dim": 6, "n_objectives": 2},  # f1, f2 — see
+                 # tunable_synthetic_oracle.py's TunableSyntheticMOOracle.build
+                 # default d=6; override _ORACLE_SHAPE_EXPECTATIONS here (or
+                 # pass a matching d) if a v3 training-set generator uses a
+                 # different dimensionality.
 }
+
+# TunableSyntheticMOOracle's noise/plateau/scale config (see its own
+# docstring) is NOT recoverable from a training log's plain X_raw/Y_raw
+# arrays the way excipient/coatings' fixed real data is — it must travel
+# WITH the log. v3's training-set generator (not yet written) needs to dump
+# these fields into every log JSON it produces (alongside the usual
+# X_init/Y_init/oracle_X_raw/oracle_Y_raw/budget/n_init/batch_size keys):
+# tunable_scale1, tunable_scale2, tunable_noise_level, tunable_noise_mode,
+# tunable_boundary_gain, tunable_seed. reconstruct_oracle below reads them
+# with the TunableSyntheticMOOracle.build() defaults as a fallback ONLY so
+# a hand-built log without these keys doesn't crash — for a real v3 run
+# generate them explicitly and dump them, don't rely on this fallback
+# silently picking generic defaults that may not match what was intended.
+_TUNABLE_DEFAULTS = dict(scale1=1.0, scale2=3.0, noise_level=0.08,
+                          noise_mode="proportional", boundary_gain=0.5, seed=0)
 
 
 def reconstruct_oracle(log: dict, oracle_family: str = "excipient"):
@@ -199,6 +220,28 @@ def reconstruct_oracle(log: dict, oracle_family: str = "excipient"):
 
     if oracle_family == "coatings":
         return DiscreteADACoatingsOracle(X_raw, Y_raw)
+    if oracle_family == "tunable":
+        # CAVEAT (see _TUNABLE_DEFAULTS's comment above): TunableSyntheticMOOracle
+        # normally DRAWS its own noisy _Y_raw from _Y_true + a fresh RNG draw
+        # inside __init__ (tunable_synthetic_oracle.py:157-158) — it does not
+        # accept a pre-realized noisy Y_raw the way DiscreteADACoatingsOracle/
+        # DiscreteMOExcipientOracle do for real, already-fixed experimental
+        # data. Passing this log's dumped oracle_Y_raw as Y_true here means
+        # the reconstructed oracle will draw a DIFFERENT noise realization
+        # than whatever the training-set generator originally saw for this
+        # campaign, even with the same seed/config — replay determinism for
+        # this oracle family is NOT yet guaranteed the way it is for
+        # excipient/coatings. Treat this branch as provisional until a v3
+        # training-set generator + a matching reconstruct fix (e.g. an
+        # alternate constructor that accepts a fixed Y_raw directly) exists;
+        # don't trust cross-run comparisons on "tunable" until then.
+        cfg = {**_TUNABLE_DEFAULTS, **{k[len("tunable_"):]: v for k, v in log.items()
+                                        if k.startswith("tunable_")}}
+        return TunableSyntheticMOOracle(
+            X_raw, Y_raw, objective_names=["f1", "f2"],
+            scale1=cfg["scale1"], scale2=cfg["scale2"],
+            noise_level=cfg["noise_level"], noise_mode=cfg["noise_mode"],
+            boundary_gain=cfg["boundary_gain"], seed=cfg["seed"])
     scaler = StandardScaler().fit(X_raw)
     return DiscreteMOExcipientOracle(X_raw, Y_raw, forms=None, scaler=scaler)
 
