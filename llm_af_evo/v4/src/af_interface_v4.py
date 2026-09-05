@@ -140,32 +140,45 @@ SEED_TERM_WEIGHTS = {
     # only matters for mock-mode smoke tests, never a real run.
 }
 
-# Strategy hints: 8 distinct mechanisms spanning UCB, novelty, HV
-# improvement, repulsive diversity, greedy penalization, and Pareto-
-# membership trust regions.  evolve_af_v2.py's real-LLM mode asks the LLM
-# to WRITE score_pool implementing each hint at generation 0.
+# Strategy hints: 10 distinct mechanisms spanning novelty, HV improvement,
+# repulsive diversity, greedy penalization, Pareto-membership trust
+# regions, front coverage, cross-objective correlation, and temporal
+# momentum.  evolve_af_v2.py's real-LLM mode asks the LLM to WRITE
+# score_pool implementing each hint at generation 0.
 #
-# Hints requiring context["Y_obs"]: noisy_front_hvi, outcome_novelty
-# Hints requiring context["pareto_front"]: noisy_front_hvi, pareto_membership
-# Hints requiring neither: fixed_ucb, ucb_plus_novelty, phase_decaying_ucb,
-#                          dpp_diversity, local_penalization
+# v4.1: dropped fixed_ucb/ucb_plus_novelty/phase_decaying_ucb (the three
+# pure-UCB-family hints kept from v2.0) and replaced them with
+# front_coverage_gap/obj_correlation_bonus/improvement_momentum. Found
+# necessary from evolve_af_v4.py run1's live behaviour (gens 22-45): once
+# the champion converges to an acq_value_norm+uncertainty-bonus formula
+# (which every run so far has — acq_value_progress_blend IS this family
+# by design), these three hints are textually different but MECHANICALLY
+# THE SAME FAMILY as the champion, so handing them to the model as a
+# "structurally different" escape option during stagnation doesn't
+# actually offer an escape — see evolve_af_v4.py's STRATEGY_HINT_TAGS/
+# _UCB_UNCERTAINTY_TAG history for the full account (the model was handed
+# ucb_plus_novelty as a "fresh" redirect while already stuck restating its
+# own UCB+novelty formula). This isn't a claim the UCB family performs
+# badly — docs/llm_evolved_afs_comprehensive_log.md §25's DTLZ2 table has
+# hint_fixed_ucb (mean HV 4.745) beating every front-range-normalised
+# variant tested — only that it's the wrong tool for a catalog whose job
+# is to offer the model somewhere ELSE to go once it's already fixated on
+# that exact family. The three replacements were checked against that same
+# log before being written: none use front-range normalisation (closed as
+# a mechanism there — §22-25, every domain and variant tested failed to
+# beat hint_fixed_ucb) and none require a hand-rolled dominance/HV test
+# (already the documented failure mode of noisy_front_hvi/
+# pareto_membership/dro_robust_hvi below — the LLM gets these wrong
+# repeatedly per this file's own hint-rewrite history).
+#
+# Hints requiring context["Y_obs"]: noisy_front_hvi, outcome_novelty,
+#                                    improvement_momentum
+# Hints requiring context["pareto_front"]: noisy_front_hvi, pareto_membership,
+#                                           front_coverage_gap
+# Hints requiring context["obj_correlation"]: obj_correlation_bonus (falls
+#   back to a no-op when empty — see its own text; empty is the common case)
+# Hints requiring neither: dpp_diversity, local_penalization
 STRATEGY_HINTS = {
-    # --- UCB family (kept from v2.0; survived on mAb) ---
-    "fixed_ucb":
-        "Score by predicted objective sum plus a fixed-weight (beta=2.0) "
-        "uncertainty bonus, UCB-style — no novelty term, no phase-"
-        "awareness.",
-    "ucb_plus_novelty":
-        "Combine a UCB-style exploration credit (predicted objective sum "
-        "plus a fixed-weight uncertainty bonus) with an explicit novelty "
-        "term (distance to the nearest observed point).",
-    "phase_decaying_ucb":
-        "Phase-aware: weight the uncertainty term heavily early in the "
-        "campaign and let it decay as the budget is spent, exploiting more "
-        "as the campaign progresses, with an extra novelty boost when the "
-        "campaign has been stagnant (no hypervolume improvement for "
-        "several batches).",
-
     # --- Noisy-front HV improvement (replaces ehvi_approx + mc_hvi_approx) ---
     # Requires: context["Y_obs"], context["ref_point"], context["pareto_front"]
     # v2.2: rewritten after a first attempt (see evolution_runs/
@@ -383,4 +396,96 @@ STRATEGY_HINTS = {
         "(distance to nearest observed point), or an uncertainty bonus — "
         "so the final score is not just acq_value_norm alone but a "
         "genuine blend where acq_value_norm clearly dominates.",
+
+    # --- Front coverage gap (v4.1 addition, replaces fixed_ucb) ---
+    # Requires: context["pareto_front"] (falls back to context["Y_obs"] if
+    # the front has fewer than 3 points — very early in a campaign).
+    "front_coverage_gap":
+        "Reward candidates predicted to land in an UNDER-COVERED region of "
+        "the current Pareto front, not just candidates that are near it: "
+        "for each candidate, take its predicted objective vector "
+        "(gp_posterior means, all-maximise convention) and compute its "
+        "distance to the k=3 NEAREST points already in "
+        "context['pareto_front'] (if context['pareto_front'] has fewer "
+        "than 3 points, use context['Y_obs'] instead — early in a "
+        "campaign the front itself is too small to give a meaningful "
+        "density estimate). Take the MEAN of those k nearest-distances as "
+        "the candidate's coverage-gap score: a candidate near a SPARSE "
+        "stretch of the front scores high, a candidate near a DENSE "
+        "cluster of front points scores low, even when both are equally "
+        "close to the front overall. This is DIFFERENT from a plain "
+        "novelty term (nearest-distance to ANY observed point, which "
+        "rewards being far from everything indiscriminately) and from a "
+        "pool-internal diversity term (pairwise spread WITHIN the "
+        "candidate batch, not against the front): this hint specifically "
+        "targets gaps in the FRONT's own coverage, so a candidate can "
+        "score high here even while sitting close to several already-"
+        "observed but dominated (off-front) points, as long as the front "
+        "itself is sparse nearby. Blend as a SMALLER secondary term added "
+        "to context['pool'][i]['acq_value_norm'] (see "
+        "acq_value_progress_blend's guidance above), not as the sole "
+        "score. Cost is O(n_candidates * n_front_points) — cheap at "
+        "typical front sizes, well under the sandbox's 10-second budget.",
+
+    # --- Cross-objective correlation bonus (v4.1 addition, replaces
+    #     ucb_plus_novelty) ---
+    # Requires: context["obj_correlation"] (optional, {} for most oracles
+    # — see sandbox.py's own docstring for this key). MUST degrade to a
+    # true no-op when empty; do not treat a missing key as zero-
+    # correlation-is-itself-informative.
+    "obj_correlation_bonus":
+        "Use context['obj_correlation'] — an OPTIONAL, per-candidate "
+        "cross-objective posterior correlation signal, only populated "
+        "when the surrogate is a DA-COREG GP (empty dict {} for every "
+        "other oracle/surrogate, which is the common case). When "
+        "non-empty, it is keyed 'name_a,name_b' -> list[float] "
+        "(index-aligned with context['pool'], one value per candidate) "
+        "since JSON has no tuple keys. The idea: a candidate predicted to "
+        "improve an objective that this signal says is NEGATIVELY "
+        "correlated with objectives the current front already covers "
+        "well has a marginal hypervolume contribution that tends to be "
+        "disproportionately large, since progress there is not "
+        "'automatically' bought by progress the campaign has already "
+        "made on the correlated objectives. Build a small bonus from "
+        "this (e.g. average the relevant per-candidate correlation "
+        "values, weighting negative correlations positively) and blend "
+        "it as a SMALLER secondary term on top of "
+        "context['pool'][i]['acq_value_norm'], which stays the dominant "
+        "term. CRITICAL: if context['obj_correlation'] is empty (check "
+        "this explicitly first), this term must contribute EXACTLY 0 to "
+        "every candidate's score — do NOT raise an error, do NOT iterate "
+        "over hypothetical 'name_a,name_b' keys that aren't actually "
+        "present, and do NOT treat an empty dict as evidence of zero "
+        "correlation (it means 'no signal available', not 'no "
+        "correlation exists'). Your code must run correctly on both "
+        "empty-dict and populated-dict inputs.",
+
+    # --- Improvement-direction momentum (v4.1 addition, replaces
+    #     phase_decaying_ucb) ---
+    # Requires: context["Y_obs"] with at least 4 rows (falls back to
+    # acq_value_norm alone otherwise — very early in a campaign there's
+    # nothing to split into an older/newer trend yet).
+    "improvement_momentum":
+        "Reward candidates whose predicted objective vector points in the "
+        "SAME DIRECTION the campaign has recently been improving in — a "
+        "temporal signal, distinct from every other hint here (none of "
+        "them use the ORDER of context['Y_obs'], only its final "
+        "contents). First check len(context['Y_obs']) >= 4; if not, skip "
+        "this term entirely and score by context['pool'][i]"
+        "['acq_value_norm'] alone (too few observations to split "
+        "meaningfully). Otherwise, split context['Y_obs'] (all-maximise "
+        "convention, append-ordered) into an OLDER half and a NEWER half "
+        "by row index (e.g. first half of rows vs second half), compute "
+        "each half's per-objective MEAN, and set momentum_direction = "
+        "newer_mean - older_mean (a vector in objective space — the "
+        "direction the campaign's typical outcome has been drifting). "
+        "For each candidate, take (its own gp_posterior mean vector - "
+        "newer_mean) and score it by the DOT PRODUCT with "
+        "momentum_direction, normalised by momentum_direction's own norm "
+        "(if that norm is ~0 — e.g. the campaign hasn't moved recently — "
+        "this term contributes 0, do not divide by zero). This rewards "
+        "continuing a direction that has recently been paying off. Blend "
+        "as a SMALLER secondary term added to "
+        "context['pool'][i]['acq_value_norm'], same pattern as the other "
+        "additive hints above, not as the sole score.",
 }

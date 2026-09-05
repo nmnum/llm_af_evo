@@ -889,7 +889,9 @@ def champion_rehash_similarity(child_docstring: str, champion_docstring: str) ->
     """Jaccard similarity of meaningful words between a child's docstring
     and the current champion's — see CHAMPION_REHASH_NAME's note above.
     0.0 if either docstring is missing/has no meaningful words (never
-    falsely flags a rehash from empty input)."""
+    falsely flags a rehash from empty input). Generic pairwise-docstring
+    similarity — reused as-is by generic_repeat_similarity below to
+    compare a child against non-champion siblings too."""
     words_a = _rehash_words(child_docstring)
     words_b = _rehash_words(champion_docstring)
     if not words_a or not words_b:
@@ -897,11 +899,377 @@ def champion_rehash_similarity(child_docstring: str, champion_docstring: str) ->
     return len(words_a & words_b) / len(words_a | words_b)
 
 
+# ── Anti-mode-collapse, part 3: rehashing a non-champion idea ──────────────
+#
+# Found on v4 run1: with parts 1+2 above both active and working as
+# designed (family_attempt_counts showed genuine rotation through all four
+# MECHANISM_FAMILIES, plus champion_rehash correctly climbing and
+# triggering the hard-redirect), the run STILL stagnated for 16+ straight
+# generations. Reading the actual generated code showed why: calls 37, 38,
+# and 43 were three cosmetic restatements of "UCB-style score + inverse-
+# distance novelty" (a formula that was never the champion — the champion
+# stayed the gen-0 acq_value_norm-based seed throughout), and calls 40/41
+# were BYTE-IDENTICAL. None of this got caught, because
+# classify_mechanism_families' keyword lists don't cover "novelty"/"UCB"
+# phrasing, and champion_rehash_similarity only ever compares a child
+# against best_so_far — a repeated idea that ISN'T the champion is
+# invisible to both mechanisms. The 4 named families + the champion aren't
+# an exhaustive list of what the model can fixate on; they're just the two
+# failure modes we'd previously observed and named. This third guard
+# generalizes the fix: instead of comparing against one fixed reference
+# (the champion), compare each new child against a rolling window of ALL
+# recent stagnation-triggered children's docstrings, regardless of which
+# family (if any) they were classified into. Same word-overlap similarity
+# function and 0.3 threshold as champion_rehash — already validated
+# against real docstrings in this run's own logs (see above).
+GENERIC_REPEAT_NAME = "generic_repeat"
+RECENT_DOCSTRING_WINDOW = 15
+
+
+def generic_repeat_similarity(child_docstring: str, recent_docstrings: list) -> float:
+    """Max champion_rehash_similarity between child_docstring and any entry
+    in recent_docstrings (a rolling window of recently-proposed children's
+    docstrings, not just the champion's). 0.0 if recent_docstrings is
+    empty."""
+    if not recent_docstrings:
+        return 0.0
+    return max(champion_rehash_similarity(child_docstring, d) for d in recent_docstrings)
+
+
+# Static family tags for STRATEGY_HINTS, used only by unexhausted_strategy_hint
+# below. classify_mechanism_families (keyword-scanning a free-form LLM-
+# written docstring) is the wrong tool here: STRATEGY_HINTS' descriptions
+# are our own fixed, hand-written text, so what family each one belongs to
+# is known outright rather than needing to be guessed from keywords — and
+# guessing gets it wrong for exactly the hints that matter most. Verified
+# directly: classify_mechanism_families("Score by predicted objective sum
+# plus a fixed-weight (beta=2.0) uncertainty bonus, UCB-style...") returns
+# [] (no MECHANISM_FAMILIES keyword — "resampl", "pareto-optim" etc. — asks
+# about UCB at all), so fixed_ucb slipped straight through a keyword-only
+# filter in testing.
+#
+# v4.1: af_interface_v4.py's STRATEGY_HINTS dropped fixed_ucb/
+# ucb_plus_novelty/phase_decaying_ucb (see its own comment for the full
+# account — every run's champion so far has converged to the SAME family
+# these three hints describe, so offering them as a stagnation "escape"
+# wasn't actually offering anywhere new to go) in favour of
+# front_coverage_gap/obj_correlation_bonus/improvement_momentum, none of
+# which carry this tag. "ucb_uncertainty" is kept as a tag (now naming
+# only acq_value_progress_blend) rather than removed outright: that hint
+# is still the literal formula every champion has converged to
+# (acq_value_progress_blend seeded egbo_novelty_like, the seed every real
+# champion so far has been a variant of), so it still needs unconditional
+# exclusion from the redirect fallback even though its three siblings are
+# gone. If a future STRATEGY_HINTS revision adds another hint that's
+# mechanically UCB+uncertainty-shaped, tag it here too.
+#
+# (Two text-similarity-based approaches to detecting "this hint's already
+# been reworded" — Jaccard, then an overlap coefficient — were tried and
+# discarded here; see unexhausted_strategy_hint's docstring below for why
+# neither held up against real data, and why exact per-key tracking via
+# family_attempt_counts replaced them instead.)
+_UCB_UNCERTAINTY_TAG = "ucb_uncertainty"
+STRATEGY_HINT_TAGS = {
+    "acq_value_progress_blend": {_UCB_UNCERTAINTY_TAG},
+    "noisy_front_hvi": {"posterior_resampling"},
+    "outcome_novelty": set(),
+    "dpp_diversity": {"diversity_repulsion"},
+    "local_penalization": {"proximity_suppression"},
+    "pareto_membership": {"pareto_probability"},
+    "dro_robust_hvi": {"posterior_resampling"},
+    "front_coverage_gap": set(),
+    "obj_correlation_bonus": set(),
+    "improvement_momentum": set(),
+}
+
+
+def unexhausted_strategy_hint(rng, family_attempt_counts: dict, worn_out_families: set,
+                               best_doc: str) -> tuple:
+    """Pick a (key, description) pair from STRATEGY_HINTS for the
+    hard-redirect fallback, filtered against what's already been exhausted
+    this stagnation streak. The caller MUST tally the returned key into
+    family_attempt_counts (as f"hint_{key}") immediately after using it —
+    see HINT_KEY_PREFIX below — or this function has no way to know a hint
+    got reused and will keep suggesting it.
+
+    Found needed on v4 run1's second stagnation stretch (gens 22-41): once
+    all four MECHANISM_FAMILIES were worn out, the hard-redirect fallback
+    used to do `random.choice(list(STRATEGY_HINTS.values()))` — completely
+    unfiltered. STRATEGY_HINTS is the *gen-0 seed pool*, not a curated
+    "still fresh" list like MECHANISM_FAMILIES is — at the time this was
+    found, it held 9 hints including fixed_ucb/ucb_plus_novelty/
+    phase_decaying_ucb/acq_value_progress_blend, all UCB+uncertainty
+    (+novelty) variants (the first three have since been dropped from the
+    catalog entirely — see STRATEGY_HINT_TAGS' v4.1 comment above — but
+    this function's job, filtering ANY future catalog against what's
+    already worn out, doesn't depend on which specific hints happen to be
+    in it). So the redirect could (and on run1 did) hand the model back
+    "Combine a UCB-style exploration credit... with an explicit novelty
+    term" — textually different from, but
+    conceptually identical to, the champion's own acq_value+uncertainty
+    formula the model was already stuck rewording.
+
+    Two iterations before this one both tried to detect "has this hint
+    already been suggested and reworded" by comparing STRATEGY_HINTS' own
+    (long, detailed) description text against recent_docstrings (short,
+    one-line child summaries) via word-overlap similarity — first Jaccard
+    (champion_rehash_similarity's metric), then an overlap coefficient
+    (_hint_similarity). Both measured directly against run1's actual gens
+    41-45 stuck state: Jaccard scored real restatements of outcome_novelty
+    at only 0.12-0.15 (swamped by the long hint's own vocabulary — false
+    negative, let the same hint be resuggested 5 times), and the overlap
+    coefficient over-corrected the other way — taking the max similarity
+    against a 15-entry recent_docstrings window flagged EVERY hint as "too
+    similar to something recent" (0.33-1.0 across the board) purely from
+    generic domain vocabulary shared by any two AF ideas ("candidates",
+    "objective", "predicted", "score") — false positive, starved the pool
+    down to a single tag-surviving hint regardless of what was actually
+    repeating. Comparing a fixed catalog entry's prose against a
+    stagnation-window's worth of free-form LLM summaries is the wrong tool
+    either way — thresholds calibrated on a couple of examples don't hold
+    up against real, noisy, many-comparison data.
+
+    What actually distinguishes "this hint was suggested and failed" is
+    not text similarity at all — it's whether THIS EXACT KEY has already
+    been handed to the redirect prompt this streak, which the caller knows
+    exactly (it's the return value of this same function, previous calls).
+    So family_attempt_counts gets a new per-hint counter
+    (f"hint_{key}", same reset-on-improvement lifecycle as every other
+    entry in that dict) instead of trying to infer reuse from prose.
+
+    Filters, most-constrained first, each only advancing to the next if it
+    empties the candidate pool entirely (never returns nothing to try):
+    1. tag (STRATEGY_HINT_TAGS not in an already-worn-out MECHANISM_FAMILIES
+       family or the champion's own ucb_uncertainty family) AND not itself
+       already redirected-to >= FAMILY_REPEAT_LIMIT times this streak.
+    2. Drop the tag constraint, keep "not already worn out by key".
+    3. Drop the key-repeat constraint too (last resort — every hint has
+       been tried and tag-worn-out; just avoid the champion's own family).
+    4. Give up: any hint at all.
+    """
+    hint_worn_out = {key for key in STRATEGY_HINTS
+                      if family_attempt_counts.get(f"hint_{key}", 0) >= FAMILY_REPEAT_LIMIT}
+    always_worn_out = worn_out_families | {_UCB_UNCERTAINTY_TAG}
+
+    def tag_ok(key):
+        return not (STRATEGY_HINT_TAGS.get(key, set()) & always_worn_out)
+
+    def key_ok(key):
+        return key not in hint_worn_out
+
+    all_items = list(STRATEGY_HINTS.items())
+    filter_stages = [
+        lambda k: tag_ok(k) and key_ok(k),
+        lambda k: key_ok(k),
+        lambda k: tag_ok(k),
+        lambda k: True,
+    ]
+    for stage in filter_stages:
+        candidates = [(k, d) for k, d in all_items if stage(k)]
+        if candidates:
+            return candidates[int(rng.integers(len(candidates)))]
+    return all_items[0]  # unreachable — the last stage always matches
+
+
+# ── Exploitation lane: jittering the champion's own weight constants ───────
+#
+# Found on v4 run1's --resume continuation (generation 17-20): with parts
+# 1-3 above all active and confirmed working (family_attempt_counts showed
+# genuine rotation across all named families AND no generic_repeat trigger
+# — recent_docstrings held 5 genuinely distinct ideas), the run was STILL
+# stagnant. This isn't the mode-collapse failure the guards above exist
+# for — the model IS diversifying. The cause is different: the incumbent
+# champion (an acq_value_norm-based blend, already close to real EGBO's
+# own performance per run_2b_diagnostic_v4.py's Step A) is hard to beat
+# with a full from-scratch rewrite, and the one thing most likely to
+# actually improve on it — small numeric refinement of ITS OWN weights
+# (e.g. trying w_acq=0.85 instead of 0.9) — is exactly what
+# champion_rehash_similarity bans once triggered, because a weight-tuned
+# variant has the same high word-overlap as a lazy cosmetic reword. The
+# guard can't tell "same idea, different prose" from "same structure,
+# different constants" from docstring text alone.
+#
+# Rather than teaching the LLM to distinguish these (unreliable — see the
+# hard-redirect comment above on why "please don't" text isn't a reliable
+# enforcement mechanism), this adds a second, non-LLM child each stagnant
+# generation: the champion's own code with its bare 0.NNN numeric literals
+# (the pattern egbo_novelty_like's own w_acq=0.9/w_nov=0.1 follow, and
+# most LLM-authored blend weights follow too) perturbed by a small random
+# fraction. It bypasses the LLM, the annealing prompt, and every
+# anti-repetition guard above entirely — this is deliberate local search
+# around a formula that's already working, not a new proposal to classify
+# or ban.
+_WEIGHT_LITERAL_RE = re.compile(r"(?<![\w.])(0\.\d+)(?!\d)")
+JITTER_FRACTION = 0.2
+
+# Overfitting cap: jitter_champion_code hill-climbs against the SAME fixed
+# set of training campaigns every generation — a smooth, low-dimensional
+# search that can converge on a value fitting quirks of that fixed set
+# rather than a genuinely better setting (the classic "tuned too many
+# times against the same validation split" failure), more efficiently
+# than free-form LLM proposals would. If a jitter-sourced child becomes
+# the population's champion several generations running, that's exactly
+# the regime where this risk is highest — nothing has re-challenged it
+# with a structurally different, LLM-proposed idea in a while. Once a
+# jitter-sourced champion has held the top spot for
+# JITTER_CHAMPION_STREAK_LIMIT consecutive generations, the jitter lane is
+# skipped for one generation, forcing that slot back to a real LLM
+# proposal so at least one non-jitter idea competes against it. This
+# doesn't fix overfitting on its own — validating the eventual champion
+# against the held-out set (same standard used throughout this project,
+# e.g. run_2b_diagnostic_v4.py) is still the real check — it just stops
+# the loop from spending unlimited consecutive generations doing nothing
+# but narrow scalar-tuning on a fixed training set.
+JITTER_CHAMPION_STREAK_LIMIT = 3
+
+
+def jitter_champion_code(champion_code: str, rng: np.random.Generator,
+                          jitter_frac: float = JITTER_FRACTION) -> str:
+    """Returns a copy of champion_code with every bare 0.NNN numeric
+    literal perturbed by +/- jitter_frac (relative, with a small additive
+    floor so near-zero constants can still move), clipped to [0.01, 0.99].
+    Only matches literals of the exact form 0.NNN (not preceded by a digit
+    or dot) — deliberately does NOT touch integers, array indices/loop
+    bounds, or exponential-notation epsilons like 1e-8, so it can't
+    corrupt code structure the way a blind numeric-literal regex would.
+    If champion_code has no such literals, returns it unchanged (the
+    caller still gets a valid, if identical, child rather than an error).
+    """
+    def _perturb(m):
+        val = float(m.group(1))
+        delta = rng.uniform(-jitter_frac, jitter_frac) * max(val, 0.05)
+        new_val = min(0.99, max(0.01, val + delta))
+        text = f"{new_val:.4f}".rstrip("0").rstrip(".")
+        return text if "." in text else text + ".0"
+    return _WEIGHT_LITERAL_RE.sub(_perturb, champion_code)
+
+
+def _clean_llm_code(raw: str) -> str:
+    """Strip a leading/trailing ```python fence off a raw LLM response.
+    Module-level (not a local closure) so both llm_propose_child's normal
+    path and attempt_free_invention's extra call below can share it."""
+    raw = raw.strip()
+    for fence in ["```python", "```"]:
+        if raw.startswith(fence):
+            raw = raw[len(fence):]
+    if raw.endswith("```"):
+        raw = raw[:-3]
+    return raw.strip()
+
+
+HARD_REDIRECT_COUNT_NAME = "hard_redirect_count"
+FREE_INVENTION_PERIOD = 3
+
+
+def attempt_free_invention(best_doc: str, recent_docstrings: list,
+                            family_attempt_counts: dict, system_prompt: str,
+                            model: str, rng: np.random.Generator,
+                            objective_names: list, domain_description: str,
+                            feature_dim: int, temperature: float):
+    """One extra LLM call, tried before the hard redirect's guaranteed-
+    escape literal-catalog-implementation (see that block's own comment)
+    every FREE_INVENTION_PERIOD-th time this generation's model has
+    exhausted the soft annealing note. Returns cleaned code if the result
+    passes the SAME champion/generic rehash checks used everywhere else,
+    else None so the caller falls through to the forced-catalog redirect.
+
+    Why this exists: the hard redirect forces literal implementation of
+    one MECHANISM_FAMILIES/STRATEGY_HINTS entry — reliable (see that
+    block's history for why prose alone wasn't), but it can never again
+    produce something like v3 run1's `gen5_child0` (progress-weighted
+    front-range-normalized GP mean/std blend) — a genuinely novel idea
+    that came from ordinary, unconstrained proposal generation, not from
+    any catalog. Once a run is deep enough into repeated hard-redirects
+    (which is exactly when this function's caller runs), EVERY child is
+    catalog-bound and that kind of discovery becomes structurally
+    impossible for the rest of the run.
+
+    Why not just try this every time instead of literal-catalog-forcing:
+    that's what the ORIGINAL soft annealing note already does ("invent a
+    different mechanism entirely" is already one of its stated options) —
+    and it demonstrably doesn't reliably work once the model is fixated
+    (see the hard-redirect block's own history: prose alone let it keep
+    rewording the same idea for 14+ generations in run2). This function is
+    the same free-form ask, but with an explicit, comprehensive banned-
+    ideas list (the champion, recent circling docstrings, AND every
+    STRATEGY_HINTS entry already tried via a redirect this streak) rather
+    than a general "don't repeat yourself," and its output is checked
+    before being trusted rather than assumed to have worked — if it's
+    still a rehash, the guaranteed fallback still runs right after it.
+    Only every 3rd attempt, not every time, so most stuck generations
+    still get the reliable escape without paying for a probably-failing
+    extra LLM call each time.
+    """
+    banned_bits = [f"the current best (\"{best_doc}\")"]
+    for d in (recent_docstrings or [])[-4:]:
+        if d and d != best_doc:
+            banned_bits.append(f"\"{d}\"")
+    tried_hint_keys = [k[len("hint_"):] for k, v in family_attempt_counts.items()
+                        if k.startswith("hint_") and v > 0]
+    for key in tried_hint_keys:
+        desc = STRATEGY_HINTS.get(key)
+        if desc:
+            banned_bits.append(f"\"{desc}\"")
+    banned_text = "; ".join(banned_bits)
+
+    prompt = (
+        f"Design a new score_pool acquisition function from scratch for a "
+        f"{domain_description} with objectives {objective_names} "
+        f"(feature_dim={feature_dim}).\n\n"
+        f"Every recent proposal this stagnation streak has just been a "
+        f"reworded version of one of the following already-tried ideas — "
+        f"do NOT propose anything that resembles ANY of them, not even "
+        f"with different vocabulary or a minor twist on the same "
+        f"underlying formula: {banned_text}.\n\n"
+        f"Invent a genuinely different mechanism, built on different "
+        f"underlying math from every idea listed above. Remember the "
+        f"required one-line docstring as the first statement."
+    )
+    import ollama  # local import, matches llm_propose_child's own — see
+    # its comment: keeps the mock-mode code path (evolve_af_v4.py --mock)
+    # free of an ollama dependency it never uses. This function is a
+    # SEPARATE top-level function from llm_propose_child, not nested
+    # inside it, so it does NOT inherit llm_propose_child's own local
+    # `import ollama` — that was missing here entirely until found via
+    # v4 run1's live behaviour post-resume (gens 111-114: 8/9 calls
+    # fell back to mock crossover). Every call into this function raised
+    # NameError immediately, which propagated uncaught out of
+    # llm_propose_child to make_child's except block — not just failing
+    # the free-invention attempt, but the entire child generation. Worse,
+    # because the exception fired before HARD_REDIRECT_COUNT_NAME ever
+    # got incremented (see the call site in llm_propose_child), hr_count
+    # stayed stuck at 0 forever, so `hr_count % FREE_INVENTION_PERIOD ==
+    # 0` was true on EVERY call — once a run reaches the hard-redirect
+    # state (which run1 already had, durably, from before this bug was
+    # introduced), essentially every subsequent generation failed. A unit
+    # test against this function passed anyway because it monkeypatched
+    # `evolve_af_v4.ollama` directly onto the module, which silently
+    # created the very module-level global whose absence was the bug —
+    # never exercising the real unpatched import path.
+    resp = ollama.chat(
+        model=model,
+        messages=[{"role": "system", "content": system_prompt},
+                  {"role": "user", "content": prompt}],
+        options={"temperature": min(1.2, temperature + 0.15), "num_predict": 1024,
+                 "repeat_penalty": 1.3, "num_ctx": 8192,
+                 "seed": int(rng.integers(1_000_000))},
+        keep_alive="30m",
+    )
+    code = _clean_llm_code(resp["message"]["content"])
+    doc = extract_af_docstring(code)
+    champion_sim = champion_rehash_similarity(doc, best_doc)
+    generic_sim = generic_repeat_similarity(doc, recent_docstrings)
+    if champion_sim >= CHAMPION_REHASH_THRESHOLD or generic_sim >= CHAMPION_REHASH_THRESHOLD:
+        return None
+    return code
+
+
 def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
                        model: str, rng: np.random.Generator,
                        objective_names: list, domain_description: str,
                        feature_dim: int = 16, stagnant_generations: int = 0,
-                       family_attempt_counts: dict = None) -> str:
+                       family_attempt_counts: dict = None,
+                       recent_docstrings: list = None) -> str:
     """Real-LLM crossover/mutation — same shape as evolve_af.py's
     llm_propose_child, but mean_margin/LOC in the prompt now refer to
     campaign-level, margin-based fitness (see evaluate_af_2b's FITNESS
@@ -931,6 +1299,11 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
     one it tried first, re-proposing near-verbatim restatements of it for
     dozens of generations (see MECHANISM_FAMILIES' docstring above) instead
     of actually rotating through the list as intended.
+
+    recent_docstrings: rolling window of recently-proposed children's
+    docstrings this stagnation streak (see GENERIC_REPEAT_NAME above) —
+    used to detect/ban fixation on an idea that isn't the champion and
+    isn't one of the named MECHANISM_FAMILIES either.
     """
     import ollama
     system_prompt = _build_system_prompt(objective_names, domain_description, feature_dim)
@@ -996,6 +1369,22 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
                 f"underlying math, not a renamed version of the current "
                 f"best's math."
             )
+        # Generic-repeat guard (added after v4 run1 — see GENERIC_REPEAT_NAME's
+        # docstring): catches fixation on an idea that is neither the
+        # champion nor one of the four named families (e.g. repeatedly
+        # rewording "UCB score + inverse-distance novelty" — a pattern the
+        # keyword/champion checks above both missed in that run).
+        if family_attempt_counts.get(GENERIC_REPEAT_NAME, 0) >= FAMILY_REPEAT_LIMIT:
+            recent_examples = "; ".join(
+                f"\"{d}\"" for d in (recent_docstrings or [])[-2:])
+            note += (
+                f" Also: {family_attempt_counts[GENERIC_REPEAT_NAME]} of your "
+                f"recent proposals this streak were near-duplicates of EACH "
+                f"OTHER (not the champion, not a named family above — some "
+                f"other idea you kept rewording), e.g. {recent_examples}. "
+                f"Do NOT propose another variant of that idea either — pick "
+                f"a mechanism you have not already tried this streak."
+            )
         if fresh:
             fresh_descs = "; or ".join(desc for _name, desc in fresh)
             note += (
@@ -1026,16 +1415,7 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
         keep_alive="30m",
     )
 
-    def _clean(raw: str) -> str:
-        raw = raw.strip()
-        for fence in ["```python", "```"]:
-            if raw.startswith(fence):
-                raw = raw[len(fence):]
-        if raw.endswith("```"):
-            raw = raw[:-3]
-        return raw.strip()
-
-    code = _clean(resp["message"]["content"])
+    code = _clean_llm_code(resp["message"]["content"])
 
     # Hard redirect — found necessary on run2's --resume continuation: the
     # champion-rehash TEXTUAL ban above (added after run2's first 50
@@ -1056,12 +1436,32 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
     # choice open to drift back to what it just read.
     if stagnant_generations >= STAGNATION_THRESHOLD:
         family_attempt_counts = family_attempt_counts or {}
-        already_banned = (
+        recent_docstrings = recent_docstrings or []
+        champion_banned = (
             family_attempt_counts.get(CHAMPION_REHASH_NAME, 0) >= FAMILY_REPEAT_LIMIT)
+        generic_banned = (
+            family_attempt_counts.get(GENERIC_REPEAT_NAME, 0) >= FAMILY_REPEAT_LIMIT)
+        already_banned = champion_banned or generic_banned
         if already_banned:
             doc = extract_af_docstring(code)
-            sim = champion_rehash_similarity(doc, best_doc)
-            if sim >= CHAMPION_REHASH_THRESHOLD:
+            champion_sim = champion_rehash_similarity(doc, best_doc) if champion_banned else 0.0
+            generic_sim = (generic_repeat_similarity(doc, recent_docstrings)
+                           if generic_banned else 0.0)
+            if champion_sim >= CHAMPION_REHASH_THRESHOLD or generic_sim >= CHAMPION_REHASH_THRESHOLD:
+                # Free-invention attempt, tried first every FREE_INVENTION_PERIOD-th
+                # time this branch fires this streak (see HARD_REDIRECT_COUNT_NAME's
+                # docstring below for why this exists and isn't the default).
+                hr_count = family_attempt_counts.get(HARD_REDIRECT_COUNT_NAME, 0)
+                if hr_count % FREE_INVENTION_PERIOD == 0:
+                    invented_code = attempt_free_invention(
+                        best_doc, recent_docstrings, family_attempt_counts,
+                        system_prompt, model, rng, objective_names,
+                        domain_description, feature_dim, temperature)
+                    if invented_code is not None:
+                        family_attempt_counts[HARD_REDIRECT_COUNT_NAME] = hr_count + 1
+                        return invented_code
+                family_attempt_counts[HARD_REDIRECT_COUNT_NAME] = hr_count + 1
+
                 worn_out_now = {name for name, _desc, _kw in MECHANISM_FAMILIES
                                  if family_attempt_counts.get(name, 0) >= FAMILY_REPEAT_LIMIT}
                 fresh_now = [desc for name, desc, _kw in MECHANISM_FAMILIES
@@ -1069,19 +1469,32 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
                 if fresh_now:
                     redirect_desc = fresh_now[int(rng.integers(len(fresh_now)))]
                 else:
-                    redirect_desc = list(STRATEGY_HINTS.values())[
-                        int(rng.integers(len(STRATEGY_HINTS)))]
+                    redirect_key, redirect_desc = unexhausted_strategy_hint(
+                        rng, family_attempt_counts, worn_out_now, best_doc)
+                    # Tally the exact hint key immediately — this mutates
+                    # the SAME dict object _run_one_generation holds (see
+                    # unexhausted_strategy_hint's docstring), not a copy:
+                    # family_attempt_counts is only ever reassigned to a
+                    # NEW dict via `x or {}` when it's empty/falsy, and it
+                    # can't be empty here (champion_banned/generic_banned
+                    # both require an entry already >= FAMILY_REPEAT_LIMIT).
+                    family_attempt_counts[f"hint_{redirect_key}"] = (
+                        family_attempt_counts.get(f"hint_{redirect_key}", 0) + 1)
+                if champion_sim >= CHAMPION_REHASH_THRESHOLD:
+                    reworded_thing = f"the current best (\"{best_doc}\")"
+                    n_repeats = family_attempt_counts.get(CHAMPION_REHASH_NAME, 0)
+                else:
+                    reworded_thing = "an idea you already tried repeatedly this streak"
+                    n_repeats = family_attempt_counts.get(GENERIC_REPEAT_NAME, 0)
                 redirect_prompt = (
                     f"Implement the following acquisition strategy as "
                     f"score_pool, for a {domain_description} with "
                     f"objectives {objective_names} (feature_dim={feature_dim}):"
                     f"\n\n\"{redirect_desc}\"\n\n"
                     f"This is a hard requirement, not a suggestion: your "
-                    f"last {family_attempt_counts.get(CHAMPION_REHASH_NAME, 0)} "
-                    f"proposals this stagnation streak were all just "
-                    f"reworded versions of the current best "
-                    f"(\"{best_doc}\") — different vocabulary, same "
-                    f"underlying mean/uncertainty/progress formula — and "
+                    f"last {n_repeats} proposals this stagnation streak were "
+                    f"all just reworded versions of {reworded_thing} — "
+                    f"different vocabulary, same underlying formula — and "
                     f"none of them improved fitness. Do NOT reference, "
                     f"resemble, or partially reuse that formula this time. "
                     f"Implement ONLY the strategy described above, built "
@@ -1097,7 +1510,7 @@ def llm_propose_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: 
                              "seed": int(rng.integers(1_000_000))},
                     keep_alive="30m",
                 )
-                code = _clean(resp2["message"]["content"])
+                code = _clean_llm_code(resp2["message"]["content"])
 
     return code
 
@@ -1113,7 +1526,8 @@ def tournament_select(population: list, rng: np.random.Generator, k: int = 3) ->
 def make_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
                mock: bool, model: str, rng: np.random.Generator,
                objective_names: list, domain_description: str, feature_dim: int = 16,
-               stagnant_generations: int = 0, family_attempt_counts: dict = None):
+               stagnant_generations: int = 0, family_attempt_counts: dict = None,
+               recent_docstrings: list = None):
     """Identical mechanism to evolve_af.py's make_child, plus annealing
     under stagnation — see llm_propose_child's docstring. mock mode has no
     LLM to anneal a prompt for, so it gets a light structural analog
@@ -1132,7 +1546,8 @@ def make_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
             code = llm_propose_child(parent_a, parent_b, best_so_far, steps, model, rng,
                                       objective_names, domain_description, feature_dim,
                                       stagnant_generations=stagnant_generations,
-                                      family_attempt_counts=family_attempt_counts)
+                                      family_attempt_counts=family_attempt_counts,
+                                      recent_docstrings=recent_docstrings)
             return code, None, True
         except Exception as e:
             warnings.warn(
@@ -1147,7 +1562,9 @@ def make_child(parent_a: dict, parent_b: dict, best_so_far: dict, steps: list,
 def save_checkpoint(checkpoint_path: pathlib.Path, generation: int, population: list,
                      history: list, rng: np.random.Generator, stagnant_generations: int,
                      best_fitness_ever: float, n_llm_calls: int, n_llm_failures: int,
-                     family_attempt_counts: dict = None) -> None:
+                     family_attempt_counts: dict = None,
+                     recent_docstrings: list = None,
+                     jitter_champion_streak: int = 0) -> None:
     """
     Writes ONE checkpoint file (overwritten every generation, not
     accumulated) capturing everything --resume needs to continue this run
@@ -1173,6 +1590,8 @@ def save_checkpoint(checkpoint_path: pathlib.Path, generation: int, population: 
         "n_llm_calls": n_llm_calls,
         "n_llm_failures": n_llm_failures,
         "family_attempt_counts": family_attempt_counts or {},
+        "recent_docstrings": recent_docstrings or [],
+        "jitter_champion_streak": jitter_champion_streak,
     }
     tmp = checkpoint_path.with_suffix(".json.tmp")
     with open(tmp, "w") as f:
@@ -1231,6 +1650,12 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
         # .get(..., {}) for backward compatibility with checkpoints written
         # before family_attempt_counts existed.
         family_attempt_counts = resume_state.get("family_attempt_counts", {})
+        # .get(..., []) for backward compatibility with checkpoints written
+        # before recent_docstrings existed (see GENERIC_REPEAT_NAME above).
+        recent_docstrings = resume_state.get("recent_docstrings", [])
+        # .get(..., 0) for backward compatibility with checkpoints written
+        # before jitter_champion_streak/jitter_champion_code existed.
+        jitter_champion_streak = resume_state.get("jitter_champion_streak", 0)
         start_gen = resume_state["generation"] + 1
         print(f"Resumed from checkpoint at generation {resume_state['generation']} "
               f"(best fitness={population[0]['fitness']:.4f}, id={population[0]['id']!r}). "
@@ -1242,16 +1667,19 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
                     "n_llm_calls": n_llm_calls, "n_llm_failures": n_llm_failures}
         for gen in range(start_gen, n_generations + 1):
             population, history, stagnant_generations, best_fitness_ever, n_llm_calls, \
-                n_llm_failures, family_attempt_counts = _run_one_generation(
+                n_llm_failures, family_attempt_counts, recent_docstrings, \
+                jitter_champion_streak = _run_one_generation(
                     gen, population, history, stagnant_generations, best_fitness_ever,
                     n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
                     pop_size, n_offspring, mock, model, rng, objective_names,
                     domain_description, feature_dim, oracle_family, log_dir,
-                    n_fitness_seeds, pseudo_steps, family_attempt_counts)
+                    n_fitness_seeds, pseudo_steps, family_attempt_counts, recent_docstrings,
+                    jitter_champion_streak)
             if checkpoint_path is not None:
                 save_checkpoint(checkpoint_path, gen, population, history, rng,
                                  stagnant_generations, best_fitness_ever,
-                                 n_llm_calls, n_llm_failures, family_attempt_counts)
+                                 n_llm_calls, n_llm_failures, family_attempt_counts,
+                                 recent_docstrings, jitter_champion_streak)
         _print_llm_summary(mock, n_llm_calls, n_llm_failures)
         return {"population": population, "history": history,
                 "n_llm_calls": n_llm_calls, "n_llm_failures": n_llm_failures}
@@ -1317,24 +1745,29 @@ def run_evolution(training_logs: list, baseline_hvs: list, pop_size: int,
     best_fitness_ever = population[0]["fitness"]
     stagnant_generations = 0
     family_attempt_counts = {}
+    recent_docstrings = []
+    jitter_champion_streak = 0
 
     if checkpoint_path is not None:
         save_checkpoint(checkpoint_path, 0, population, history, rng,
                          stagnant_generations, best_fitness_ever, n_llm_calls, n_llm_failures,
-                         family_attempt_counts)
+                         family_attempt_counts, recent_docstrings, jitter_champion_streak)
 
     for gen in range(1, n_generations + 1):
         population, history, stagnant_generations, best_fitness_ever, n_llm_calls, \
-            n_llm_failures, family_attempt_counts = _run_one_generation(
+            n_llm_failures, family_attempt_counts, recent_docstrings, \
+            jitter_champion_streak = _run_one_generation(
                 gen, population, history, stagnant_generations, best_fitness_ever,
                 n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
                 pop_size, n_offspring, mock, model, rng, objective_names,
                 domain_description, feature_dim, oracle_family, log_dir,
-                n_fitness_seeds, pseudo_steps, family_attempt_counts)
+                n_fitness_seeds, pseudo_steps, family_attempt_counts, recent_docstrings,
+                jitter_champion_streak)
         if checkpoint_path is not None:
             save_checkpoint(checkpoint_path, gen, population, history, rng,
                              stagnant_generations, best_fitness_ever,
-                             n_llm_calls, n_llm_failures, family_attempt_counts)
+                             n_llm_calls, n_llm_failures, family_attempt_counts,
+                             recent_docstrings, jitter_champion_streak)
 
     _print_llm_summary(mock, n_llm_calls, n_llm_failures)
     return {"population": population, "history": history,
@@ -1345,7 +1778,8 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
                          n_llm_calls, n_llm_failures, training_logs, baseline_hvs, gamma,
                          pop_size, n_offspring, mock, model, rng, objective_names,
                          domain_description, feature_dim, oracle_family, log_dir,
-                         n_fitness_seeds, pseudo_steps, family_attempt_counts=None):
+                         n_fitness_seeds, pseudo_steps, family_attempt_counts=None,
+                         recent_docstrings=None, jitter_champion_streak=0):
     """One generation's worth of run_evolution's loop body, factored out so
     both the fresh-run path and the --resume path (which needs to run an
     arbitrary sub-range of generations, not always starting at 1) share the
@@ -1355,26 +1789,78 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
     MECHANISM_FAMILIES above. Passed in read-only for this generation's
     prompt-building, then updated below (by classifying each stagnation-
     triggered child's docstring) and returned for the caller to persist.
+
+    recent_docstrings: see GENERIC_REPEAT_NAME above. Same lifecycle as
+    family_attempt_counts (passed in read-only, updated below, reset
+    together on genuine improvement).
+
+    jitter_champion_streak: see JITTER_CHAMPION_STREAK_LIMIT above — how
+    many CONSECUTIVE generations a jitter-sourced child has held the
+    population's #1 spot. Read-only here for this generation's use_jitter
+    decision, updated below after the population resorts, returned for the
+    caller to persist. NOT reset on improvement the way the other two
+    counters are — a jitter-sourced champion improving fitness is exactly
+    the case this cap exists to eventually interrupt, not a fresh streak
+    to forgive.
     """
     family_attempt_counts = dict(family_attempt_counts or {})
+    recent_docstrings = list(recent_docstrings or [])
     best_so_far = max(population, key=lambda p: p["fitness"])
+    # LLM-facing reference pool: excludes jitter-sourced individuals. A
+    # jitter child's docstring is byte-identical to the design it was
+    # tuned from (jitter_champion_code only touches numeric literals), so
+    # showing it to the LLM as "best-so-far" changes nothing textually —
+    # but its FITNESS does get shown, and letting that fitness (inflated
+    # by weight-tuning against this exact fixed training set) become the
+    # bar every fresh idea has to clear is a real problem: it's a much
+    # harder, more overfit-prone target than the honest LLM-designed
+    # champion underneath it, and it can also get drawn as a tournament
+    # parent, seeding crossover material with the tuned constant. Parent
+    # selection and the "beat this" reference shown to the LLM both draw
+    # from this filtered pool instead, so the LLM is always asked to
+    # improve on genuine LLM designs — the jitter lane and elitism
+    # (population[0], best_fitness_ever, checkpoint output) are untouched
+    # and still see the true best, jitter included.
+    llm_pool = [p for p in population if "_jitter" not in p["id"]] or population
+    llm_reference = max(llm_pool, key=lambda p: p["fitness"])
     children = []
     for i in range(n_offspring):
-        parent_a = tournament_select(population, rng)
-        parent_b = tournament_select(population, rng)
-        code, term_weights, used_llm = make_child(parent_a, parent_b, best_so_far,
-                                                    pseudo_steps, mock, model, rng,
-                                                    objective_names, domain_description,
-                                                    feature_dim,
-                                                    stagnant_generations=stagnant_generations,
-                                                    family_attempt_counts=family_attempt_counts)
-        if not mock:
-            n_llm_calls += 1
-            n_llm_failures += (not used_llm)
+        # Exploitation lane (see jitter_champion_code's docstring above):
+        # one slot per stagnant generation goes to a non-LLM, weight-jittered
+        # copy of the champion instead of a fresh proposal — deliberate
+        # local search that the anti-repetition guards above would
+        # otherwise ban. Only the LAST slot, and only once stagnation is
+        # established, so early generations (already healthy per run1's
+        # calls 0-15) and single-offspring runs (n_offspring=1) are
+        # unaffected. Also skipped once a jitter-sourced child has held
+        # the champion spot JITTER_CHAMPION_STREAK_LIMIT generations
+        # running (see its docstring) — forces this slot back to a real
+        # LLM proposal for one generation instead of tuning the same
+        # fixed-training-set-fit scalar further.
+        use_jitter = (not mock and stagnant_generations >= 2
+                      and n_offspring >= 2 and i == n_offspring - 1
+                      and jitter_champion_streak < JITTER_CHAMPION_STREAK_LIMIT)
+        if use_jitter:
+            code = jitter_champion_code(best_so_far["code"], rng)
+            term_weights, used_llm = None, False
+        else:
+            parent_a = tournament_select(llm_pool, rng)
+            parent_b = tournament_select(llm_pool, rng)
+            code, term_weights, used_llm = make_child(parent_a, parent_b, llm_reference,
+                                                        pseudo_steps, mock, model, rng,
+                                                        objective_names, domain_description,
+                                                        feature_dim,
+                                                        stagnant_generations=stagnant_generations,
+                                                        family_attempt_counts=family_attempt_counts,
+                                                        recent_docstrings=recent_docstrings)
+            if not mock:
+                n_llm_calls += 1
+                n_llm_failures += (not used_llm)
         result = evaluate_af_2b(code, training_logs, baseline_hvs, gamma, log_dir=log_dir,
                                  oracle_family=oracle_family,
                                  n_fitness_seeds=n_fitness_seeds)
-        children.append({"id": f"gen{gen}_child{i}", "code": code,
+        child_id = f"gen{gen}_jitter{i}" if use_jitter else f"gen{gen}_child{i}"
+        children.append({"id": child_id, "code": code,
                           "term_weights": term_weights, "used_llm": used_llm, **result})
         # Only tally this child against the anti-repetition counters if it
         # was actually generated under the annealing note (mirrors
@@ -1382,16 +1868,27 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
         # diversity is already healthy (see run1's calls 0-15) and doesn't
         # need this pressure.
         if not mock and used_llm and stagnant_generations >= 2:
-            for family_name in classify_mechanism_families(result.get("docstring")):
+            child_doc = result.get("docstring")
+            for family_name in classify_mechanism_families(child_doc):
                 family_attempt_counts[family_name] = family_attempt_counts.get(family_name, 0) + 1
             # Champion-rehash tally (see CHAMPION_REHASH_NAME's docstring) —
-            # compared against THIS generation's best_so_far, the same
-            # docstring the child was actually prompted against.
-            rehash_sim = champion_rehash_similarity(result.get("docstring"),
-                                                      best_so_far.get("docstring"))
+            # compared against THIS generation's llm_reference, the same
+            # docstring the child was actually prompted against (not
+            # best_so_far, which may be a jitter child the LLM never saw).
+            rehash_sim = champion_rehash_similarity(child_doc, llm_reference.get("docstring"))
             if rehash_sim >= CHAMPION_REHASH_THRESHOLD:
                 family_attempt_counts[CHAMPION_REHASH_NAME] = (
                     family_attempt_counts.get(CHAMPION_REHASH_NAME, 0) + 1)
+            # Generic-repeat tally (see GENERIC_REPEAT_NAME's docstring) —
+            # compared against recent_docstrings BEFORE this child is added
+            # to it, so a child can't trivially match itself.
+            generic_sim = generic_repeat_similarity(child_doc, recent_docstrings)
+            if generic_sim >= CHAMPION_REHASH_THRESHOLD:
+                family_attempt_counts[GENERIC_REPEAT_NAME] = (
+                    family_attempt_counts.get(GENERIC_REPEAT_NAME, 0) + 1)
+            if child_doc:
+                recent_docstrings.append(child_doc)
+                recent_docstrings = recent_docstrings[-RECENT_DOCSTRING_WINDOW:]
 
     existing_sigs = {p["selection_signature"] for p in population}
     novel_children, n_duplicate = [], 0
@@ -1404,6 +1901,16 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
 
     population = sorted(population + novel_children, key=lambda p: -p["fitness"])[:pop_size]
 
+    # jitter_champion_streak update (see JITTER_CHAMPION_STREAK_LIMIT above)
+    # — tracks the #1 population slot specifically, not whether a jitter
+    # child merely survived into the population. "_jitter" only ever
+    # appears in ids this loop assigns (gen{N}_jitter{i}), never in a
+    # seed/hint/mock/LLM child's id, so substring match is unambiguous.
+    if "_jitter" in population[0]["id"]:
+        jitter_champion_streak += 1
+    else:
+        jitter_champion_streak = 0
+
     # Stagnation tracking for next generation's annealing (see
     # llm_propose_child's docstring) — small epsilon tolerance so
     # floating-point-noise-level "improvement" doesn't reset the
@@ -1415,6 +1922,7 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
         # so the anti-repetition counters reset: whatever family just
         # worked (or didn't) shouldn't be held against the NEXT streak.
         family_attempt_counts = {}
+        recent_docstrings = []
     else:
         stagnant_generations += 1
 
@@ -1433,13 +1941,15 @@ def _run_one_generation(gen, population, history, stagnant_generations, best_fit
         anneal_note = f"  [stagnant={stagnant_generations}, annealing]"
     else:
         anneal_note = ""
+    jitter_note = f"  [jitter_streak={jitter_champion_streak}]" if jitter_champion_streak else ""
     print(f"gen {gen}: best fitness={population[0]['fitness']:.4f} "
           f"mean_margin={population[0]['mean_margin']:+.3%} "
           f"win_rate={population[0]['win_rate']:.3f} mean_hv={population[0]['mean_hv']:.1f} "
-          f"({population[0]['id']})  duplicates={n_duplicate}/{len(children)}{anneal_note}")
+          f"({population[0]['id']})  duplicates={n_duplicate}/{len(children)}"
+          f"{anneal_note}{jitter_note}")
 
     return (population, history, stagnant_generations, best_fitness_ever, n_llm_calls,
-            n_llm_failures, family_attempt_counts)
+            n_llm_failures, family_attempt_counts, recent_docstrings, jitter_champion_streak)
 
 
 def _print_llm_summary(mock, n_llm_calls, n_llm_failures):
