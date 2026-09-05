@@ -210,29 +210,71 @@ if __name__ == "__main__":
         "obj_correlation": OBJ_CORRELATION,
     }
 
-    result = score_pool(context)
+%s'''
+
+
+def _wrapper_footer_tail(af_function_name: str, combine_with_baseline_acq: bool) -> str:
+    """
+    Builds the call-the-candidate-function + validate + print tail of the
+    sandbox wrapper. Parameterised (v6 addition) so the delta-seed contract
+    can reuse the EXACT SAME sandbox/subprocess/whitelist machinery as every
+    prior version's score_pool contract, rather than forking a parallel
+    execution path — only what gets called and whether the result is
+    combined with acq_value_norm before returning changes.
+
+    af_function_name: the candidate code's required top-level function name
+    ("score_pool" for every v1-v5 contract — unchanged default, so every
+    existing call site's generated wrapper text is byte-identical to
+    before this parameterisation). v6 passes "modifier" instead.
+
+    combine_with_baseline_acq: False (default, v1-v5 behaviour) means the
+    candidate function's return value IS the final score, exactly as
+    before. True (v6's delta-seed contract) means the candidate function
+    is expected to return only a per-candidate MODIFIER term, which this
+    tail then adds elementwise to acq_value_norm (already computed above,
+    same min-max-normalised real qLogNEHVI value every score_pool contract
+    already exposes as context["pool"][i]["acq_value_norm"]) before
+    validating shape/finiteness — so a v6 "modifier" of all zeros
+    reproduces EGBO's raw acq_value_norm baseline exactly, structurally
+    (not by convention the LLM could ignore), because there is no code
+    path in this wrapper that returns the candidate's value un-combined.
+    """
+    combine_line = (
+        "    result = np.asarray(result, dtype=float) + acq_value_norm\n"
+        if combine_with_baseline_acq else "")
+    return f'''    result = {af_function_name}(context)
     if result is None:
-        raise ValueError("score_pool() returned None — missing return statement")
+        raise ValueError("{af_function_name}() returned None — missing return statement")
     result = list(result)
     if len(result) != len(pool_x):
         raise ValueError(
-            f"score_pool() returned {len(result)} scores but there were "
-            f"{len(pool_x)} candidates in the pool — lengths must match")
-    print(json.dumps([float(v) for v in result]))
+            f"{af_function_name}() returned {{len(result)}} scores but there were "
+            f"{{len(pool_x)}} candidates in the pool — lengths must match")
+{combine_line}    print(json.dumps([float(v) for v in result]))
 '''
 
 
-def _build_sandbox_wrapper(af_code: str) -> str:
+def _build_sandbox_wrapper(af_code: str, af_function_name: str = "score_pool",
+                            combine_with_baseline_acq: bool = False) -> str:
     """
-    Wrap the candidate score_pool code in a subprocess-safe script that
-    reads its arrays from argv (JSON) and prints the result as JSON.
+    Wrap the candidate score_pool/modifier code in a subprocess-safe script
+    that reads its arrays from argv (JSON) and prints the result as JSON.
     Deliberately NOT an f-string over the whole template — af_code is
     arbitrary (possibly LLM-generated) Python and may itself contain `{`
     or `}` (dict/set literals, nested f-strings), which would corrupt an
     f-string interpolation silently or raise a spurious format error.
-    Plain concatenation keeps af_code's own braces inert.
+    Plain concatenation keeps af_code's own braces inert; only the
+    (trusted, non-af_code) footer tail is f-string-built, in
+    _wrapper_footer_tail above.
+
+    af_function_name/combine_with_baseline_acq: see _wrapper_footer_tail's
+    docstring. Both default to v1-v5's exact original contract — every
+    existing caller that doesn't pass these gets a byte-identical wrapper
+    to before this parameterisation (verified directly, not just by
+    inspection — see sandbox's own test coverage for v6's addition).
     """
-    return _WRAPPER_HEADER + af_code + _WRAPPER_FOOTER
+    tail = _wrapper_footer_tail(af_function_name, combine_with_baseline_acq)
+    return _WRAPPER_HEADER + af_code + (_WRAPPER_FOOTER % tail)
 
 
 def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
@@ -246,13 +288,31 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
                        obj_correlation: dict = None,
                        front_boundary_std: dict = None,
                        front_allmax_init: np.ndarray = None,
-                       pool_acq_value: np.ndarray = None) -> np.ndarray:
+                       pool_acq_value: np.ndarray = None,
+                       af_function_name: str = "score_pool",
+                       combine_with_baseline_acq: bool = False) -> np.ndarray:
     """
     Execute af_code (must define score_pool per af_interface.py's contract)
     in a subprocess and return the resulting (N,) score array. Raises
     SandboxError on timeout, non-zero exit, malformed output, wrong shape,
     or non-finite values — callers are expected to fall back to the last
     known-good AF, exactly as approach_c.py's _parse_response does.
+
+    af_function_name/combine_with_baseline_acq: v6 addition, both default
+    to v1-v5's exact original contract (function named "score_pool", its
+    return value IS the final score) — no existing caller passes these, so
+    every existing call site is completely unaffected. v6's delta-seed
+    contract passes af_function_name="modifier",
+    combine_with_baseline_acq=True: af_code then defines `modifier(context)`
+    returning a per-candidate MODIFIER term only, which this function adds
+    to acq_value_norm (the same real qLogNEHVI value every version already
+    exposes via context["pool"][i]["acq_value_norm"]) INSIDE the sandboxed
+    subprocess before shape/finiteness validation — see
+    _wrapper_footer_tail's docstring for why this is a structural contract
+    change, not a prompting convention the LLM could ignore. pool_acq_value
+    must be passed (non-None) for this to be meaningful; if omitted,
+    acq_value_norm falls back to the existing flat 0.5-for-everyone
+    default, same as every other caller of this function.
 
     objective_names defaults to ["Tm", "kD", "viscosity"] for backward
     compatibility with every existing excipient call site — pass an
@@ -321,14 +381,15 @@ def run_af_in_sandbox(af_code: str, pool_x: np.ndarray, pool_mu: np.ndarray,
     # the one contract with any tooling: it's what makes an evolved AF's
     # results-table row and the next generation's crossover prompt
     # human-readable (see evolve_af.py's module docstring).
-    if not extract_af_docstring(af_code):
+    if not extract_af_docstring(af_code, af_function_name=af_function_name):
         raise SandboxError(
-            "score_pool is missing a required one-line docstring as its "
-            "first statement (e.g. def score_pool(context):\\n    \"\"\"<what "
-            "this AF does, in plain English>\"\"\")")
+            f"{af_function_name} is missing a required one-line docstring as its "
+            f"first statement (e.g. def {af_function_name}(context):\\n    \"\"\"<what "
+            f"this AF does, in plain English>\"\"\")")
 
     n = len(pool_x)
-    wrapper = _build_sandbox_wrapper(af_code)
+    wrapper = _build_sandbox_wrapper(af_code, af_function_name=af_function_name,
+                                      combine_with_baseline_acq=combine_with_baseline_acq)
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(wrapper)
