@@ -1,0 +1,206 @@
+[
+  {
+    "id": "gen114_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Blend hypervolume acquisition with a coverage-gap term targeting sparse Pareto front regions.\"\"\"\n    names = context[\"objective_names\"]\n    pf = context[\"pareto_front\"]\n    \n    # Use Y_obs if pareto_front is too small for k=3 nearest neighbors\n    use_y_obs = len(pf) < 3\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp_mean = [cand[\"gp_posterior\"][name][\"mean\"] for name in names]\n        \n        # Compute mean distance to k-nearest front points (or Y_obs if too few)\n        distances = []\n        reference_points = pf if not use_y_obs else context[\"Y_obs\"]\n        cand_point = np.array(gp_mean)\n\n        for ref_point in reference_points:\n            dist = np.linalg.norm(cand_point - ref_point, ord=2)\n            distances.append(dist)\n        \n        # Get k nearest (k=3) \n        sorted_distances = sorted(distances)[:min(3, len(distances))]\n        mean_dist_to_front = sum(sorted_distances)/len(sorted_distances)\n\n        # Blend with acquisition value\n        acq_value_norm = cand[\"acq_value_norm\"]\n        coverage_gap_score = 1.0 - (mean_dist_to_front / context[\"pareto_front_range\"][names[0]]) if not use_y_obs else mean_dist_to_front\n        \n        final_score = acq_value_norm + 0.2289 * coverage_gap_score\n        scores.append(final_score)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": -0.002910705807078142,
+    "mean_margin": -0.002910705807078142,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0010411878200353576,
+      "coatings": -0.00756812119409927,
+      "mAb": -0.005357783424773784
+    },
+    "gate_failed_at": null,
+    "loc": 19,
+    "selection_signature": "90871e69647cab830bef6b4f523a582e",
+    "docstring": "Blend hypervolume acquisition with a coverage-gap term targeting sparse Pareto front regions."
+  },
+  {
+    "id": "gen106_child0",
+    "code": "def score_pool(context):\n    \"\"\"Blend hypervolume acquisition with a coverage-gap term targeting sparse Pareto front regions.\"\"\"\n    names = context[\"objective_names\"]\n    pf = context[\"pareto_front\"]\n    \n    # Use Y_obs if pareto_front is too small for k=3 nearest neighbors\n    use_y_obs = len(pf) < 3\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp_mean = [cand[\"gp_posterior\"][name][\"mean\"] for name in names]\n        \n        # Compute mean distance to k-nearest front points (or Y_obs if too few)\n        distances = []\n        reference_points = pf if not use_y_obs else context[\"Y_obs\"]\n        cand_point = np.array(gp_mean)\n\n        for ref_point in reference_points:\n            dist = np.linalg.norm(cand_point - ref_point, ord=2)\n            distances.append(dist)\n        \n        # Get k nearest (k=3) \n        sorted_distances = sorted(distances)[:min(3, len(distances))]\n        mean_dist_to_front = sum(sorted_distances)/len(sorted_distances)\n\n        # Blend with acquisition value\n        acq_value_norm = cand[\"acq_value_norm\"]\n        coverage_gap_score = 1.0 - (mean_dist_to_front / context[\"pareto_front_range\"][names[0]]) if not use_y_obs else mean_dist_to_front\n        \n        final_score = acq_value_norm + 0.2 * coverage_gap_score\n        scores.append(final_score)\n        \n    return scores",
+    "used_llm": true,
+    "fitness": -0.0034667020871054725,
+    "mean_margin": -0.0034667020871054725,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.001744443597840095,
+      "coatings": 0.006174574891901157,
+      "mAb": 0.002771748494284719
+    },
+    "gate_failed_at": null,
+    "loc": 19,
+    "selection_signature": "5420cd66a76e6b96f049f4efbd9c6457",
+    "docstring": "Blend hypervolume acquisition with a coverage-gap term targeting sparse Pareto front regions."
+  },
+  {
+    "id": "gen109_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Blend hypervolume acquisition with a coverage-gap term targeting sparse Pareto front regions.\"\"\"\n    names = context[\"objective_names\"]\n    pf = context[\"pareto_front\"]\n    \n    # Use Y_obs if pareto_front is too small for k=3 nearest neighbors\n    use_y_obs = len(pf) < 3\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp_mean = [cand[\"gp_posterior\"][name][\"mean\"] for name in names]\n        \n        # Compute mean distance to k-nearest front points (or Y_obs if too few)\n        distances = []\n        reference_points = pf if not use_y_obs else context[\"Y_obs\"]\n        cand_point = np.array(gp_mean)\n\n        for ref_point in reference_points:\n            dist = np.linalg.norm(cand_point - ref_point, ord=2)\n            distances.append(dist)\n        \n        # Get k nearest (k=3) \n        sorted_distances = sorted(distances)[:min(3, len(distances))]\n        mean_dist_to_front = sum(sorted_distances)/len(sorted_distances)\n\n        # Blend with acquisition value\n        acq_value_norm = cand[\"acq_value_norm\"]\n        coverage_gap_score = 1.0 - (mean_dist_to_front / context[\"pareto_front_range\"][names[0]]) if not use_y_obs else mean_dist_to_front\n        \n        final_score = acq_value_norm + 0.2126 * coverage_gap_score\n        scores.append(final_score)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": -0.007717630975437985,
+    "mean_margin": -0.007717630975437985,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0033541526592849955,
+      "coatings": 0.01833394414768901,
+      "mAb": -0.009259580601394648
+    },
+    "gate_failed_at": null,
+    "loc": 19,
+    "selection_signature": "9455712efb9258b63826c3e00c346495",
+    "docstring": "Blend hypervolume acquisition with a coverage-gap term targeting sparse Pareto front regions."
+  },
+  {
+    "id": "gen138_child1",
+    "code": "def score_pool(context):\n    \"\"\"Leverage gradient-like information from objective means to bias toward under-explored front regions while scaling uncertainty rewards based on campaign progress.\"\"\"\n    \n    names = context[\"objective_names\"]\n    pf = context[\"pareto_front\"] \n    ref_point = context[\"ref_point\"]\n    acq_values = np.array([cand['acq_value_norm'] for cand in context[\"pool\"]])\n    campaign = context[\"campaign\"]\n\n    # Compute gradient-like score based on how much each candidate's mean\n    # moves toward the reference point (i.e., improves hypervolume)\n    grad_scores = []\n    for cand in context[\"pool\"]:\n        gp_mean = np.array([cand['gp_posterior'][name][\"mean\"] for name in names])\n        ref_improvement = np.linalg.norm(ref_point - gp_mean, ord=2) \n        # Inverse of distance to reference point (higher is better)\n        grad_scores.append(1.0 / max(1e-8, ref_improvement))\n    \n    # Scale uncertainty bonus based on campaign progress\n    ucb_weight = 0.5 * np.exp(-campaign[\"progress\"]*2) \n    \n    front_range = context[\"pareto_front_range\"]\n    unc_scores = []\n    for cand in context[\"pool\"]:\n        gp_posterior = cand[\"gp_posterior\"] \n        sigma_sum = sum(gp_posterior[name][\"std\"] / front_range[name] for name in names)\n        unc_scores.append(ucb_weight * sigma_sum)\n\n    # Novelty reward: encourage exploration of new areas\n    X_obs = context[\"X_obs\"]\n    \n    if len(X_obs) > 0:\n        nov_rewards = []\n        for cand in context[\"pool\"]:\n            x_cand = cand[\"x\"] \n            dists = np.sum((X_obs - x_cand)**2, axis=1)\n            min_dist = np.min(dists)\n            \n            # Normalize by feature dimensionality\n            norm_min_dist = min_dist / len(x_cand)  \n            nov_rewards.append(norm_min_dist)\n\n    else:\n        nov_rewards = [0.0] * len(context[\"pool\"])\n\n    \n    final_scores = acq_values + np.array(grad_scores) - 2.*np.array(nov_rewards)\n        \n    return list(final_scores)",
+    "used_llm": true,
+    "fitness": -0.008001694424948417,
+    "mean_margin": -0.008001694424948417,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.005262706097622275,
+      "coatings": 0.019701796093735912,
+      "mAb": -0.00693807345994952
+    },
+    "gate_failed_at": null,
+    "loc": 30,
+    "selection_signature": "655d62975793f318b8738926778f7352",
+    "docstring": "Leverage gradient-like information from objective means to bias toward under-explored front regions while scaling uncertainty rewards based on campaign progress."
+  },
+  {
+    "id": "gen81_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Incorporate progress-aware uncertainty scaling and adaptive novelty reward to dynamically balance exploration-exploitation.\"\"\"\n    \n    names = context[\"objective_names\"]\n    campaign = context[\"campaign\"] \n    acq_values = np.array([cand['acq_value_norm'] for cand in context[\"pool\"]])\n    \n    # Progress-adaptive UCB bonus: decrease uncertainty weight as we approach the end\n    progress = campaign[\"progress\"]\n    ucb_weight = 0.4588 * (1 - progress**2) \n    \n    front_range = context[\"pareto_front_range\"]\n    unc_scores = []\n    for cand in context[\"pool\"]:\n        gp_posterior = cand[\"gp_posterior\"] \n        sigma_sum = sum(gp_posterior[name][\"std\"] / front_range[name] for name in names)\n        unc_scores.append(ucb_weight * sigma_sum)\n\n    # Adaptive novelty reward: increase as campaign stagnates, decrease otherwise\n    stagnant_batches = campaign[\"stagnant_batches\"]\n    \n    X_obs = context[\"X_obs\"]\n    nov_rewards = []\n        \n    if len(X_obs) > 0:\n        for cand in context[\"pool\"]:\n            x_cand = cand[\"x\"] \n            dists = np.sum((X_obs - x_cand)**2, axis=1)\n            min_dist = np.min(dists)\n            \n            # Normalize by feature dimensionality and stagnation level\n            norm_min_dist = min_dist / (len(x_cand) * max(1., stagnant_batches))\n            nov_rewards.append(norm_min_dist)  # Higher reward for less explored areas\n            \n    else:\n        nov_rewards = [0.01] * len(context[\"pool\"])\n\n    # Combine acquisition, uncertainty and novelty terms\n    final_scores = acq_values + np.array(unc_scores) - np.array(nov_rewards)\n    \n    return list(final_scores)",
+    "used_llm": false,
+    "fitness": -0.008144491224729893,
+    "mean_margin": -0.008144491224729893,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.004333500926423187,
+      "coatings": 0.01900692803867107,
+      "mAb": 0.01266454947555247
+    },
+    "gate_failed_at": null,
+    "loc": 25,
+    "selection_signature": "5f7682a5b46aedc8196a74be8a45a9e3",
+    "docstring": "Incorporate progress-aware uncertainty scaling and adaptive novelty reward to dynamically balance exploration-exploitation."
+  },
+  {
+    "id": "gen78_child1",
+    "code": "def score_pool(context):\n    \"\"\"Incorporate progress-aware uncertainty scaling and adaptive novelty reward to dynamically balance exploration-exploitation.\"\"\"\n    \n    names = context[\"objective_names\"]\n    campaign = context[\"campaign\"] \n    acq_values = np.array([cand['acq_value_norm'] for cand in context[\"pool\"]])\n    \n    # Progress-adaptive UCB bonus: decrease uncertainty weight as we approach the end\n    progress = campaign[\"progress\"]\n    ucb_weight = 0.5 * (1 - progress**2) \n    \n    front_range = context[\"pareto_front_range\"]\n    unc_scores = []\n    for cand in context[\"pool\"]:\n        gp_posterior = cand[\"gp_posterior\"] \n        sigma_sum = sum(gp_posterior[name][\"std\"] / front_range[name] for name in names)\n        unc_scores.append(ucb_weight * sigma_sum)\n\n    # Adaptive novelty reward: increase as campaign stagnates, decrease otherwise\n    stagnant_batches = campaign[\"stagnant_batches\"]\n    \n    X_obs = context[\"X_obs\"]\n    nov_rewards = []\n        \n    if len(X_obs) > 0:\n        for cand in context[\"pool\"]:\n            x_cand = cand[\"x\"] \n            dists = np.sum((X_obs - x_cand)**2, axis=1)\n            min_dist = np.min(dists)\n            \n            # Normalize by feature dimensionality and stagnation level\n            norm_min_dist = min_dist / (len(x_cand) * max(1., stagnant_batches))\n            nov_rewards.append(norm_min_dist)  # Higher reward for less explored areas\n            \n    else:\n        nov_rewards = [0.0] * len(context[\"pool\"])\n\n    # Combine acquisition, uncertainty and novelty terms\n    final_scores = acq_values + np.array(unc_scores) - np.array(nov_rewards)\n    \n    return list(final_scores)",
+    "used_llm": true,
+    "fitness": -0.008150523810395681,
+    "mean_margin": -0.008150523810395681,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0032974602695165327,
+      "coatings": 0.00626867810916782,
+      "mAb": 0.018490141045964043
+    },
+    "gate_failed_at": null,
+    "loc": 25,
+    "selection_signature": "dd1f9140b112a2a3fbd0fd453c1e502f",
+    "docstring": "Incorporate progress-aware uncertainty scaling and adaptive novelty reward to dynamically balance exploration-exploitation."
+  },
+  {
+    "id": "gen106_child1",
+    "code": "def score_pool(context):\n    \"\"\"Blend acquisition value with a progress-adaptive uncertainty term and inverse novelty penalty to encourage diverse exploration early, then focused exploitation later.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Base scores from normalized acquisition values  \n    acq_scores = np.array([cand['acq_value_norm'] for cand in context[\"pool\"]])\n    \n    # Compute distances from all previously observed points\n    X_obs = context[\"X_obs\"]\n    if len(X_obs) > 0:\n        novelty_distances = []\n        for i, cand in enumerate(context[\"pool\"]):\n            x_cand = np.array(cand['x'])\n            dists_to_observed = [np.linalg.norm(x_cand - x_obs) for x_obs in X_obs]\n            min_dist = min(dists_to_observed)\n            novelty_distances.append(min_dist)\n\n        # Normalize distances to [0, 1] scale\n        if max(novelty_distances) > 0:\n            novel_scores = np.array(novelty_distances) / max(novelty_distances)\n        else:\n            novel_scores = np.zeros_like(novelty_distances)\n    else: \n        novel_scores = np.zeros(len(context[\"pool\"]))\n\n    # Progress-aware scaling of uncertainty bonus\n    progress = context['campaign']['progress']\n    \n    # Early in campaign, boost exploration; later focus on exploitation  \n    exploit_weight = 1.0 - min(1.0, max(0., (2 * progress) - 1)) \n    explore_weight = 1.0 - exploit_weight\n    \n    scores = []\n        \n    for i, cand in enumerate(context[\"pool\"]):\n        gp_posterior = cand['gp_posterior']\n                \n        # Uncertainty bonus scaled by campaign phase\n        sigma_sum_normed = sum(gp_posterior[name][\"std\"]/context[\"pareto_front_range\"][name] \n                               for name in names)\n        \n        uncertainty_bonus = explore_weight * (sigma_sum_normed / len(names))\n            \n        # Inverse novelty penalty \u2014 penalize candidates too close to previous observations  \n        novel_penalty = 0.25 * novel_scores[i]\n                \n        combined_score = acq_scores[i] + uncertainty_bonus - novel_penalty\n        \n        scores.append(combined_score)\n        \n    return scores",
+    "used_llm": true,
+    "fitness": -0.009826684445516945,
+    "mean_margin": -0.009826684445516945,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.00907156808208507,
+      "coatings": 0.0003395718776772591,
+      "mAb": -0.00695860082067238
+    },
+    "gate_failed_at": null,
+    "loc": 29,
+    "selection_signature": "1e24cee02dafd645c02bd84bcf802b05",
+    "docstring": "Blend acquisition value with a progress-adaptive uncertainty term and inverse novelty penalty to encourage diverse exploration early, then focused exploitation later."
+  },
+  {
+    "id": "gen120_child1",
+    "code": "def score_pool(context):\n    \"\"\"Blend acquisition value with inverse coverage gap and adaptive uncertainty bonus to balance exploration and exploitation across the Pareto front.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Base scores from normalized acquisition values  \n    acq_scores = np.array([cand['acq_value_norm'] for cand in context[\"pool\"]])\n    \n    # Compute distances from all previously observed points\n    X_obs = context[\"X_obs\"]\n    if len(X_obs) > 0:\n        novelty_distances = []\n        for i, cand in enumerate(context[\"pool\"]):\n            x_cand = np.array(cand['x'])\n            dists_to_observed = [np.linalg.norm(x_cand - x_obs) for x_obs in X_obs]\n            min_dist = min(dists_to_observed)\n            novelty_distances.append(min_dist)\n\n        # Normalize distances to [0, 1] scale\n        if max(novelty_distances) > 0:\n            novel_scores = np.array(novelty_distances) / max(novelty_distances)\n        else:\n            novel_scores = np.zeros_like(novelty_distances)\n    else: \n        novel_scores = np.zeros(len(context[\"pool\"]))\n\n    \n    # Progress-aware scaling of uncertainty bonus\n    progress = context['campaign']['progress']\n        \n    scores = []\n        \n    for i, cand in enumerate(context[\"pool\"]):\n        gp_posterior = cand['gp_posterior'] \n        \n        mu_sum = sum(gp_posterior[name][\"mean\"] for name in names)\n                \n        # Uncertainty bonus scaled by campaign phase\n        sigma_normed = np.mean([gp_posterior[name][\"std\"]/context[\"pareto_front_range\"][name] \n                               for name in names])\n        \n        uncertainty_bonus = 0.5 * (1 - progress) * sigma_normed\n            \n        # Inverse novelty penalty \u2014 penalize candidates too close to previous observations  \n        novel_penalty = 0.25 * novel_scores[i]\n                \n        combined_score = acq_scores[i] + uncertainty_bonus - novel_penalty\n        \n        scores.append(combined_score)\n        \n    return scores",
+    "used_llm": true,
+    "fitness": -0.010547490086405287,
+    "mean_margin": -0.010547490086405287,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0046541819163976525,
+      "coatings": 0.014630855870064912,
+      "mAb": 0.015228276496593432
+    },
+    "gate_failed_at": null,
+    "loc": 28,
+    "selection_signature": "2b15fa14a1bfbdb718932fad6f05723f",
+    "docstring": "Blend acquisition value with inverse coverage gap and adaptive uncertainty bonus to balance exploration and exploitation across the Pareto front."
+  },
+  {
+    "id": "gen119_child0",
+    "code": "def score_pool(context):\n    \"\"\"Suppress scores of candidates that are too close to already selected high-scoring ones, encouraging batch-wide diversity.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute GP means for all candidates \n    gp_means = np.array([[cand[\"gp_posterior\"][name][\"mean\"] for name in names] for cand in context[\"pool\"]])\n    \n    scores = []\n    for i, cand in enumerate(context[\"pool\"]):\n        acq_value_norm = cand[\"acq_value_norm\"]\n        \n        # Start with acquisition value\n        score = acq_value_norm\n        \n        # If this candidate is near any previously selected top candidates (within 10% of front range),\n        # suppress its score significantly to encourage diversity in the batch.\n        gp_mean = np.array([cand[\"gp_posterior\"][name][\"mean\"] for name in names])\n        \n        # Check if there's a high-scoring candidate nearby\n        threshold_dist = min(context[\"pareto_front_range\"].values()) * 0.1\n        \n        for j, prev_gp_mean in enumerate(gp_means[:i]):   # Only check previously scored candidates  \n            dist_to_prev = np.linalg.norm(prev_gp_mean - gp_mean)\n            \n            if dist_to_prev < threshold_dist:\n                score *= 0.3    # Suppress the score significantly to avoid duplicates\n                break\n                \n        scores.append(score)\n\n    return scores",
+    "used_llm": true,
+    "fitness": -0.017594748582893324,
+    "mean_margin": -0.017594748582893324,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.002007953740660049,
+      "coatings": 0.001480248683777063,
+      "mAb": 0.04616005143233227
+    },
+    "gate_failed_at": null,
+    "loc": 15,
+    "selection_signature": "a2da5da0f16e5e1927f2bbe76c752485",
+    "docstring": "Suppress scores of candidates that are too close to already selected high-scoring ones, encouraging batch-wide diversity."
+  },
+  {
+    "id": "gen18_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Estimate probability of a candidate being Pareto optimal and blend with acquisition value for robust exploration-exploitation.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Use normalized acquisition values as base scores  \n    acq_scores = np.array([cand['acq_value_norm'] for cand in context[\"pool\"]])\n    \n    # Estimate probability of being Pareto-optimal using GP posteriors\n    pareto_probs = []\n    front_range = context[\"pareto_front_range\"]\n        \n    for i, cand in enumerate(context[\"pool\"]):\n        gp_posterior = cand[\"gp_posterior\"]\n\n        # For each objective, compute how many standard deviations the mean is \n        # from the current Pareto frontier (assuming maximization)\n        n_better_than_pf = 0\n        total_evals = 1000\n\n        for _ in range(total_evals):\n            sample_means = []\n            \n            for name in names:\n                mu, sigma = gp_posterior[name][\"mean\"], gp_posterior[name][\"std\"]\n                \n                # Sample from the GP posterior (assuming normality)\n                sampled_val = np.random.normal(mu, sigma) \n                \n                if len(context[\"pareto_front\"]) > 0:  \n                    pf_vals = context[\"pareto_front\"][:, names.index(name)]\n                    \n                    # How many points in PF is this sample better than?\n                    n_better_than_point_in_pf = sum(1 for val in pf_vals if sampled_val >= val)\n                else:\n                    # No front yet, assume it's likely to be good\n                    n_better_than_point_in_pf = 0\n                    \n            pareto_probs.append(n_better_than_point_in_pf / len(context[\"pareto_front\"]) \n                                if len(context[\"pareto_front\"]) > 0 else 1.0)\n    \n    # Combine base acquisition score with estimated Pareto probability  \n    final_scores = []\n        \n    for i in range(len(acq_scores)):\n        prob_pareto = pareto_probs[i]\n            \n        combined_score = (acq_scores[i] \n                          + 0.2779 * np.clip(prob_pareto, 0., 1.) # weight Pareto estimate\n                         )\n                \n        final_scores.append(combined_score)\n        \n    return final_scores",
+    "used_llm": false,
+    "fitness": -999800.010691749,
+    "mean_margin": -999800.010691749,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0006249648428449025,
+      "coatings": -0.004389817337175218,
+      "mAb": -0.010691749060559757
+    },
+    "gate_failed_at": "mAb",
+    "loc": 28,
+    "selection_signature": "fc5a8e7f4f4562c0068a40261b5eb67a",
+    "docstring": "Estimate probability of a candidate being Pareto optimal and blend with acquisition value for robust exploration-exploitation."
+  },
+  {
+    "id": "gen11_child0",
+    "code": "def score_pool(context):\n    \"\"\"Estimate probability of a candidate being Pareto optimal and blend with acquisition value for robust exploration-exploitation.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Use normalized acquisition values as base scores  \n    acq_scores = np.array([cand['acq_value_norm'] for cand in context[\"pool\"]])\n    \n    # Estimate probability of being Pareto-optimal using GP posteriors\n    pareto_probs = []\n    front_range = context[\"pareto_front_range\"]\n        \n    for i, cand in enumerate(context[\"pool\"]):\n        gp_posterior = cand[\"gp_posterior\"]\n\n        # For each objective, compute how many standard deviations the mean is \n        # from the current Pareto frontier (assuming maximization)\n        n_better_than_pf = 0\n        total_evals = 1000\n\n        for _ in range(total_evals):\n            sample_means = []\n            \n            for name in names:\n                mu, sigma = gp_posterior[name][\"mean\"], gp_posterior[name][\"std\"]\n                \n                # Sample from the GP posterior (assuming normality)\n                sampled_val = np.random.normal(mu, sigma) \n                \n                if len(context[\"pareto_front\"]) > 0:  \n                    pf_vals = context[\"pareto_front\"][:, names.index(name)]\n                    \n                    # How many points in PF is this sample better than?\n                    n_better_than_point_in_pf = sum(1 for val in pf_vals if sampled_val >= val)\n                else:\n                    # No front yet, assume it's likely to be good\n                    n_better_than_point_in_pf = 0\n                    \n            pareto_probs.append(n_better_than_point_in_pf / len(context[\"pareto_front\"]) \n                                if len(context[\"pareto_front\"]) > 0 else 1.0)\n    \n    # Combine base acquisition score with estimated Pareto probability  \n    final_scores = []\n        \n    for i in range(len(acq_scores)):\n        prob_pareto = pareto_probs[i]\n            \n        combined_score = (acq_scores[i] \n                          + 0.3 * np.clip(prob_pareto, 0., 1.) # weight Pareto estimate\n                         )\n                \n        final_scores.append(combined_score)\n        \n    return final_scores",
+    "used_llm": true,
+    "fitness": -999800.016597647,
+    "mean_margin": -999800.016597647,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.000967169895005703,
+      "coatings": -0.003722487642720523,
+      "mAb": -0.016597646975266972
+    },
+    "gate_failed_at": "mAb",
+    "loc": 28,
+    "selection_signature": "90b562c880733d2c85744b40c0b49857",
+    "docstring": "Estimate probability of a candidate being Pareto optimal and blend with acquisition value for robust exploration-exploitation."
+  },
+  {
+    "id": "gen115_child0",
+    "code": "def score_pool(context):\n    \"\"\"Blend acquisition value with progress-adaptive uncertainty and stagnation-informed novelty to balance exploration-exploitation.\"\"\"\n    \n    names = context[\"objective_names\"]\n    campaign = context[\"campaign\"] \n    acq_values = np.array([cand['acq_value_norm'] for cand in context[\"pool\"]])\n    \n    # Progress-aware UCB scaling\n    progress = campaign[\"progress\"]\n    ucb_weight = 0.5 * (1 - progress**2) \n    \n    front_range = context[\"pareto_front_range\"]\n    unc_scores = []\n    for cand in context[\"pool\"]:\n        gp_posterior = cand[\"gp_posterior\"] \n        sigma_sum = sum(gp_posterior[name][\"std\"] / front_range[name] for name in names)\n        unc_scores.append(ucb_weight * sigma_sum)\n\n    # Novelty reward based on stagnation and distance to observations\n    stagnant_batches = campaign[\"stagnant_batches\"]\n    X_obs = context[\"X_obs\"]\n    \n    if len(X_obs) > 0:\n        nov_rewards = []\n        for cand in context[\"pool\"]:\n            x_cand = cand[\"x\"] \n            dists = np.sum((X_obs - x_cand)**2, axis=1)\n            min_dist = np.min(dists)\n            \n            # Normalize and weight by stagnation\n            norm_min_dist = min_dist / (len(x_cand) * max(1., stagnant_batches))\n            nov_rewards.append(norm_min_dist)\n    else:\n        nov_rewards = [0.0] * len(context[\"pool\"])\n\n    final_scores = acq_values + np.array(unc_scores) - 0.5 * np.array(nov_rewards)\n    \n    return list(final_scores)",
+    "used_llm": true,
+    "fitness": -999800.0246800063,
+    "mean_margin": -999800.0246800063,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": 0.00355803688367494,
+      "coatings": 0.00829106686433095,
+      "mAb": -0.024680006315084897
+    },
+    "gate_failed_at": "mAb",
+    "loc": 25,
+    "selection_signature": "fc22cfdcd7c7a51ba0fa4ff1e8f894c2",
+    "docstring": "Blend acquisition value with progress-adaptive uncertainty and stagnation-informed novelty to balance exploration-exploitation."
+  }
+]
