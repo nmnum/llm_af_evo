@@ -90,17 +90,38 @@ class ObjectiveProfile:
                   breadth_base * (1.3 - difficulty), so difficulty=0 gives
                   wide/smooth peaks and difficulty=1 gives narrow/sharp peaks.
     noise_frac  : measurement noise as a fraction of the objective's dynamic
-                  range (mirrors CI/range from real assay data — see Waibel:
-                  Tm~0.013, kD~0.096, RM_Agi~0.06, after the sign-error
-                  correction). This directly controls the ground-truth
-                  noise-to-signal ratio the per-objective trust diagnostic
-                  must recover.
+                  range (mirrors CI/range from real assay data — see Waibel
+                  Table S2: Tm~0.013, kD~0.096, RM_Agi~0.06, after the
+                  sign-error correction). This directly controls the
+                  ground-truth noise-to-signal ratio the per-objective trust
+                  diagnostic must recover.
+
+                  CALIBRATION CAVEAT (2026-09-08 SI re-read): the RM_Agi
+                  noise_frac (~0.06) was derived from Waibel Table S2, but
+                  this oracle's third objective is VISCOSITY, not RM_Agi —
+                  a deliberate substitution onto a more standard formulation
+                  axis (see VISC_RANGE below) — so that derivation does NOT
+                  transfer to viscosity_noise. Table S4 (the real viscosity
+                  data) reports no replicate CI at all (5 repeats averaged,
+                  no variance given), so viscosity_noise=0.10 has no real
+                  calibration source and is a placeholder, unlike tm_noise
+                  and kd_noise which are both exact CI/range ratios from
+                  Table S2.
     which_pathways : which of the protein's degradation pathways this
                   objective is mechanistically sensitive to, as a dict of
                   pathway_name -> relative_weight. E.g. Tm cares about
                   denaturation_tendency and aggregation_tendency; kD cares
                   almost entirely about aggregation_tendency; viscosity is
                   driven by total excipient load, not pathway-specific.
+
+    CALIBRATION CAVEAT ON `difficulty` (2026-09-08): breadth/difficulty is
+    only qualitatively sanity-checked against real data for 2 of the 16
+    encoded dimensions (arginine, sorbitol — Waibel Fig S9 shows broad,
+    smooth monotonic-ish trends, not sharp peaks, arguing against a high
+    difficulty value there). The other 4 amino acids, 3 remaining sugars,
+    and all surfactants are entirely unconstrained by real data — Waibel's
+    design never varied them. Treat `difficulty` outside arginine/sorbitol
+    as an assumed, not calibrated, landscape shape.
     """
     difficulty: float = 0.5
     noise_frac: float = 0.10
@@ -111,9 +132,29 @@ class ObjectiveProfile:
 # synthetic oracle's dynamic range is realistic for a real mAb formulation
 # campaign (not required to match exactly — this is a synthetic oracle for
 # stress-testing, not a surrogate of the Waibel data itself).
-TM_RANGE   = (60.0, 75.0)     # °C
+#
+# CORRECTED 2026-09-08 after a full SI re-read (Table S2 = 33 real Tm/kD/
+# RM_Agi measurements w/ CIs, Table S4 = real viscosity, n=8 @ 125 mg/mL):
+#   TM_RANGE was (60.0, 75.0), span 15°C — real observed span is 63.4-71.3°C
+#     (7.9°C), so the old range was ~2x too wide. Since tm_noise=0.013 is a
+#     FRACTION of this range (see ObjectiveProfile.noise_frac docstring),
+#     the old wider range silently doubled the actual injected noise
+#     (0.013*15=0.195°C absolute, vs. the real ±0.1°C the fraction was
+#     derived from). Tightened to match the real span instead of
+#     re-deriving noise_frac, per Table S2.
+#   VISC_RANGE was (2.0, 25.0), span 23 cP — real Table S4 range is
+#     3.0-10.6 cP, so the old range was ~2.5x too wide (most of it dead
+#     space no real formulation in this system occupies). Tightened to
+#     (2, 12) for a small margin beyond the observed range. NOTE:
+#     viscosity_noise=0.10 remains uncalibrated (see ObjectiveProfile
+#     docstring) — Table S4 gives no replicate CI to derive a real
+#     noise_frac from.
+#   KD_RANGE was NOT changed: kD's real observed span (-24.4 to 48.6,
+#     i.e. 73.0) already closely matches the coded (-25, 50) span of 75 —
+#     this one was already correctly anchored.
+TM_RANGE   = (63.0, 72.0)     # °C — tightened to match Waibel Table S2's real span
 KD_RANGE   = (-25.0, 50.0)    # mL/g  (sign matters — see corrected Waibel data)
-VISC_RANGE = (2.0, 25.0)      # cP (lower is better)
+VISC_RANGE = (2.0, 12.0)      # cP (lower is better) — tightened to match Table S4
 
 
 # ── Multi-objective oracle core ─────────────────────────────────────────────────
@@ -229,7 +270,20 @@ class MultiObjectiveExcipientOracle:
         kd_aa_contrib = np.where(
             aa_is_antiagg, 0.85 * self.protein.aggregation_tendency * kd_aa_peak,
             0.05 * self.protein.aggregation_tendency * kd_aa_peak)
-        # Surfactant synergy: arginine + polysorbate80/20 boosts kD specifically
+        # Surfactant synergy: arginine + polysorbate80/20 boosts kD specifically.
+        #
+        # CALIBRATION CAVEAT (2026-09-08 SI re-read): Waibel Fig S11 shows
+        # real arginine concentration strongly ANTI-correlating with kD
+        # (Spearman r=-0.94) for the real molecule studied (bococizumab).
+        # That's the opposite direction from this mechanism's assumption.
+        # This isn't necessarily a bug -- arginine's effect on colloidal
+        # stability is documented as protein-specific (see waibel_mab_data.py
+        # in the sibling mo_bo_pipeline project for the same real dataset),
+        # and this oracle's synergy mechanism is deliberately modelling a
+        # DIFFERENT synthetic protein profile, not bococizumab specifically.
+        # But if this mechanism was ever meant to reflect general literature
+        # consensus rather than one assumed profile, Waibel's real data is a
+        # direct counterexample worth citing, not leaving implicit.
         sf_synergy_partner = np.array(
             [SURFACTANTS[s]["synergy_partner"] for s in sf_names])
         sf_synergy_strength = np.array(
