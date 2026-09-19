@@ -460,11 +460,35 @@ def strategy_mo_llm_candidate_gen(oracle, X_obs, Y_obs, bounds, batch_size, rng,
         n_llm_in_pool = len(llm_vectors)
         n_egbo_in_pool = len(egbo_cands_n)
 
+        # ── Selection-by-source diagnostic ──
+        # all_cands_n = vstack([egbo_cands_n, llm_n]), so indices
+        # >= n_egbo_in_pool are LLM-sourced, < n_egbo_in_pool are
+        # EGBO-sourced (qbo_x gradient-optimised + ea_x evolutionary,
+        # both constructed to score well on acq_fn itself). This checks
+        # whether LLM candidates are structurally out-competed by
+        # acquisition-optimised GP candidates in the "fair" pooled
+        # comparison, a confound never previously measured: pool
+        # composition (n_llm_candidates/n_egbo_candidates, logged
+        # above) tells you what was OFFERED, not what WON.
+        selected_idx_arr = np.asarray(selected_idx)
+        is_llm_selected = selected_idx_arr >= n_egbo_in_pool
+        n_llm_selected = int(is_llm_selected.sum())
+        n_egbo_selected = int(len(selected_idx_arr) - n_llm_selected)
+
+        egbo_acq = acq_vals[:n_egbo_in_pool] if n_egbo_in_pool > 0 else np.array([])
+        llm_acq = acq_vals[n_egbo_in_pool:] if n_llm_in_pool > 0 else np.array([])
+
         return new_x_raw, {
             "novelty_select": True,
             "n_llm_candidates": n_llm_in_pool,
             "n_egbo_candidates": n_egbo_in_pool,
             "n_total_candidates": len(all_cands_n),
+            "n_llm_selected": n_llm_selected,
+            "n_egbo_selected": n_egbo_selected,
+            "llm_acq_mean": float(np.mean(llm_acq)) if len(llm_acq) else float("nan"),
+            "llm_acq_max": float(np.max(llm_acq)) if len(llm_acq) else float("nan"),
+            "egbo_acq_mean": float(np.mean(egbo_acq)) if len(egbo_acq) else float("nan"),
+            "egbo_acq_max": float(np.max(egbo_acq)) if len(egbo_acq) else float("nan"),
             "w_acq": w_acq,
             "w_nov": w_nov,
             "llm_called_this_batch": call_llm_this_batch,
