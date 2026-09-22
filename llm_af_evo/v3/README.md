@@ -183,3 +183,14 @@ stagnation mode-collapse bug (item 6) — worth a second real evolution run
 to see whether the fix lets later generations actually diversify past the
 gen5 champion instead of plateauing again. Treat concrete/AgNP as
 secondary, gated on their own audits (item 4/5).
+
+## Status: run2 exists, not yet written up here
+
+`experiments/evolution_runs/run2/` (68 generations, real LLM,
+post-mode-collapse-fix) has been run — `checkpoint.json` shows
+`best_fitness_ever` around -0.0005, i.e. essentially flat/negative
+relative to run1's champion (+0.0003). Champion program
+(`run2/best_af.py`) is a progress-weighted exploit/explore blend, same
+general family as run1's. This result hasn't been analyzed or written up
+in this document yet — treat the numbers above as a pointer for whoever
+picks this up next, not a conclusion.

@@ -98,10 +98,17 @@ control over sequential selection, not just per-candidate scoring — not
 attempted here since (1) hadn't even been validated as the binding
 constraint before that effort would be worth spending.
 
-## Recommended next step
+## Status: run1 exists, not yet written up here
 
-Run `run_2b_diagnostic_v4.py` (Step A/B/C) before trusting this at scale,
-same standard as every other domain/version in this project, then a real
-`evolve_af_v4.py --oracle tunable --real_llm` run — same command shape as
-v3's, pointed at v3's training logs and a fresh `v4/experiments/
-evolution_runs/` output directory.
+A real `evolve_af_v4.py` run has since been done:
+`experiments/evolution_runs/run1/` (144 generations, real LLM) —
+champion (`run1/best_af.py`) is `acq_value_norm` plus a small fixed-weight
+(0.1116) GP-std bonus, i.e. evolution converged on almost exactly the
+`egbo_novelty_like` seed shape this README's validation table already
+flagged as close to the real baseline. `checkpoint.json`'s
+`best_fitness_ever` (~0.00032) is in the same range as v3's champions.
+There's also a `diagnostic_v4/` directory (48 logged AF calls, no
+checkpoint/history — looks like a `run_2b_diagnostic_v4.py` diagnostic
+pass, not a full evolution run). Neither has been analyzed or written up
+in this document yet — treat the numbers above as a pointer for whoever
+picks this up next, not a conclusion.
