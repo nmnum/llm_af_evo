@@ -1,0 +1,17 @@
+def score_pool(context):
+    """Reward candidates with predicted outcomes farthest from any previously observed outcome in objective space."""
+    names = context["objective_names"]
+    y_obs = context["Y_obs"]
+    scores = []
+    
+    for cand in context["pool"]:
+        gp_mean = np.array([cand["gp_posterior"][name]["mean"] for name in names])
+        
+        # Compute distances to all observed outcomes
+        dists = np.linalg.norm(y_obs - gp_mean, axis=1)
+        
+        # Use the minimum distance as novelty score (higher is better)
+        min_dist = np.min(dists)
+        scores.append(min_dist)
+
+    return scores

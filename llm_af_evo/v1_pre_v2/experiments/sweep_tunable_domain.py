@@ -36,6 +36,10 @@ import pathlib
 import numpy as np
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "src"))
+# tunable_synthetic_oracle.py moved to shared/ this session (so
+# full_replay.py, which lives there, can import it) — added here so this
+# pre-existing script keeps working rather than shadowing/duplicating it.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent / "shared"))
 from tunable_synthetic_oracle import TunableSyntheticMOOracle  # noqa: E402
 
 N_TRAIN = 30

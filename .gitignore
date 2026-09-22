@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
+.venv/
+.venv-old-freeze.txt
 
 # export_campaign_for_viz.py output — regenerate rather than version
 llm_af_evo/v1_pre_v2/campaign_exports/*.json

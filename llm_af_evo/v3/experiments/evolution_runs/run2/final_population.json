@@ -1,0 +1,242 @@
+[
+  {
+    "id": "gen20_child1",
+    "code": "def score_pool(context):\n    \"\"\"Adaptive uncertainty scaling with progress-aware exploitation and normalized hypervolume signal.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Sigmoidal blend: more exploration early, exploit later\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.5)))\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Normalized exploitation signal: mean of objectives scaled by front range\n        mu_sum_norm = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n                \n        # Uncertainty term with adaptive scaling based on progress and objective ranges  \n        sigma_scaled = sum(\n            gp[name][\"std\"] * (1.0 + 2.0 * np.exp(-5 * progress)) / front_range[name]\n            for name in names\n        )\n\n        score = w_exploit * mu_sum_norm + (1.0 - w_exploit) * sigma_scaled\n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.875,
+    "mean_margin": 0.004924233313102323,
+    "median_margin": 0.006005847530641219,
+    "ci_lower_16": 0.0029288505409531002,
+    "bootstrap_ci": [
+      0.0010253590761208895,
+      0.008827293691075959
+    ],
+    "gamma": 0.00021403852561268627,
+    "loc": 16,
+    "fitness": -0.0004957658688498801,
+    "mean_hv": 10.96718828361709,
+    "n_campaigns": 8,
+    "selection_signature": "695da589d0990c8d128e44bca331eee2",
+    "docstring": "Adaptive uncertainty scaling with progress-aware exploitation and normalized hypervolume signal."
+  },
+  {
+    "id": "gen47_child0",
+    "code": "def score_pool(context):\n    \"\"\"Exploits predicted means with progress-adaptive uncertainty scaling and ref point-normalized hypervolume signal.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Sigmoidal blend: more exploitation early, exploration later\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.5)))\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Normalize means and uncertainties by front range \n        mu_norm_sum = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n        sigma_scaled_sum = sum(\n            gp[name][\"std\"] * (1.0 + 2.0 * progress) / front_range[name]\n            for name in names\n        )\n        \n        # Combine with dynamic blend and normalize by objective count to avoid scale bias \n        score = w_exploit * mu_norm_sum + (1 - w_exploit) * sigma_scaled_sum\n        \n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.75,
+    "mean_margin": 0.003885148013518818,
+    "median_margin": 0.004735753001622485,
+    "ci_lower_16": 0.002234779683727372,
+    "bootstrap_ci": [
+      0.0005353851171731153,
+      0.0069168313165441035
+    ],
+    "gamma": 0.00017885958603747264,
+    "loc": 16,
+    "fitness": -0.00062697369287219,
+    "mean_hv": 10.955978497460201,
+    "n_campaigns": 8,
+    "selection_signature": "1803e8127df38245a686be4f742dea07",
+    "docstring": "Exploits predicted means with progress-adaptive uncertainty scaling and ref point-normalized hypervolume signal."
+  },
+  {
+    "id": "gen36_child1",
+    "code": "def score_pool(context):\n    \"\"\"Exploits predicted objective means and uncertainty scaled by front range with dynamic blend controlled by progress-aware sigmoidal function.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Sigmoidal blending: more exploitation early, exploration later\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.5)))\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Normalized means and uncertainties by front range \n        mu_norm_sum = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n        sigma_norm_sum = sum(gp[name][\"std\"] / front_range[name] for name in names)\n\n        score = w_exploit * mu_norm_sum + (1.0 - w_exploit) * np.sqrt(sigma_norm_sum)\n        \n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "mean_margin": 0.004263380387529641,
+    "median_margin": 0.006317270782172656,
+    "ci_lower_16": 0.0020503356229821983,
+    "bootstrap_ci": [
+      -0.0001931496965513548,
+      0.008438617360473645
+    ],
+    "gamma": 0.0002322904568689788,
+    "loc": 13,
+    "fitness": -0.000969440316314526,
+    "mean_hv": 10.959957280460053,
+    "n_campaigns": 8,
+    "selection_signature": "2b4632086a646879d8b845e0c63db0e2",
+    "docstring": "Exploits predicted objective means and uncertainty scaled by front range with dynamic blend controlled by progress-aware sigmoidal function."
+  },
+  {
+    "id": "gen29_child0",
+    "code": "def score_pool(context):\n    \"\"\"Progress-adaptive exploitation with uncertainty-aware hypervolume normalization and dynamic scaling.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Dynamic weight: exploit more as we approach the end\n    w_exploit = 0.5 + 0.5 * np.tanh(2 * (progress - 0.5))\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Normalized means and scaled uncertainties \n        mu_norm_sum = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n        sigma_scaled_sum = sum(\n            gp[name][\"std\"] * (1.0 + 2.0 * progress) / front_range[name]\n            for name in names\n        )\n        \n        # Combine with dynamic blend and normalize by objective count to avoid scale bias \n        score = w_exploit * mu_norm_sum + (1 - w_exploit) * sigma_scaled_sum\n        \n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.75,
+    "mean_margin": 0.005079713537676683,
+    "median_margin": 0.007686362001194165,
+    "ci_lower_16": 0.0027247695081243214,
+    "bootstrap_ci": [
+      0.0003904186227727093,
+      0.00943561339363308
+    ],
+    "gamma": 0.0002469729517126788,
+    "loc": 16,
+    "fitness": -0.0012267977192785395,
+    "mean_hv": 10.968819653836023,
+    "n_campaigns": 8,
+    "selection_signature": "6ddf84bf6de767a0167eb7453fab1d3a",
+    "docstring": "Progress-adaptive exploitation with uncertainty-aware hypervolume normalization and dynamic scaling."
+  },
+  {
+    "id": "gen32_child0",
+    "code": "def score_pool(context):\n    \"\"\"Leverages progressive utility scaling and uncertainty-aware hypervolume signal for adaptive exploration-exploitation.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Progress-driven exploitation weight: start with strong UCB-like behavior, taper off\n    w_exploit = 0.3 + 0.7 * (1 - np.exp(-5 * progress))\n\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Normalize means and uncertainties by front range \n        mu_norm_sum = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n        sigma_norm_sum = sum(gp[name][\"std\"] / front_range[name] for name in names)\n\n        # Apply dynamic scaling to uncertainty based on progress\n        scaled_sigma = np.sqrt(sigma_norm_sum * (1.0 + 2.5 * progress))\n        \n        score = w_exploit * mu_norm_sum + (1 - w_exploit) * scaled_sigma\n        \n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.75,
+    "mean_margin": 0.002576903564802297,
+    "median_margin": 0.001326144236438456,
+    "ci_lower_16": 0.000944798886549345,
+    "bootstrap_ci": [
+      -0.0005884297453353986,
+      0.005897871788453944
+    ],
+    "gamma": 0.00017530875105820656,
+    "loc": 14,
+    "fitness": -0.0015095236282655468,
+    "mean_hv": 10.941632961238945,
+    "n_campaigns": 8,
+    "selection_signature": "825eb3f495aa65b4aeebd285f7c398b0",
+    "docstring": "Leverages progressive utility scaling and uncertainty-aware hypervolume signal for adaptive exploration-exploitation."
+  },
+  {
+    "id": "gen33_child1",
+    "code": "def score_pool(context):\n    \"\"\"Adapts uncertainty sensitivity based on progress and refines exploitation using normalized hypervolume gain estimates.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Progress-aware blending: early exploration, late exploitation\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.5)))\n\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Exploitation term based on normalized mean \n        mu_sum_norm = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n                \n        # Uncertainty-aware component: scaled by progress to reduce impact over time\n        sigma_total = sum(gp[name][\"std\"] for name in names) * (1.0 - 0.5 * progress)\n\n        score = w_exploit * mu_sum_norm + (1.0 - w_exploit) * sigma_total\n        \n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "mean_margin": 0.004762053581278795,
+    "median_margin": 0.004255053691763598,
+    "ci_lower_16": 0.0019689164593313735,
+    "bootstrap_ci": [
+      -0.0005705336933707686,
+      0.010334200412177976
+    ],
+    "gamma": 0.0002959763773426884,
+    "loc": 13,
+    "fitness": -0.0018787764461235756,
+    "mean_hv": 10.965272655047176,
+    "n_campaigns": 8,
+    "selection_signature": "4c12c1d3b3b8136b571351b3ee377334",
+    "docstring": "Adapts uncertainty sensitivity based on progress and refines exploitation using normalized hypervolume gain estimates."
+  },
+  {
+    "id": "gen12_child1",
+    "code": "def score_pool(context):\n    \"\"\"Progressively shifts between hypervolume-based acquisition and uncertainty-weighted exploitation.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Use a sigmoidal blend to shift from pure UCB-like exploration early on, towards hypervolume estimation later\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.5)))\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Exploitation signal: mean of objectives, normalized by front range\n        mu_sum_norm = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n                \n        # Uncertainty term (normalized standard deviation) \n        sigma_norm = sum(gp[name][\"std\"]/front_range[name] for name in names)\n\n        score = w_exploit * mu_sum_norm + (1.0 - w_exploit) * sigma_norm\n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "mean_margin": 0.004073445524154224,
+    "median_margin": 0.00589065770718809,
+    "ci_lower_16": 0.0015049878921994545,
+    "bootstrap_ci": [
+      -0.0012477995558567941,
+      0.009134100090883557
+    ],
+    "gamma": 0.0002842895494587294,
+    "loc": 13,
+    "fitness": -0.0021907762507640278,
+    "mean_hv": 10.957842831499892,
+    "n_campaigns": 8,
+    "selection_signature": "21fad17d179e5ad15a1653ad43e862d6",
+    "docstring": "Progressively shifts between hypervolume-based acquisition and uncertainty-weighted exploitation."
+  },
+  {
+    "id": "gen38_child1",
+    "code": "def score_pool(context):\n    \"\"\"Progress-aware blend of normalized mean and uncertainty with dynamic exponentiation for adaptive exploration-exploitation balance.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Dynamic blending: start exploit, shift to explore\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.5)))\n\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        mu_norm_sum = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n        sigma_norm_sum = sum(gp[name][\"std\"] / front_range[name] for name in names)\n\n        # Use exponential scaling on uncertainty to increase its impact as progress increases\n        exp_factor = np.exp(2 * progress)  \n        adjusted_sigma = (1.0 + 3.0 * exp_factor) * sigma_norm_sum\n\n        score = w_exploit * mu_norm_sum + (1.0 - w_exploit) *adjusted_sigma \n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.75,
+    "mean_margin": 0.00415172948617646,
+    "median_margin": 0.0023430826152716615,
+    "ci_lower_16": 0.0015645362495048517,
+    "bootstrap_ci": [
+      -0.0005540764425029658,
+      0.009043459091973172
+    ],
+    "gamma": 0.00027104204131490396,
+    "loc": 14,
+    "fitness": -0.0022300523289038037,
+    "mean_hv": 10.958691611647208,
+    "n_campaigns": 8,
+    "selection_signature": "61c0785ecee4d184e26db413bef3062f",
+    "docstring": "Progress-aware blend of normalized mean and uncertainty with dynamic exponentiation for adaptive exploration-exploitation balance."
+  },
+  {
+    "id": "gen35_child0",
+    "code": "def score_pool(context):\n    \"\"\"Progress-sensitive exploitation with uncertainty-aware hypervolume gain estimation.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Early exploration via UCB-like strategy, shift to pure exploitation later\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.3)))\n    \n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Exploitation: normalized mean \n        mu_sum_norm = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n                \n        # Uncertainty term with dynamic scaling based on progress and objective ranges  \n        sigma_scaled = sum(\n            gp[name][\"std\"] * (1.0 + 3.0 * np.exp(-2 * progress)) / front_range[name]\n            for name in names\n        )\n\n        score = w_exploit * mu_sum_norm + (1 - w_exploit) * sigma_scaled\n        \n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "mean_margin": 0.003767602177398947,
+    "median_margin": 0.003019159428030123,
+    "ci_lower_16": 0.0015879025015219982,
+    "bootstrap_ci": [
+      -0.0009388436133543456,
+      0.008409065744045981
+    ],
+    "gamma": 0.00024710029211919373,
+    "loc": 16,
+    "fitness": -0.0023657021723851018,
+    "mean_hv": 10.954567947468206,
+    "n_campaigns": 8,
+    "selection_signature": "403dda50630571f6f48640bb08033173",
+    "docstring": "Progress-sensitive exploitation with uncertainty-aware hypervolume gain estimation."
+  },
+  {
+    "id": "gen36_child0",
+    "code": "def score_pool(context):\n    \"\"\"Balances uncertainty-sensitive exploitation with progressive hypervolume optimism using dynamic reward shaping.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Early exploration via UCB, tapering off as we approach the end\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.6)))\n\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Normalize means and uncertainties by front range \n        mu_norm_sum = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n        sigma_norm_sum = sum(gp[name][\"std\"] / front_range[name] for name in names)\n\n        # Reward candidates that are both promising (high mean) AND uncertain\n        ucb_like_score = w_exploit * mu_norm_sum + (1.0 - w_exploit) * np.sqrt(sigma_norm_sum)\n        \n        # Adjust based on how much the candidate's predicted objectives exceed current front bounds,\n        # incentivizing expansion of dominated hypervolume in a progressive way.\n        hv_improvement_signal = 0\n        for name in names:\n            pred_mean = gp[name][\"mean\"]\n            ref_val = context[\"ref_point_by_name\"][name]\n            \n            if pred_mean > ref_val:  \n                hv_improvement_signal += (pred_mean - ref_val) / front_range[name]\n\n        # Combine exploitation and hypervolume signals with a dynamic blend\n        final_score = ucb_like_score + 0.5 * np.tanh(2.0 * progress) * hv_improvement_signal\n        \n        scores.append(final_score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.75,
+    "mean_margin": 0.004190968783384742,
+    "median_margin": 0.00641738303323247,
+    "ci_lower_16": 0.002033468336016885,
+    "bootstrap_ci": [
+      -0.00025891469562125467,
+      0.007711665190059841
+    ],
+    "gamma": 0.0002271080442939979,
+    "loc": 20,
+    "fitness": -0.002508692549863073,
+    "mean_hv": 10.95920353203714,
+    "n_campaigns": 8,
+    "selection_signature": "f2172fa93fcf62b9a860ce3a0a4d8652",
+    "docstring": "Balances uncertainty-sensitive exploitation with progressive hypervolume optimism using dynamic reward shaping."
+  },
+  {
+    "id": "gen39_child1",
+    "code": "def score_pool(context):\n    \"\"\"Adapts exploration-exploitation balance using uncertainty-aware hypervolume signal with dynamic scaling and progress-driven blending.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Blend exploitation weight: start low, increase gradually towards mid-campaign\n    w_exploit = 0.2 + 0.6 * (1 - np.exp(-3 * progress))\n\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        mu_sum_norm = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n        sigma_norm = sum(gp[name][\"std\"]/front_range[name] for name in names)\n\n        # Dynamic scaling of uncertainty based on progress and current exploitation weight\n        scaled_sigma = np.sqrt(sigma_norm * (1.0 + 3.0 * w_exploit))\n\n        score = w_exploit * mu_sum_norm + (1 - w_exploit) * scaled_sigma\n        \n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.625,
+    "mean_margin": 0.0007356328725455747,
+    "median_margin": 0.0010289150321466144,
+    "ci_lower_16": -0.0005719715805673695,
+    "bootstrap_ci": [
+      -0.002002464048673924,
+      0.0031232936376782224
+    ],
+    "gamma": 0.00014213169421264604,
+    "loc": 14,
+    "fitness": -0.002561815299544414,
+    "mean_hv": 10.921598960602894,
+    "n_campaigns": 8,
+    "selection_signature": "ceccc84c6c9f830abac90f820b8c5353",
+    "docstring": "Adapts exploration-exploitation balance using uncertainty-aware hypervolume signal with dynamic scaling and progress-driven blending."
+  },
+  {
+    "id": "gen27_child1",
+    "code": "def score_pool(context):\n    \"\"\"Balances exploitation and uncertainty via progress-aware blending while incorporating hypervolume signal from predicted candidates.\"\"\"\n    names = context[\"objective_names\"]\n    front_range = context[\"pareto_front_range\"]\n    ref_point = context[\"ref_point\"]\n    progress = context[\"campaign\"][\"progress\"]\n\n    # Blend between UCB-like exploration (early) and exploitation-focused scoring (late)\n    w_exploit = 1.0 / (1.0 + np.exp(-5 * (progress - 0.5)))\n\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n        \n        # Exploitation: sum of normalized means\n        mu_sum_norm = sum(gp[name][\"mean\"] / front_range[name] for name in names)\n                \n        # Uncertainty: total std scaled by range  \n        sigma_total = sum(gp[name][\"std\"] for name in names)\n\n        score = w_exploit * mu_sum_norm + (1.0 - w_exploit) * sigma_total\n        scores.append(score)\n    \n    return scores",
+    "used_llm": true,
+    "win_rate": 0.75,
+    "mean_margin": 0.0027901813423555225,
+    "median_margin": 0.0012931569997283712,
+    "ci_lower_16": 0.0004235930778556186,
+    "bootstrap_ci": [
+      -0.0014531124951728258,
+      0.007222640199727435
+    ],
+    "gamma": 0.0002452464300681973,
+    "loc": 13,
+    "fitness": -0.0027646105130309465,
+    "mean_hv": 10.944038401790113,
+    "n_campaigns": 8,
+    "selection_signature": "081fa861a4c2d077cb422fb1da8a0bf4",
+    "docstring": "Balances exploitation and uncertainty via progress-aware blending while incorporating hypervolume signal from predicted candidates."
+  }
+]

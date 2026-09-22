@@ -94,6 +94,8 @@ from ada_coatings_oracle import (
     DiscreteADACoatingsOracle, FEATURE_DIM as _COATINGS_FEATURE_DIM,
     OBJECTIVE_NAMES as _COATINGS_OBJECTIVE_NAMES,
 )
+from tunable_synthetic_oracle import TunableSyntheticMOOracle
+from synthetic_mo_oracle import DiscreteSyntheticMOOracle
 
 # Opt-in diagnostic log for the growth-aware modification (1)'s
 # boundary_std / front_range / growth_weight per batch — off (None) by
@@ -148,7 +150,40 @@ _ORACLE_SHAPE_EXPECTATIONS = {
     "excipient": {"feature_dim": 16, "n_objectives": 3},  # Tm, kD, viscosity
     "coatings": {"feature_dim": _COATINGS_FEATURE_DIM,
                  "n_objectives": len(_COATINGS_OBJECTIVE_NAMES)},
+    "tunable": {"feature_dim": 6, "n_objectives": 2},  # f1, f2 — see
+                 # tunable_synthetic_oracle.py's TunableSyntheticMOOracle.build
+                 # default d=6; override _ORACLE_SHAPE_EXPECTATIONS here (or
+                 # pass a matching d) if a v3 training-set generator uses a
+                 # different dimensionality.
+    "dtlz2": {"feature_dim": 6, "n_objectives": 3},  # f1,f2,f3 — see
+                 # synthetic_mo_oracle.py's DiscreteSyntheticMOOracle.build_dtlz2
+                 # default n_obj=3, k=4 (feature_dim = n_obj-1+k = 6); override
+                 # here (or pass matching --n_obj/--k to a dtlz2 training-set
+                 # generator) if a different DTLZ2 shape is used.
+    "zdt1": {"feature_dim": 6, "n_objectives": 2},  # f1,f2 — see
+                 # DiscreteSyntheticMOOracle.build_zdt1 default d=6; override
+                 # here (or pass a matching --d to a zdt1 training-set
+                 # generator) if a different ZDT1 dimensionality is used.
+    "zdt3": {"feature_dim": 6, "n_objectives": 2},  # f1,f2 — v6 addition,
+                 # see DiscreteSyntheticMOOracle.build_zdt3 default d=6;
+                 # same shape as zdt1 (both 2-objective, disconnected vs
+                 # connected front is a Y-space property, not a shape one).
 }
+
+# TunableSyntheticMOOracle's noise/plateau/scale config (see its own
+# docstring) is NOT recoverable from a training log's plain X_raw/Y_raw
+# arrays the way excipient/coatings' fixed real data is — it must travel
+# WITH the log. v3's training-set generator (not yet written) needs to dump
+# these fields into every log JSON it produces (alongside the usual
+# X_init/Y_init/oracle_X_raw/oracle_Y_raw/budget/n_init/batch_size keys):
+# tunable_scale1, tunable_scale2, tunable_noise_level, tunable_noise_mode,
+# tunable_boundary_gain, tunable_seed. reconstruct_oracle below reads them
+# with the TunableSyntheticMOOracle.build() defaults as a fallback ONLY so
+# a hand-built log without these keys doesn't crash — for a real v3 run
+# generate them explicitly and dump them, don't rely on this fallback
+# silently picking generic defaults that may not match what was intended.
+_TUNABLE_DEFAULTS = dict(scale1=1.0, scale2=3.0, noise_level=0.08,
+                          noise_mode="proportional", boundary_gain=0.5, seed=0)
 
 
 def reconstruct_oracle(log: dict, oracle_family: str = "excipient"):
@@ -199,6 +234,64 @@ def reconstruct_oracle(log: dict, oracle_family: str = "excipient"):
 
     if oracle_family == "coatings":
         return DiscreteADACoatingsOracle(X_raw, Y_raw)
+    if oracle_family == "tunable":
+        # Uses from_fixed_realization (not plain __init__) so the log's
+        # dumped oracle_Y_raw is used AS-IS, not treated as noiseless
+        # ground truth and re-noised — see that constructor's own
+        # docstring for why plain __init__ would silently break replay
+        # determinism here. Requires the log to also carry oracle_Y_true
+        # (the noiseless ground truth dumped alongside oracle_Y_raw by the
+        # training-set generator) plus the tunable_* config keys —
+        # see _TUNABLE_DEFAULTS's comment.
+        if "oracle_Y_true" not in log:
+            raise ValueError(
+                "reconstruct_oracle(oracle_family='tunable') requires the "
+                "log to carry 'oracle_Y_true' (noiseless ground truth) "
+                "alongside 'oracle_Y_raw' — this log doesn't have it, so "
+                "it wasn't produced by a tunable-domain training-set "
+                "generator built after the from_fixed_realization fix.")
+        Y_true = np.array(log["oracle_Y_true"])
+        cfg = {**_TUNABLE_DEFAULTS, **{k[len("tunable_"):]: v for k, v in log.items()
+                                        if k.startswith("tunable_")}}
+        return TunableSyntheticMOOracle.from_fixed_realization(
+            X_raw, Y_true, Y_raw, objective_names=["f1", "f2"],
+            scale1=cfg["scale1"], scale2=cfg["scale2"],
+            noise_level=cfg["noise_level"], noise_mode=cfg["noise_mode"],
+            boundary_gain=cfg["boundary_gain"], seed=cfg["seed"])
+    if oracle_family in ("dtlz2", "zdt1", "zdt3"):
+        # DiscreteSyntheticMOOracle's GROUND TRUTH is fully deterministic
+        # for all three benchmarks (Y_raw = _dtlz2(X_raw)/_zdt1(X_raw)/
+        # _zdt3(X_raw) directly) — unlike "tunable" above, there's no
+        # noiseless-ground-truth/noise-realization split to reconstruct
+        # for the STORED pool, so the plain constructor on the log's
+        # dumped X_raw/Y_raw is sufficient and exact, matching "coatings"'
+        # pattern rather than "tunable"'s from_fixed_realization one.
+        # Identical logic for all three benchmarks (same oracle class,
+        # same reconstruction), so one shared branch rather than three
+        # near-duplicates.
+        # objective_names must match how the log was generated
+        # (DiscreteSyntheticMOOracle.build_* names them f1..f{n_obj} in
+        # order) — read n_objectives straight from Y_raw's own shape
+        # rather than assuming a fixed count, so this branch works for
+        # any --n_obj a training-set generator used (zdt1/zdt3 are always
+        # 2-objective; dtlz2 defaults to 3 but isn't fixed at that).
+        #
+        # noise_cv/noise_seed (v6 addition): OBSERVATION noise is a
+        # separate, orthogonal thing from the ground-truth determinism
+        # above — see synthetic_mo_oracle.py's module docstring for the
+        # v6 noise model (fresh multiplicative Gaussian noise per
+        # query_mo call, applied only to what's returned, never to
+        # _Y_raw). Read from the log with 0.0/DATA_SEED fallbacks so
+        # every pre-v6 log (which never wrote these keys at all) replays
+        # exactly as before — noiseless, byte-identical to pre-v6
+        # behaviour. A v6 noisy-synthetic training-set generator must
+        # write "noise_cv"/"noise_seed" into its payload for this to
+        # matter at all.
+        objective_names = [f"f{i + 1}" for i in range(Y_raw.shape[1])]
+        return DiscreteSyntheticMOOracle(
+            X_raw, Y_raw, objective_names=objective_names,
+            noise_cv=log.get("noise_cv", 0.0),
+            noise_seed=log.get("noise_seed", 42))
     scaler = StandardScaler().fit(X_raw)
     return DiscreteMOExcipientOracle(X_raw, Y_raw, forms=None, scaler=scaler)
 
@@ -206,11 +299,20 @@ def reconstruct_oracle(log: dict, oracle_family: str = "excipient"):
 def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
                          af_code: str, budget: int, sandbox_log_dir=None,
                          evo_candidates: int = 20, hv_history: list = None,
-                         n_init: int = None, **kw):
+                         n_init: int = None, af_function_name: str = "score_pool",
+                         combine_with_baseline_acq: bool = False, **kw):
     """
     Candidate generation identical to strategy_mo_egbo_novelty (see module
     docstring). Final selection: the evolved AF via the sandbox, not
     qLogNEHVI + novelty-aware selection.
+
+    af_function_name/combine_with_baseline_acq: v6 addition, threaded
+    straight through to sandbox.py's run_af_in_sandbox (see its own
+    docstring) — both default to the original v1-v5 contract, so every
+    existing caller of this function is unaffected. v6's evolve_af_v6.py
+    passes these via run_2b_campaign's strategy_kwargs (see that
+    function's docstring) to evaluate its delta-seed `modifier(context)`
+    programs through this exact same replay path, unmodified otherwise.
 
     hv_history: optional MUTABLE list, shared by the caller across every
     batch of one campaign (via the same strategy_kwargs dict run_mo_campaign
@@ -387,6 +489,36 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             pool_mu = post.mean.detach().cpu().numpy()
             pool_sigma = post.variance.clamp_min(1e-12).sqrt().detach().cpu().numpy()
 
+        # Per-candidate qLogNEHVI acquisition value — v4 addition (see
+        # sandbox.py's pool_acq_value docs). This is the SAME batched
+        # acq_fn(candidates.unsqueeze(1)) call strategy_mo_egbo_novelty
+        # itself uses to score its pool (see strategy_ls_na_egbo.py) —
+        # exposing it lets an evolved AF use EGBO's own MC-integrated,
+        # full-joint-posterior hypervolume-improvement estimate directly,
+        # instead of an evolved AF having to hand-approximate hypervolume
+        # improvement from per-objective mean/std alone (the "posterior
+        # resampling"/"pareto probability" mechanism families in
+        # evolve_af_v3.py's MECHANISM_FAMILIES — tried repeatedly by the
+        # LLM under stagnation on the tunable domain, always a much
+        # lower-fidelity approximation of this exact quantity). acq_fn is
+        # already built above for optimize_acqf, so this is one extra
+        # cheap batched forward pass, not a second model fit.
+        with warnings.catch_warnings(), torch.no_grad():
+            warnings.simplefilter("ignore")
+            try:
+                acq_vals = acq_fn(candidates.unsqueeze(1)).detach().cpu().numpy()
+            except Exception:
+                # Same fallback as strategy_mo_egbo_novelty's own code: a
+                # single degenerate candidate can break the batched call.
+                acq_vals = []
+                for i in range(candidates.shape[0]):
+                    try:
+                        v = float(acq_fn(candidates[i].unsqueeze(0)).item())
+                    except Exception:
+                        v = float("-inf")
+                    acq_vals.append(v)
+                acq_vals = np.array(acq_vals)
+
         if _POOL_TOP_DEBUG_LOG is not None:
             for j, name in enumerate(oracle.objective_names()):
                 front_range_j = max(
@@ -444,6 +576,9 @@ def strategy_evolved_af(oracle, X_obs, Y_obs, bounds, batch_size, rng,
             log_dir=sandbox_log_dir,
             front_boundary_std=front_boundary_std,
             front_allmax_init=front_allmax_init,
+            pool_acq_value=acq_vals,
+            af_function_name=af_function_name,
+            combine_with_baseline_acq=combine_with_baseline_acq,
         )
         selected_idx = select_batch(scores, batch_size)
 
@@ -1001,7 +1136,9 @@ def strategy_evolved_generation(oracle, X_obs, Y_obs, bounds, batch_size, rng,
 
 def run_2b_campaign(af_code: str, log: dict, batch_size: int = None,
                      seed: int = 0, sandbox_log_dir=None,
-                     oracle_family: str = "excipient") -> dict:
+                     oracle_family: str = "excipient",
+                     af_function_name: str = "score_pool",
+                     combine_with_baseline_acq: bool = False) -> dict:
     """
     Reconstruct the held-out campaign's oracle and initial points from its
     logged X_init/Y_init, then run a full sequential BO loop with the
@@ -1012,6 +1149,12 @@ def run_2b_campaign(af_code: str, log: dict, batch_size: int = None,
     its docstring. Defaults to "excipient" so every existing caller
     (evolve_af_2b.py, validate_2b_seed.py, validate_population_2b.py,
     run_2b_diagnostic.py) is unaffected.
+
+    af_function_name/combine_with_baseline_acq: v6 addition, threaded to
+    strategy_evolved_af via strategy_kwargs below (run_mo_campaign spreads
+    strategy_kwargs as **kwargs into strategy_fn — see excipient_campaign_
+    mo.py's run_mo_campaign). Both default to the original v1-v5 contract;
+    every existing caller of this function is unaffected.
     """
     torch.manual_seed(seed)  # see run_baseline_campaign's docstring note
     disc_oracle = reconstruct_oracle(log, oracle_family=oracle_family)
@@ -1028,7 +1171,9 @@ def run_2b_campaign(af_code: str, log: dict, batch_size: int = None,
     # stagnant_batches would be hardcoded 0 for the whole campaign, same as
     # before the fix.
     strategy_kwargs = {"af_code": af_code, "budget": budget,
-                        "sandbox_log_dir": sandbox_log_dir, "hv_history": []}
+                        "sandbox_log_dir": sandbox_log_dir, "hv_history": [],
+                        "af_function_name": af_function_name,
+                        "combine_with_baseline_acq": combine_with_baseline_acq}
     result = run_mo_campaign(
         disc_oracle, X_init, Y_init, budget, strategy_evolved_af,
         strategy_kwargs,

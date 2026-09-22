@@ -1,0 +1,25 @@
+seed 0: 577s, final_hv=3092.0
+seed 1: 595s, final_hv=3887.6
+seed 2: 591s, final_hv=4136.1
+
+Total: 1762s for 3 seeds (18 batches)
+
+Saved raw per-batch rows to /Users/neha/Desktop/llm_af_evo/.scratch/llm_selection_source_diagnostic.json
+
+============================================================
+SELECTION-BY-SOURCE DIAGNOSTIC
+============================================================
+Batches analysed: 18  (LLM fallback used in 0 of them)
+
+Pool composition (offered): LLM 212, EGBO 450 (32.0% LLM)
+Winners (selected):         LLM 23, EGBO 67 (25.6% LLM)
+
+Mean per-batch acquisition value (candidate pool):
+  LLM-sourced:  mean of batch-means = -0.5713  (n_batches=18)
+  EGBO-sourced: mean of batch-means = -1.1319  (n_batches=18)
+
+Max per-batch acquisition value (best candidate offered by each source):
+  LLM-sourced:  mean of batch-maxes = 4.6675
+  EGBO-sourced: mean of batch-maxes = 5.9893
+
+Batches where LLM offered >=1 candidate but WON ZERO selections: 5 / 18

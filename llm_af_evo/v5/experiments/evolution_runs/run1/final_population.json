@@ -1,0 +1,206 @@
+[
+  {
+    "id": "gen148_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.5246] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.508 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.4143 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": 0.0035987833365547853,
+    "mean_margin": 0.0035987833365547853,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0016080382611203458,
+      "coatings": 0.0735760390023766,
+      "mAb": 0.0023108273031343415
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "0c2353b283818121bd506809f908f8b2",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen41_child0",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.5] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.5 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.5 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": true,
+    "fitness": 0.0035748951659000314,
+    "mean_margin": 0.0035748951659000314,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0024508792255873027,
+      "coatings": 0.04781775210006492,
+      "mAb": 0.0057964071024210065
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "59094ae7fb3e60cd9bdc1aac3c41e0b5",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen110_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.5527] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.5103 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.4348 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": 0.0034816702531143898,
+    "mean_margin": 0.0034816702531143898,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0018473257514728426,
+      "coatings": 0.0735760390023766,
+      "mAb": 0.0023108273031343415
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "07711476c118dcf2a536328c3f5bce3c",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen45_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.5794] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.5167 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.408 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": 0.0023355753670409977,
+    "mean_margin": 0.0023355753670409977,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0016442094173297198,
+      "coatings": 0.041736907440275445,
+      "mAb": 0.0027370572301506444
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "fad58ea2925d6ad9d114186576f0c853",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen73_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.5347] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.5136 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.5257 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": 0.0021414906638677258,
+    "mean_margin": 0.0021414906638677258,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0016442094173297198,
+      "coatings": 0.041736907440275445,
+      "mAb": 0.0023108273031343415
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "f086d053647c9281c649915599f25c58",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen65_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.5352] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.5117 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.4775 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": 0.002040284703145141,
+    "mean_margin": 0.002040284703145141,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0018473257514728426,
+      "coatings": 0.041736907440275445,
+      "mAb": 0.0023108273031343415
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "7bc629c0e697ccc89007349d3e2557e3",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen144_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.4634] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.5059 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.5303 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": 0.0019106666535423436,
+    "mean_margin": 0.0019106666535423436,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0016080382611203458,
+      "coatings": 0.0735760390023766,
+      "mAb": -0.0012703916337969102
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "5bb6f4ccc6019df91194ddb59960716a",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen143_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.4355] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.496 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.4263 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": 0.0015303466489377604,
+    "mean_margin": 0.0015303466489377604,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.002450879225587303,
+      "coatings": 0.007688275094431814,
+      "mAb": 0.008511910521981424
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "600409c2bf2001b046a6ba07679a90c4",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen123_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.5137] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.5037 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.5226 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": 0.0004708707559089656,
+    "mean_margin": 0.0004708707559089656,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0016080382611203458,
+      "coatings": 0.0735760390023766,
+      "mAb": -0.004264046416414342
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "574b859c87f58efd5e136062fae553c4",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen91_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.4266] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.5034 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.479 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": -0.0006845079241881089,
+    "mean_margin": -0.0006845079241881089,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0016080382611203458,
+      "coatings": 0.04781775210006492,
+      "mAb": -0.004264046416414342
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "651dd7ac309087faaa5104162c87ee75",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  },
+  {
+    "id": "gen76_child0",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by robust hypervolume improvement estimate using posterior sampling with dominance discounting.\"\"\"\n    import numpy as np\n    \n    names = context[\"objective_names\"]\n    ref_point = context[\"ref_point\"]\n    front = context[\"pareto_front\"]\n    \n    n_samples = 20\n    lam = 1.0\n\n    scores = []\n    for cand in context[\"pool\"]:\n        gp = cand[\"gp_posterior\"]\n\n        # Sample from posterior\n        samples = np.array([\n            [np.random.normal(gp[name][\"mean\"], gp[name][\"std\"]) for name in names]\n            for _ in range(n_samples)\n        ])\n\n        if len(front) == 0:\n            volumes = np.prod(np.maximum(samples - ref_point, 0), axis=1)\n        else:\n            # Check dominance\n            dominated_mask = []\n            for s in samples:\n                is_dominated = False\n                for f in front:\n                    if all(f[i] >= s[i] and f[i] > s[i] for i in range(len(names))):\n                        is_dominated = True\n                        break\n                dominated_mask.append(is_dominated)\n            \n            volumes = np.prod(np.maximum(samples - ref_point, 0), axis=1)\n            # Discount volume of dominated samples \n            volumes[dominated_mask] *= 0.1\n\n        mean_volumes = np.mean(volumes)  \n        std_volumes = np.std(volumes)\n\n        scores.append(mean_volumes - lam * std_volumes)\n    \n    return scores",
+    "used_llm": true,
+    "fitness": -0.0008285539603758289,
+    "mean_margin": -0.0008285539603758289,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": 0.007688576368963088,
+      "coatings": 0.008569359953737189,
+      "mAb": -0.006262621793273279
+    },
+    "gate_failed_at": null,
+    "loc": 30,
+    "selection_signature": "122c239998b3a242235a2267a5e48fdb",
+    "docstring": "Score candidates by robust hypervolume improvement estimate using posterior sampling with dominance discounting."
+  },
+  {
+    "id": "gen72_jitter1",
+    "code": "def score_pool(context):\n    \"\"\"Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates.\"\"\"\n    names = context[\"objective_names\"]\n    \n    # Compute raw qualities (sum of means)\n    qualities = []\n    for cand in context[\"pool\"]:\n        mu_sum = sum(cand[\"gp_posterior\"][name][\"mean\"] for name in names)\n        qualities.append(mu_sum)\n        \n    q_min, q_max = min(qualities), max(qualities)\n    \n    # Normalize quality to [0, 1]\n    if abs(q_max - q_min) < 1e-9:\n        norm_qualities = np.array([0.58] * len(qualities))\n    else:\n        norm_qualities = (np.array(qualities) - q_min) / (q_max - q_min)\n    \n    # Compute diversity scores based on similarity to top candidates\n    pool_size = len(context[\"pool\"])\n    x_vals = [cand['x'] for cand in context[\"pool\"]]\n    \n    # Build kernel matrix: exp(-||xi-xj||^2), excluding diagonal (self-similarity)  \n    K_sim = np.zeros((pool_size, pool_size))\n    for i in range(pool_size):\n        dists_sq = [np.sum((x_vals[i] - x_vals[j]) ** 2) for j in range(pool_size)]\n        # Set self-distance to large value so similarity is near zero\n        dists_sq[i] = np.inf  \n        K_sim[:,i] = np.exp(-0.4896 * np.array(dists_sq))\n    \n    diversity_scores = []\n    top_k_candidates = min(3, pool_size)  # Top candidates for comparison\n    \n    sorted_indices = list(np.argsort(norm_qualities)[::-1])[:top_k_candidates]\n    \n    if not sorted_indices:\n        return [norm_qualities[i] * (0.4813 + np.random.rand() / 2.) \n                for i in range(pool_size)]\n        \n    # For each candidate, compute average similarity to top candidates\n    avg_similarities = []\n    for j in range(pool_size):\n        sim_to_top_k = sum(K_sim[j][i] for i in sorted_indices)\n        if len(sorted_indices) > 0:\n            avg_similarity = sim_to_top_k / float(len(sorted_indices))\n        else:\n            # fallback to random score\n            avg_similarity = np.random.rand() \n        avg_similarities.append(avg_similarity)\n\n    diversity_scores = [1. - s for s in avg_similarities]\n    \n    scores = []\n    for i, (q_norm, d_score) in enumerate(zip(norm_qualities, diversity_scores)):\n        # Multiply normalized quality with inverse similarity to top candidates\n        score_i = q_norm * max(0., min(d_score, 1.)) \n        scores.append(score_i)\n        \n    return scores",
+    "used_llm": false,
+    "fitness": -0.0019514776851191427,
+    "mean_margin": -0.0019514776851191427,
+    "win_rate": 1.0,
+    "domain_scores": {
+      "tunable": -0.0016080382611203458,
+      "coatings": 0.007688275094431814,
+      "mAb": -0.003143304687834015
+    },
+    "gate_failed_at": null,
+    "loc": 37,
+    "selection_signature": "70ab7e72d7c59bb6a15a9c9fa805b734",
+    "docstring": "Score candidates by normalized quality multiplied by diversity; diversity is inverse similarity to top-ranked candidates."
+  }
+]

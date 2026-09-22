@@ -1,0 +1,1124 @@
+{
+  "history": [
+    {
+      "generation": 0,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658
+    },
+    {
+      "generation": 1,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 1
+    },
+    {
+      "generation": 2,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 2
+    },
+    {
+      "generation": 3,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 3
+    },
+    {
+      "generation": 4,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 4
+    },
+    {
+      "generation": 5,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 5
+    },
+    {
+      "generation": 6,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 6
+    },
+    {
+      "generation": 7,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 7
+    },
+    {
+      "generation": 8,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 8
+    },
+    {
+      "generation": 9,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 9
+    },
+    {
+      "generation": 10,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 10
+    },
+    {
+      "generation": 11,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 11
+    },
+    {
+      "generation": 12,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 12
+    },
+    {
+      "generation": 13,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 13
+    },
+    {
+      "generation": 14,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 14
+    },
+    {
+      "generation": 15,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 15
+    },
+    {
+      "generation": 16,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 16
+    },
+    {
+      "generation": 17,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 17
+    },
+    {
+      "generation": 18,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 18
+    },
+    {
+      "generation": 19,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 19
+    },
+    {
+      "generation": 20,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 20
+    },
+    {
+      "generation": 21,
+      "best_fitness": -0.0004968329470349351,
+      "best_mean_margin": 0.001553870683386573,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.930597956894658,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 21
+    },
+    {
+      "generation": 22,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 0
+    },
+    {
+      "generation": 23,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 1
+    },
+    {
+      "generation": 24,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 2
+    },
+    {
+      "generation": 25,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 3
+    },
+    {
+      "generation": 26,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 4
+    },
+    {
+      "generation": 27,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 5
+    },
+    {
+      "generation": 28,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 2,
+      "stagnant_generations": 6
+    },
+    {
+      "generation": 29,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 7
+    },
+    {
+      "generation": 30,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 8
+    },
+    {
+      "generation": 31,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 9
+    },
+    {
+      "generation": 32,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 10
+    },
+    {
+      "generation": 33,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 11
+    },
+    {
+      "generation": 34,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 12
+    },
+    {
+      "generation": 35,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 13
+    },
+    {
+      "generation": 36,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 14
+    },
+    {
+      "generation": 37,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 15
+    },
+    {
+      "generation": 38,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 16
+    },
+    {
+      "generation": 39,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 17
+    },
+    {
+      "generation": 40,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 18
+    },
+    {
+      "generation": 41,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 19
+    },
+    {
+      "generation": 42,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 20
+    },
+    {
+      "generation": 43,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 21
+    },
+    {
+      "generation": 44,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 22
+    },
+    {
+      "generation": 45,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 0,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 23
+    },
+    {
+      "generation": 46,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 24
+    },
+    {
+      "generation": 47,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 25
+    },
+    {
+      "generation": 48,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 1,
+      "stagnant_generations": 26
+    },
+    {
+      "generation": 49,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 27
+    },
+    {
+      "generation": 50,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 28
+    },
+    {
+      "generation": 51,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 29
+    },
+    {
+      "generation": 52,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 30
+    },
+    {
+      "generation": 53,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 31
+    },
+    {
+      "generation": 54,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 32
+    },
+    {
+      "generation": 55,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 33
+    },
+    {
+      "generation": 56,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 34
+    },
+    {
+      "generation": 57,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 35
+    },
+    {
+      "generation": 58,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 36
+    },
+    {
+      "generation": 59,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 37
+    },
+    {
+      "generation": 60,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 38
+    },
+    {
+      "generation": 61,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 39
+    },
+    {
+      "generation": 62,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 40
+    },
+    {
+      "generation": 63,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 41
+    },
+    {
+      "generation": 64,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 42
+    },
+    {
+      "generation": 65,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 43
+    },
+    {
+      "generation": 66,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 44
+    },
+    {
+      "generation": 67,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 45
+    },
+    {
+      "generation": 68,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 46
+    },
+    {
+      "generation": 69,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 47
+    },
+    {
+      "generation": 70,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 48
+    },
+    {
+      "generation": 71,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 49
+    },
+    {
+      "generation": 72,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 50
+    },
+    {
+      "generation": 73,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 51
+    },
+    {
+      "generation": 74,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 52
+    },
+    {
+      "generation": 75,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 53
+    },
+    {
+      "generation": 76,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 54
+    },
+    {
+      "generation": 77,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 55
+    },
+    {
+      "generation": 78,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 56
+    },
+    {
+      "generation": 79,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 57
+    },
+    {
+      "generation": 80,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 58
+    },
+    {
+      "generation": 81,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 59
+    },
+    {
+      "generation": 82,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 60
+    },
+    {
+      "generation": 83,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 61
+    },
+    {
+      "generation": 84,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 62
+    },
+    {
+      "generation": 85,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 63
+    },
+    {
+      "generation": 86,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 64
+    },
+    {
+      "generation": 87,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 65
+    },
+    {
+      "generation": 88,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 66
+    },
+    {
+      "generation": 89,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 67
+    },
+    {
+      "generation": 90,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 68
+    },
+    {
+      "generation": 91,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 69
+    },
+    {
+      "generation": 92,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 70
+    },
+    {
+      "generation": 93,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 71
+    },
+    {
+      "generation": 94,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 72
+    },
+    {
+      "generation": 95,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 73
+    },
+    {
+      "generation": 96,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 74
+    },
+    {
+      "generation": 97,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 75
+    },
+    {
+      "generation": 98,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 76
+    },
+    {
+      "generation": 99,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 77
+    },
+    {
+      "generation": 100,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 78
+    },
+    {
+      "generation": 101,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 79
+    },
+    {
+      "generation": 102,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 80
+    },
+    {
+      "generation": 103,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 81
+    },
+    {
+      "generation": 104,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 82
+    },
+    {
+      "generation": 105,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 83
+    },
+    {
+      "generation": 106,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 84
+    },
+    {
+      "generation": 107,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 85
+    },
+    {
+      "generation": 108,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 86
+    },
+    {
+      "generation": 109,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 1,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 87
+    },
+    {
+      "generation": 110,
+      "best_fitness": 0.000323271777048741,
+      "best_mean_margin": 0.002405356743469492,
+      "best_win_rate": 0.625,
+      "best_mean_hv": 10.939885584899596,
+      "n_llm_failures_this_gen": 2,
+      "n_rank_equivalent_duplicates": 0,
+      "stagnant_generations": 88
+    }
+  ],
+  "mock": false,
+  "n_llm_calls": 213,
+  "n_llm_failures": 122,
+  "baseline_hvs": [
+    10.850424299102306,
+    11.027000782504782,
+    10.90460462070896,
+    10.906231090249625,
+    10.791606939760062,
+    10.912441713521138,
+    10.928503681163006,
+    10.989507631628541
+  ]
+}

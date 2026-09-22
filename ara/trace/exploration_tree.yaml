@@ -1,0 +1,1182 @@
+# Exploration Graph — trace/exploration_tree.yaml
+#
+# What this is: the Exploration Graph layer of this project's Agent-Native
+# Research Artifact (ARA). It reconstructs the branching research process
+# (decisions, experiments, dead ends, pivots) that the thesis narrative
+# necessarily flattens — every negative result, retracted claim, and bug
+# hunt that shaped what actually got claimed.
+#
+# Compiled: 2026-09-13
+#
+# Sources read in full:
+#   - project_comprehensive_log.md (llm_af_evo repo)
+#   - project_comprehensive_log_previous.md (llm_af_evo repo)
+#   - llm_evolved_afs_comprehensive_log.md (llm_af_evo repo)
+#   - sdl_adaptive/COMPREHENSIVE_LOG.md (llm_af_evo repo)
+#   - sdl_adaptive/approach_c_qualitative_analysis.md (llm_af_evo repo)
+#   - PLAN.md, README.md, dissertation_guidelines.md,
+#     research/chapter2_citations.md (llm_af_evo repo)
+#   - full git history of llm_af_evo (branch af-evolution), with expanded
+#     commit messages for fix/abandon/revert/retract/dead/bug/diagnostic
+#     commits
+#   - mo_bo_pipeline/FINDINGS.md, mo_bo_pipeline/README.md, and the full
+#     git history of the separate mo_bo_pipeline repo
+#     (/Users/neha/Desktop/mo_bo_pipeline — a distinct git repository,
+#     included here because it is part of the same body of work: an
+#     LLM-seeded Bayesian optimization sub-project referenced directly by
+#     llm_af_evo's own design docs)
+#
+# Node id prefixes: N## = llm_af_evo repo, M## = mo_bo_pipeline repo.
+# `also_depends_on` marks a convergence with a node outside the direct
+# parent chain (often across the two repos).
+#
+# See trace/README.md for a short orientation and "gold" example nodes.
+
+roots:
+
+  # =====================================================================
+  # ROOT 1 — Origins: cancer-screening pivot and the C1-C4 framework
+  # =====================================================================
+  - id: N01
+    type: question
+    title: 'Can strategy-level meta-decisions in an SDL campaign be automated?'
+    provenance: user
+    timestamp: '2026-08-01'
+    source: 'project_comprehensive_log_previous.md:L34-50'
+    children:
+      - id: N02
+        type: experiment
+        title: 'Phase 0: cancer drug screening (GDSC CRC5) domain-shift experiments'
+        provenance: user
+        source: 'project_comprehensive_log_previous.md:L54-83'
+        result: 'BO recovery 80-100% across all domain-shift levels; strategy_gap near zero or negative (greedy matches or beats BO within-subtype).'
+      - id: N03
+        type: dead_end
+        title: 'Cancer screening lacks LLM-prior structure'
+        provenance: user
+        source: 'project_comprehensive_log_previous.md:L66-70'
+        hypothesis: 'LLM domain knowledge about drug-cell-line mechanism could accelerate BO the way it might for chemistry.'
+        failure_mode: 'Drug response (IC50) is an essentially black-box endpoint with no mechanistic story an LLM can inject (e.g. no equivalent of "this cell line aggregates, use arginine") — the core question "when does LLM domain knowledge help BO" could not be tested on this data.'
+        lesson: 'Pick a domain where LLM priors carry genuine, testable mechanistic content before building a benchmark around them.'
+        also_depends_on: [N02]
+      - id: N04
+        type: pivot
+        title: 'Pivot from cancer screening to pharmaceutical formulation'
+        provenance: user
+        source: 'project_comprehensive_log_previous.md:L66-84'
+        trigger: 'Cancer domain has no LLM-prior structure to test (N03).'
+        rationale: 'LLM priors have genuine mechanistic content in formulation (arginine vs aggregation, methionine vs oxidation); multi-objective with heterogeneous per-objective noise gives a natural GP-trust spectrum; pharmaceutical formulation is the canonical SDL use case already demonstrated by the Shorthouse group.'
+        also_depends_on: [N03]
+      - id: N05
+        type: decision
+        title: 'Adopt the C1-C4 claim framework'
+        provenance: user
+        source: 'project_comprehensive_log_previous.md:L88-101'
+        alternatives: ['Ad hoc hypothesis testing with no formal claim structure', 'A single omnibus claim ("LLMs help BO")']
+        evidence: 'The four claims form a logical chain: C1 (LLM prior beats GP-only in low-trust regimes) motivates the need for C2 (a per-objective GP-trust diagnostic), which feeds C3 (a trust-driven LLM/GP mixing weight), validated end-to-end by C4 (the full pipeline on real multi-objective data).'
+        children:
+
+          # ---------------------------------------------------------------
+          # Single-objective oracle & wrong-prior stress test
+          # ---------------------------------------------------------------
+          - id: N06
+            type: experiment
+            title: 'Build single-objective excipient oracle with mechanistic dose-response'
+            provenance: user
+            source: 'project_comprehensive_log_previous.md:L105-181'
+            result: '16D encoding (5 amino acids, 4 sugars, 3 surfactants, EDTA), 4 protein profiles (mAb_aggregation, mAb_oxidation, enzyme_labile, mixed) each with distinct pathway tendencies, synergistic excipient interactions, viscosity penalty, discrete 500-point LHS pool for fair strategy comparison.'
+          - id: N07
+            type: dead_end
+            title: 'Prompt leakage: LLM converges deterministically, not via search'
+            provenance: user
+            source: 'project_comprehensive_log_previous.md:L230-236'
+            hypothesis: 'Mechanism-level prior text alone should let the LLM reason toward good formulations.'
+            failure_mode: 'An earlier prompt version included explicit concentration recommendations (e.g. "optimum near: methionine ~1mM..."), so the LLM reached 90% of best at step 10 on every seed with zero variance — deterministic instruction-following, not search behaviour.'
+            lesson: 'Strip all concentration hints from prior texts; keep only mechanism-level knowledge, no numeric answers.'
+            also_depends_on: [N06]
+          - id: N08
+            type: experiment
+            title: 'Single-objective wrong-prior stress test (L1/L4-blank/WRONG/EGBO/random, 20 seeds)'
+            provenance: user
+            source: 'project_comprehensive_log_previous.md:L219-284'
+            result: 'mAb_aggregation AUC: L1=0.863±0.048, L4=0.837±0.071, EGBO=0.818±0.083, random=0.749±0.106, WRONG=0.708±0.140. mAb_oxidation AUC: L1=0.917±0.047, L4=0.889±0.088, EGBO=0.900±0.069, random=0.860±0.090, WRONG=0.817±0.131. WRONG < random < EGBO ≈ L4 < L1 on mAb_aggregation, all differences p<0.05 except L4 vs EGBO.'
+            also_depends_on: [N07]
+          - id: N09
+            type: decision
+            title: 'Interpret the wrong-prior result as decisive validation of C1 (single-objective)'
+            provenance: user
+            source: 'project_comprehensive_log_previous.md:L261-284'
+            alternatives: ['Treat the WRONG-prior loss as inconclusive noise', 'Treat mechanism-level knowledge as incidental to LLM output format rather than the active ingredient']
+            evidence: 'WRONG significantly underperforms both EGBO and random on both profiles (p<0.05); blank ≈ EGBO confirms mechanism knowledge (not LLM architecture) is the active ingredient; the knowledge gradient WRONG<random<EGBO≈L4<L1 is exactly what the domain-knowledge hypothesis predicts on mAb_aggregation.'
+          - id: N10
+            type: experiment
+            title: 'Phase 1.5: synthetic/ADA benchmark null result'
+            provenance: user
+            source: 'project_comprehensive_log_previous.md:L184-213'
+            result: 'default vs llm_tuned vs oracle GP-hyperparameter conditions nearly identical AUC on pareto_20210112 (0.707/0.708/0.729), hartmann6 (0.856/0.841/0.833), coatings (0.919/0.917/0.916) — the expected null: LLM hyperparameter tuning adds nothing when the GP is already well-specified.'
+
+  # =====================================================================
+  # ROOT 2 — Multi-objective oracle construction, Waibel calibration, bugs
+  # =====================================================================
+  - id: N11
+    type: experiment
+    title: 'Waibel et al. (2025) real mAb dataset extraction (33 formulations)'
+    provenance: user
+    timestamp: '2026-08-01'
+    source: 'project_comprehensive_log_previous.md:L287-341'
+    result: '33 formulations, 7 varying inputs, 3 objectives (Tm, kD, RM_Agi) transcribed from the paper SI; kD sign-corrected (16/33 negative, 17/33 positive) after checking against reported physical meaning and two landmark formulations in the prose.'
+    children:
+      - id: N12
+        type: decision
+        title: 'Calibrate oracle noise fractions to Waibel noise-to-signal ratios'
+        provenance: user
+        source: 'project_comprehensive_log_previous.md:L330-341'
+        alternatives: ['Pick noise levels arbitrarily / by convention']
+        evidence: 'Tm noise_frac=0.013 (Waibel 0.012), kD=0.096 (Waibel 0.096), viscosity=0.10 (estimated, no real calibration source) — anchors the synthetic oracle to a real per-objective trust spectrum instead of an arbitrary one.'
+      - id: N13
+        type: experiment
+        title: 'Construct multi-objective oracle: Tm, kD, viscosity as separate objectives'
+        provenance: user
+        source: 'project_comprehensive_log_previous.md:L344-449'
+        result: 'Independently tunable per-objective difficulty/noise; Tm driven by denaturation+aggregation tendency, kD by aggregation tendency (anti-agg amino acids + surfactant synergy), viscosity by total excipient load only (no pathway relevance).'
+        children:
+          - id: N14
+            type: dead_end
+            title: 'BUG 1: kD not clipped in pool construction'
+            provenance: ai-executed
+            source: 'project_comprehensive_log_previous.md:L636-644'
+            hypothesis: 'All three objectives are clipped to their stated ranges in pool construction.'
+            failure_mode: '139/500 pool points had kD < -25.0 (stated lower bound), extending to -49.5; only Tm and viscosity were actually clipped.'
+            lesson: 'Audit every objective''s clip logic explicitly — do not assume a pattern applied to one objective was applied to all.'
+          - id: N15
+            type: dead_end
+            title: 'BUG 2 (CRITICAL): per-profile kD ceiling algebraically cancels the protein-profile effect'
+            provenance: ai-executed
+            source: 'project_comprehensive_log_previous.md:L646-663'
+            hypothesis: 'A per-profile ceiling (scaling with aggregation_tendency) makes kD response correctly compressed for low-aggregation profiles.'
+            failure_mode: 'kd_frac = (0.85*agg*peak)/(0.85*agg + 1.2*agg) = 0.415*peak — the aggregation_tendency term cancels algebraically, so kD was numerically identical across all four protein profiles. Arginine was always "best" for kD regardless of pathway, making the wrong-prior stress test meaningless.'
+            lesson: 'Use a fixed (not per-profile-scaled) ceiling so profile-dependence survives normalisation; the same class of bug also affected Tm and was fixed the same way (TM_CEILING_MAX_ACHIEVABLE=0.4925, the max achievable tm_raw across profiles).'
+          - id: N16
+            type: dead_end
+            title: 'BUG 3: oracle''s internal hypervolume computation underestimates by ~28%'
+            provenance: ai-executed
+            source: 'project_comprehensive_log_previous.md:L665-670'
+            hypothesis: 'A simple max(individual_volumes) approximation is adequate for internal HV reporting.'
+            failure_mode: 'This is not the true union-of-dominated-hyperrectangles HV; underestimated true HV by roughly 28%.'
+            lesson: 'Use a proper HV library (pymoo''s indicator) everywhere, including internal analysis tools, not just the campaign runner.'
+          - id: N17
+            type: dead_end
+            title: 'BUG 4 (CRITICAL): per-objective trust diagnostic (C2) collapses to identical values'
+            provenance: ai-executed
+            source: 'project_comprehensive_log_previous.md:L671-687'
+            hypothesis: 'LOO calibration + lengthscale/nearest-neighbour ratio + uncertainty reduction can differentiate which objectives the GP models well vs poorly (C2).'
+            failure_mode: 'At budget=40/d=16 (obs_per_dim ≤ 2.5), the sparse override forces ls_score=0.5 and unc_score=0.5 for every objective regardless of true noise, and loo_score is 1.0 for all three — trust collapses to exactly 0.700 for Tm, kD, and viscosity alike. The diagnostic measures landscape roughness, not measurement noise, and cannot differentiate objectives at this sample density.'
+            lesson: 'This is an honest limitation, not a fixable bug at this budget/dimensionality — C2 needs budget≥80 (obs_per_dim≥3.0) or replicate measurements for genuine noise estimation.'
+            children:
+              - id: N17b
+                type: dead_end
+                title: 'Attempted fix: WhiteKernel noise_score component inverts the true noise ordering'
+                provenance: ai-executed
+                source: 'project_comprehensive_log_previous.md:L549-565'
+                hypothesis: 'A WhiteKernel noise term fitted per-objective can directly estimate measurement noise (Tm low, kD high) to feed C2.'
+                failure_mode: 'WhiteKernel measures landscape-fitting difficulty, not measurement noise, and inverts the true ordering: Tm (true noise 0.013, LOW) fits with WhiteKernel noise 0.344 (HIGH, because its two-weak-bump surface is hard to reconstruct), while kD (true noise 0.096, HIGH) fits with WhiteKernel noise ~0.000001 (ZERO, because its single-mechanism surface fits the Matern kernel cleanly).'
+                lesson: 'Genuine per-objective measurement-noise detection needs replicate measurements or an external noise estimate (as Waibel''s real CIs provide) — not a GP-internal fit-quality proxy. noise_score reverted to a neutral 0.5 placeholder; WhiteKernel code kept as documentation only.'
+                also_depends_on: [N17]
+          - id: N18
+            type: dead_end
+            title: 'BUG 5: mixing weight has negligible effect on candidate selection'
+            provenance: ai-executed
+            source: 'project_comprehensive_log_previous.md:L689-704'
+            hypothesis: 'The trust-derived mixing weight controls how much LLM vs GP candidates dominate the final batch.'
+            failure_mode: 'Final selection from the combined pool was uniform random, so even a large weight difference (0.3 vs 0.8) changed pool composition by only ~1 candidate slot, which uniform random then discarded.'
+            lesson: 'Implement genuine trust-weighted selection probability (gp_prob/llm_prob split via rng.choice(p=probs)), not just a differently-composed but uniformly-sampled pool.'
+          - id: N19
+            type: dead_end
+            title: 'BUG 6: hypervolume reference point drifts between batches'
+            provenance: ai-executed
+            source: 'project_comprehensive_log_previous.md:L705-709'
+            hypothesis: 'Recomputing the HV reference point each batch from current observations keeps it representative.'
+            failure_mode: 'As better points were found the reference shifted upward (kD component drifted 42%), making batch-to-batch HV values incomparable.'
+            lesson: 'Compute the reference point once, at campaign start, from the full oracle pool, and reuse it for every batch.'
+          - id: N20
+            type: dead_end
+            title: 'Cross-seed contamination: shared discrete oracle''s _queried set never reset'
+            provenance: ai-executed
+            source: 'project_comprehensive_log_previous.md:L622-628'
+            hypothesis: 'A single discrete oracle instance can be reused across a 15-seed run.'
+            failure_mode: 'The oracle''s _queried set (tracking tested pool points) was mutable shared state never reset between seeds, so the selectable pool shrank monotonically across the run; n_init points were also never registered, letting a seed re-snap onto its own initial points.'
+            lesson: 'Reset shared mutable oracle state at the start of every seed''s campaign and register initial points as already-queried.'
+            children:
+              - id: N82
+                type: experiment
+                title: 'Final recalibration: TM_RANGE/VISC_RANGE against full Waibel SI re-read'
+                provenance: ai-executed
+                timestamp: '2026-09-09'
+                source: 'commit:8fbf3a7'
+                result: 'TM_RANGE (60,75) was ~2x too wide vs real observed span 63.4-71.3°C — silently doubled injected noise (0.195°C absolute vs the ~0.1°C the noise_frac was derived from); tightened to (63,72). VISC_RANGE (2,25) was ~2.5x too wide vs real Table S4 span 3.0-10.6 cP; tightened to (2,12). KD_RANGE (-25,50) confirmed already correctly anchored (kd_noise=0.096 recomputes exactly from Table S2). Also documented: viscosity_noise=0.10 has no real calibration source, and the arginine+surfactant synergy assumes the opposite direction from Waibel''s real arginine/kD correlation (r=-0.94, Fig S11) — flagged as a protein-specific discrepancy, not necessarily a bug.'
+                claims_touched: ['thesis oracle calibration']
+
+  # =====================================================================
+  # ROOT 3 — MO campaign strategy evolution: mo_llm -> LS-NA-EGBO
+  # =====================================================================
+  - id: N21
+    type: experiment
+    title: 'Phase 7: MO campaign results, mAb_aggregation L1, 15 seeds, real LLM'
+    provenance: user
+    source: 'project_comprehensive_log_previous.md:L713-747'
+    result: 'mo_egbo_real=13699.7±1003.3, mo_llm=13401.1±988.7, mo_random=11472.3±1556.4, mo_egbo(lightweight)=10181.1±2605.8. mo_egbo_real and mo_llm both clearly beat random (Δ~2200); nearly tied with each other (Δ=299). Trust trajectory [0.2,0.2,0.2,0.2,0.2,0.6] — sparse inversion (80% LLM weight) working as designed for 5/6 batches.'
+    children:
+      - id: N22
+        type: experiment
+        title: 'Phase 8: wrong-prior stress test, mAb_oxidation multi-objective'
+        provenance: user
+        source: 'project_comprehensive_log_previous.md:L751-785'
+        result: 'WRONG (arginine-forward, agg_L1 prior) = 2763.3±234.9 HV, beating L1-correct (2413.1±338.0), blank (2422.1±367.2), and mo_egbo_real (2527.4±385.0). Mechanism verified directly from oracle code: arginine gives kD=+13.4 (51.2% of range) vs methionine''s kD=-24.1 (1.2% of range) — a 37.5 mL/g kD advantage — while the Tm penalty of the wrong prior is only ~0.5°C.'
+        children:
+          - id: N23
+            type: decision
+            title: 'Reframe C3: multi-objective hypervolume rewards partial correctness, inverting the single-objective result'
+            provenance: user
+            source: 'project_comprehensive_log_previous.md:L813-819'
+            alternatives: ['Treat the WRONG-wins result as an oracle bug and fix it away', 'Keep the single-objective formulation of C3 ("wrong prior hurts") and treat this as an anomaly']
+            evidence: 'Single-objective collapsed score implicitly weights objectives by pathway relevance, making wrong-pathway advice uniformly harmful; multi-objective HV rewards any genuine improvement on any axis, so a prior wrong about mechanism narrative but correct about one excipient-objective relationship (arginine→kD) can outperform a correct-but-vague prior. Confirmed not an oracle bug: arginine genuinely improves kD (colloidal stability) on real mAbs regardless of dominant degradation pathway.'
+          - id: N24
+            type: question
+            title: 'Is the mAb_oxidation WRONG-wins result about mechanism, or just arginine''s universal kD dominance?'
+            provenance: user
+            source: 'project_comprehensive_log_previous.md:L821-825'
+            also_depends_on: [N23]
+      - id: N25
+        type: experiment
+        title: 'Phase 2 resolves the missing mAb_aggregation WRONG/blank comparison'
+        provenance: user
+        timestamp: '2026-08-11'
+        source: 'project_comprehensive_log.md:L43-71'
+        result: 'mo_llm_candidate_gen HV on mAb_aggregation: L1=12736±1753, blank=12270±1627, WRONG(oxid_L1)=12691±1567 — none of the pairwise differences are statistically significant (e.g. wrong vs mo_egbo_novelty baseline p=0.635). All three beat mo_random (10926±2007) significantly (p<0.002, Holm-corrected). Resolves N24: WRONG-prior benefit is profile-dependent, not a universal arginine effect — on mAb_aggregation the correct mechanism already targets kD directly, so there is no unexploited-range "free ride" the way there is on mAb_oxidation.'
+        also_depends_on: [N24]
+      - id: N26
+        type: decision
+        title: 'Resolve which strategy''s mAb_oxidation numbers the thesis claims'
+        provenance: user-revised
+        timestamp: '2026-08-11'
+        source: 'project_comprehensive_log.md:L73-84'
+        alternatives: ['Claim old trust-weighted mo_llm''s dramatic WRONG=2763 result', 'Claim new mo_llm_candidate_gen''s null result (L1=2413, blank=2584, wrong=2572, all statistically indistinguishable)']
+        evidence: 'The two strategies are not measuring the same thing: old mo_llm injects the prior into every batch via a trust-weighting mechanism that itself rests on the never-validated C2 diagnostic (N17), letting a wrong-but-arginine-forward bias compound batch after batch; mo_llm_candidate_gen merges LLM candidates into the EGBO pool scored by qLogNEHVI with no persistent injection, so a wrong-mechanism candidate must re-earn selection every batch on merit. Resolution: the thesis claims mo_llm_candidate_gen (Phase 2, null result), framed as evidence that the wrong-prior "benefit" is an artifact of how the LLM prior is mixed in, not a property of the underlying chemistry.'
+        also_depends_on: [N17, N22]
+      - id: N27
+        type: pivot
+        title: 'Pivot from per-batch trust-weighted mixing (mo_llm) to one-shot warm-start + autonomous EGBO (LS-NA-EGBO)'
+        provenance: user
+        source: 'project_comprehensive_log.md:L88-107; PLAN.md:L1-70'
+        trigger: 'C2''s per-objective trust diagnostic never validated (N17); mo_llm calls the LLM every batch (~4min/seed latency) for a mixing weight that is largely cosmetic.'
+        rationale: 'Cissé et al. (BORA) find LLM/BO hybrid advantage concentrates in the warm-start phase (first ~50 experiments) after which BO catches up; "When Do LLMs Improve BO?" (NeurIPS 2025) finds reasoning LLMs excel on LLM-comprehensible representations like named excipients. Architecture: call the LLM once to warm-start the initial batch, then hand off to novelty-aware EGBO (qLogNEHVI + U-NSGA-III + novelty-weighted selection, following Aqeeli et al. 2026) for the rest of the campaign — sidesteps the unvalidated trust diagnostic entirely rather than fixing it.'
+        also_depends_on: [N17]
+        children:
+          - id: N28
+            type: decision
+            title: 'Model selection: qwen3:32b over qwen2.5:72b-instruct'
+            provenance: user
+            source: 'PLAN.md:L7-21'
+            alternatives: ['qwen2.5:72b-instruct (554.6s/call, 24/25 parsed)', 'qwen3.6:35b-a3b MoE (see N29, rejected)']
+            evidence: 'Measured directly on project hardware: qwen3:32b at 327.4s/call, 25/25 parsed, 1.7x faster with no workarounds needed — a speed win treated as not costing quality (per Qwen''s own published efficiency claims) but not independently verified beyond one smoke test.'
+          - id: N29
+            type: dead_end
+            title: 'qwen3.6:35b-a3b MoE: thinking mode un-disableable'
+            provenance: ai-executed
+            source: 'PLAN.md:L16'
+            hypothesis: 'The MoE model would be faster than qwen3:32b at comparable quality.'
+            failure_mode: 'A known Ollama bug: neither the API think:false parameter nor the /no_think prompt directive disables thinking mode, so the entire output budget is consumed by the reasoning trace — 0/25 candidates parsed.'
+            lesson: 'Verify a model''s think-mode-disable actually works empirically before adopting it for a latency-sensitive pipeline.'
+          - id: N30
+            type: dead_end
+            title: 'Original Layer-2 prompt near-verbatim mirrored the oracle''s own code comments'
+            provenance: user
+            source: 'PLAN.md:L179-189'
+            hypothesis: 'Domain-physics prompt text (Layer 2) conveys genuine, independent pharma-formulation knowledge to the LLM.'
+            failure_mode: 'The original text closely mirrored excipient_oracle.py''s own internal comments, meaning the L1 "correct mechanism" condition partly tested whether the LLM could follow the oracle''s answer key rather than whether it has genuine domain knowledge — a circularity.'
+            lesson: 'Rewrite domain-physics prompt text from independent literature (Arakawa & Timasheff preferential-exclusion framework, standard biologics practice), never paraphrased from the oracle''s own source comments.'
+          - id: N31
+            type: dead_end
+            title: 'JSON schema token-budget truncation caused 100% mock-fallback on first live Phase 2 run'
+            provenance: ai-executed
+            source: 'PLAN.md:L202-211'
+            hypothesis: 'A full-name-field, uncapped-tradeoff-text JSON schema is fine for 25 candidates per warm-start call.'
+            failure_mode: 'The model''s JSON response was truncated mid-object before completing all 25 candidates, silently failed to parse, and triggered mock fallback on every real-LLM warm-start call in the first live Phase 2 run.'
+            lesson: 'Use single-letter target codes, cap free-text fields (tradeoff ≤10 words), and raise num_predict (2048→4096) as a backstop against truncation.'
+          - id: N32
+            type: experiment
+            title: 'Novelty-weight sensitivity sweep'
+            provenance: user
+            source: 'project_comprehensive_log.md:L109-120'
+            result: 'w_nov=0.10-0.15 beats the literature default w_nov=0.30 at budget=30 on this domain (e.g. mAb_aggregation/L1: HV 12342 at w_nov=0.10 vs 12325 at 0.30). mo_ls_egbo (warm-start, no novelty selection at all) is competitive with novelty-selected variants in several rows — most of the benefit at this budget comes from warm-start, not novelty-aware selection.'
+          - id: N33
+            type: experiment
+            title: 'Phase 1/2 headline comparison: mo_ls_na_egbo vs baselines'
+            provenance: user
+            source: 'project_comprehensive_log.md:L122-133'
+            result: 'Phase 2 (25 seeds, budget=40): mo_ls_na_egbo at or above mo_egbo_real/mo_egbo_novelty in every one of 4 protein/prior rows shown (e.g. mAb_aggregation/blank: 13744±1151 vs egbo_real 12835±1143), lowest variance in 3/4 rows.'
+          - id: N34
+            type: experiment
+            title: 'Phase 1/2 mAb_aggregation full paired/Holm-corrected re-analysis'
+            provenance: user
+            timestamp: '2026-08-13'
+            source: 'project_comprehensive_log.md:L135-158'
+            result: 'Phase 2, blank prior: mo_egbo_novelty vs mo_ls_na_egbo reaches Holm-corrected significance (diff=-1311.9 HV, raw_p=0.0027, holm_p=0.0432) — the single confirmed instance of warm-start beating novelty-EGBO in the whole suite. L1/wrong priors and Phase 1 (n=15) are directionally consistent but not significant. Revised headline claim: "one confirmed instance, consistently replicated in direction, not yet confirmed as a general effect."'
+          - id: N35
+            type: experiment
+            title: 'mo_ucb_warmstart extension to Phase 1/2 — opposite pattern from Phase 3 coatings'
+            provenance: user
+            timestamp: '2026-08-14'
+            source: 'project_comprehensive_log.md:L159-177'
+            result: 'mo_ls_na_egbo numerically ahead of mo_ucb_warmstart in all 9/9 protein/prior groups across both phases (never reversed), though none survive Holm correction. This is the opposite of Phase 3 coatings, where ucb_warmstart topped the ranking — evidence that the right acquisition-function complexity (cheap scalarised UCB vs full qLogNEHVI+novelty) is domain-dependent (14-16D mAb space vs 4D coatings), not a fixed property of using warm-start.'
+          - id: N36
+            type: experiment
+            title: 'Phase 3: cross-domain generalisation (ADA coatings), real LLM, n=20'
+            provenance: user
+            source: 'project_comprehensive_log.md:L178-238'
+            result: 'Ranked mean final HV (n=20): ucb_warmstart 458.18, ls_na_egbo 453.09, egbo_warmstart 449.83, egbo 449.16, llm_labo 439.39, egbo_novelty 435.42, random 422.23. No pairwise comparison survives Holm correction (best case random vs ucb_warmstart, holm_p=0.1204). Interaction finding: warm-start alone (egbo_warmstart vs egbo, diff=0.7 HV) does essentially nothing; novelty-aware selection alone is the single worst deviation from egbo; but warm-start combined with a novelty-sensitive acquisition (explicit novelty term or cheap UCB) recovers to the top. Power analysis: ~97-114 seeds needed for 80% power on the key gaps (dz≈0.26-0.28).'
+            children:
+              - id: N37
+                type: decision
+                title: 'Frame Phase 3 as an interaction finding, not a proven main effect, for the thesis'
+                provenance: user
+                source: 'project_comprehensive_log.md:L232-238'
+                alternatives: ['Report the raw ranking as if it were a confirmed generalisation result']
+                evidence: 'Lead with the interaction (warm-start needs a novelty-sensitive acquisition to pay off) as a qualitative/mechanistic result; report the Holm-corrected table explicitly; note power-analysis seed counts (~97-114) as future work, not implying they will be run.'
+
+  # =====================================================================
+  # ROOT 4 — LLM-evolved acquisition functions (v2 era through v3-v7)
+  # =====================================================================
+  - id: N38
+    type: question
+    title: 'Can an LLM evolve better acquisition functions than fixed ones, and can design rules be derived for when different AFs work?'
+    provenance: user
+    source: 'llm_evolved_afs_comprehensive_log.md:L35-56'
+    children:
+      - id: N39
+        type: decision
+        title: 'v2.0 hint-set design: one hand-written seed + 6 strategy hints (FunBO/FunSearch-style)'
+        provenance: user
+        source: 'llm_evolved_afs_comprehensive_log.md:L194-215'
+        alternatives: ['Provide many hand-written AF implementations directly (the original 7-seed af_interface.py)']
+        evidence: 'Tests whether the LLM can generate diversity from one-line mechanism descriptions alone, following the FunBO/FunSearch/AlphaEvolve pattern.'
+        children:
+          - id: N40
+            type: dead_end
+            title: 'The 6-hint set traps the LLM in UCB space'
+            provenance: ai-executed
+            source: 'llm_evolved_afs_comprehensive_log.md:L204-236'
+            hypothesis: 'Six hints (fixed_ucb, ucb_plus_novelty, phase_decaying_ucb, novelty_only, ehvi_approx, mc_hvi_approx) span meaningfully different mechanisms.'
+            failure_mode: 'All 6 are UCB-style variants (mu_sum ± w*sigma_sum with different w(progress) schedules); on the mAb run (Run 3) all 8 surviving AFs were simple UCB variants — the evolution explored a tiny corner of AF space.'
+            lesson: 'Design hint sets to span genuinely distinct mechanism families, not superficial variants of one family.'
+          - id: N41
+            type: decision
+            title: 'Revise to v2.1: 8-hint set spanning genuinely distinct mechanisms'
+            provenance: user
+            source: 'llm_evolved_afs_comprehensive_log.md:L217-236'
+            alternatives: ['Keep the 6-hint set and accept UCB-only diversity']
+            evidence: 'Kept 3 UCB variants, replaced ehvi_approx/mc_hvi_approx with noisy_front_hvi (resamples the Pareto front under noise), replaced novelty_only with outcome_novelty (objective-space novelty), added 3 new families from the batch-BO/trust-region literature: dpp_diversity (Nava/Mutný/Krause 2021), local_penalization (Gonzalez et al. 2016), pareto_membership (NOSTRA-inspired).'
+            also_depends_on: [N40]
+      - id: N42
+        type: experiment
+        title: 'Run 1: coatings, gamma=0.005, n=15 — stagnates at gen 0'
+        provenance: ai-executed
+        timestamp: '2026-07-28'
+        source: 'llm_evolved_afs_comprehensive_log.md:L240-296'
+        result: 'hint_fixed_ucb holds the lead all 20 generations (fitness +0.0543 unchanged). gen9_child0 has a higher margin (+9.98% vs +9.43%) but higher LOC (10 vs 8); the LOC penalty (0.005×2=0.01) exceeds the margin gap (0.0056), so it loses. All 8 final AFs are UCB-family. Lesson recorded: n=15 inflates margins (~9%) vs the true ~3-5% seen in Run 2.'
+      - id: N43
+        type: experiment
+        title: 'Run 2: coatings, gamma=0.005, n=75 — margins shrink, still stagnates'
+        provenance: ai-executed
+        timestamp: '2026-07-30'
+        source: 'llm_evolved_afs_comprehensive_log.md:L298-367'
+        result: 'With 75 campaigns margins shrink from ~9% to ~3.4% (n=15''s large margins were small-sample variance). 6/8 final AFs have negative fitness (margin doesn''t cover the LOC penalty). Held-out validation (25 campaigns): 5/8 AFs significant (p<0.05), margins +2.9% to +6.4% — later shown to be partly seed noise (Section 12/13).'
+      - id: N44
+        type: experiment
+        title: 'Run 3: mAb, gamma=0.005, n=75 — stagnates, foreshadows the noise problem'
+        provenance: ai-executed
+        timestamp: '2026-07-30'
+        source: 'llm_evolved_afs_comprehensive_log.md:L370-433'
+        result: 'trust_only holds the lead all 20 generations (fitness +0.0124). All 8 final AFs UCB-family; 6/8 negative fitness. random_init_0 (a randomly generated 4.085*mu_sum AF) is rank-equivalent to trust_only, confirming score_pool only matters for ranking, not absolute scale.'
+      - id: N45
+        type: experiment
+        title: 'Run 4: coatings, gamma=0.001, n=75, 8-hint set — the only run that progressed'
+        provenance: ai-executed
+        timestamp: '2026-07-31'
+        source: 'llm_evolved_afs_comprehensive_log.md:L436-535'
+        result: 'gen6_child0 (front-range-normalised sigma, fixed weight 0.5) beats trust_only at generation 6 (fitness +0.0284 vs +0.0278) — the margin improvement (+0.367%) exceeded the recalibrated LOC penalty (gamma=0.001×3 LOC diff=0.003). Stagnates for 14 more generations after that. Held-out validation: 8/8 significant, but 7/8 had IDENTICAL HV=444.8 and p=0.0160 (rank-equivalent) — the improvement over EGBO-novelty comes from mu_sum exploitation itself, sigma''s marginal contribution is only ~0.3%.'
+        also_depends_on: [N41]
+        children:
+          - id: N46
+            type: dead_end
+            title: 'None of the 4 new v2.1 hint mechanisms survived into the final population'
+            provenance: ai-executed
+            source: 'llm_evolved_afs_comprehensive_log.md:L507-533'
+            hypothesis: 'The 4 new mechanisms (DPP diversity, local penalization, noisy-front HVI, Pareto-membership) would diversify the evolved population beyond UCB variants.'
+            failure_mode: '2 of 4 were broken, 1 drifted (measured the wrong thing), 1 was correct but lost to UCB — Run 4 is not a clean test of whether the new mechanisms add value.'
+            lesson: 'A hint mechanism''s absence from the final population can mean "genuinely worse" or "never correctly implemented" — always inspect the generated code before drawing a mechanism-level conclusion.'
+            children:
+              - id: N47
+                type: dead_end
+                title: 'noisy_front_hvi: repetition-loop pathology, never returns'
+                provenance: ai-executed
+                source: 'llm_evolved_afs_comprehensive_log.md:L575-591'
+                hypothesis: 'The LLM can implement a noise-resampled expected-hypervolume-improvement estimate in one function.'
+                failure_mode: '54 of 71 lines are hedging comments ("placeholder", "simplify", "not exact") — the LLM spirals through repeated false starts and never reaches a return statement; scores array stays all-zero, so every candidate ties (effectively random selection).'
+                lesson: 'Reword hints to demand code immediately with minimal commentary, and suggest a simple proxy (e.g. distance to nearest front point) rather than asking for a full HV algorithm from scratch.'
+              - id: N48
+                type: dead_end
+                title: 'local_penalization: three distinct bugs (empty-list index error, inverted penalty direction, float-as-index TypeError)'
+                provenance: ai-executed
+                source: 'llm_evolved_afs_comprehensive_log.md:L593-633'
+                hypothesis: 'The LLM can implement Gonzalez et al.''s local-penalization batch-diversity heuristic correctly from a one-line hint.'
+                failure_mode: 'scores initialised as an empty list then indexed (IndexError); penalty_factor formula applies exp(-radius) so CLOSE candidates keep near-full score and FAR candidates get suppressed — backwards; a single-remaining-candidate branch indexes a list with a float (TypeError).'
+                lesson: 'Hint wording must be explicit about initialization, suppression direction, and edge-case selection logic, not just the high-level mechanism name.'
+              - id: N49
+                type: dead_end
+                title: 'pareto_membership: wrong dominance direction'
+                provenance: ai-executed
+                source: 'llm_evolved_afs_comprehensive_log.md:L635-664'
+                hypothesis: 'The LLM can correctly implement "probability a candidate is Pareto-optimal" (not dominated by the current front) from the hint text.'
+                failure_mode: 'The generated code instead checks "does this candidate dominate a front point" — the opposite event — verified with a concrete counterexample (a genuinely Pareto-optimal sample gets penalised for improving the front instead of rewarded).'
+                lesson: 'Dominance-direction hints must state explicitly which direction ("DOMINATED BY the front", not "dominates the front") is intended.'
+              - id: N50
+                type: experiment
+                title: 'dpp_diversity: correct implementation, lost to mu_sum dominance'
+                provenance: ai-executed
+                source: 'llm_evolved_afs_comprehensive_log.md:L541-573'
+                result: 'Correctly implemented min-max-normalised quality × (1 - mean similarity to top-10% candidates), but lost because on coatings any uncertainty-adjacent mechanism gets swamped by mu_sum exploitation — the one clean, non-buggy negative signal from the 4 new hints.'
+          - id: N51
+            type: decision
+            title: 'Identify the "mu_sum dominance" design rule on coatings'
+            provenance: user
+            source: 'llm_evolved_afs_comprehensive_log.md:L1004-1010'
+            alternatives: ['Attribute Run 4''s 7/8 rank-equivalence to a held-out-validation artifact']
+            evidence: '7/8 Run 4 AFs had identical held-out HV=444.8 — any nonzero uncertainty weight (fixed, decaying, stagnation-boosted) produces the same batch selections on coatings. Implication: coatings is the wrong substrate for AF evolution because the evolution cannot optimise what it cannot distinguish.'
+      - id: N52
+        type: experiment
+        title: 'Noise diagnostic: mAb fitness signal is 5x smaller than seed+domain noise'
+        provenance: ai-executed
+        source: 'llm_evolved_afs_comprehensive_log.md:L785-834'
+        result: 'CV=49.7% on mAb HV; SE of mean margin=0.057, signal gap (best-worst AF margin)=0.011 — SE is 5x the signal. Variance decomposition: 29% seed noise (GP-fit + U-NSGA-III seed), 71% domain noise (oracle stochasticity). A natural fix (pair AF/baseline on the same seed) fails: their RNG streams decorrelate by batch 2-3 as selected candidates diverge.'
+        also_depends_on: [N44]
+        children:
+          - id: N53
+            type: dead_end
+            title: 'Seed-pairing does not cancel seed noise'
+            provenance: ai-executed
+            source: 'llm_evolved_afs_comprehensive_log.md:L820-834'
+            hypothesis: 'Pairing the AF and baseline on the same random seed will cancel seed-driven variance in their difference.'
+            failure_mode: 'The AF and baseline select different candidates from batch 1 onward, so they query different points, train on different data, and their downstream RNG streams decorrelate by batch 2-3 despite the shared starting seed.'
+            lesson: 'Multi-seed averaging (reduces the 29% seed-noise share by √n) and median/bootstrap fitness (addresses the 71% domain-noise share, which is skewed by outlier campaigns) are needed instead — pairing alone cannot fix downstream-pipeline noise.'
+      - id: N54
+        type: experiment
+        title: '3-seed mAb re-validation: the hint_fixed_ucb flip'
+        provenance: ai-executed
+        source: 'llm_evolved_afs_comprehensive_log.md:L838-880'
+        result: 'hint_fixed_ucb goes from p=0.596 (non-significant, 1 seed) to p=0.030 (significant, 3-seed averaged) — same AF, same campaigns, only the seed-averaging changed. 3/8 AFs significant after averaging (down from 4/8 single-seed); AFs with a stagnation-novelty term (gen4_child0, gen1_child1) DROP below significance under averaging while simpler progress-only-decay AFs (gen5_child0, gen9_child0) hold and strengthen.'
+        also_depends_on: [N52]
+      - id: N55
+        type: experiment
+        title: 'Cross-domain transfer: coatings-evolved AFs fail on mAb and on noiseless synthetic benchmarks'
+        provenance: ai-executed
+        source: 'llm_evolved_afs_comprehensive_log.md:L727-772; L884-919'
+        result: 'Coatings→mAb: 0/8 significant. Coatings→ZDT1: 0/8 positive significant, 4/8 significantly WORSE (margins -0.10% to -0.79%). Coatings→DTLZ2: 0/8 positive significant, 1/8 significantly worse. AFs evolved on coatings are overfit to that domain''s specific noise/landscape structure.'
+      - id: N56
+        type: decision
+        title: 'The "floor rule": uncertainty bonuses help on noisy real domains, hurt/neutral on noiseless synthetic ones'
+        provenance: user-revised
+        source: 'llm_evolved_afs_comprehensive_log.md:L774-782; L1182-1184'
+        alternatives: ['State the floor rule as a proven causal mechanism']
+        evidence: 'Observed across coatings/mAb (uncertainty bonus +3-6% HV over pure exploitation) vs ZDT1/DTLZ2 (uncertainty bonus hurts or is neutral) — explicitly flagged by user correction as a re-description of observed data, not yet a tested causal rule; the noise-sweep needed to test it causally (vary observation noise on the synthetic benchmarks) was never run.'
+        also_depends_on: [N55]
+      - id: N57
+        type: dead_end
+        title: 'Composition pilot: within-batch joint composition hypothesis'
+        provenance: user
+        source: 'llm_evolved_afs_comprehensive_log.md:L927-933'
+        hypothesis: 'Strategy adaptation operates through implicit within-batch joint composition (a diverse batch composing exploration+exploitation) rather than an explicit adaptive weight.'
+        failure_mode: 'A narrow pilot comparing joint composition against independent per-candidate scoring came back NULL on both mAb and coatings.'
+        lesson: 'Joint composition does not explain strategy adaptation; the gate closes.'
+      - id: N58
+        type: dead_end
+        title: 'Generation-gate hypothesis'
+        provenance: user
+        source: 'llm_evolved_afs_comprehensive_log.md:L935-941'
+        hypothesis: 'Adaptation happens at the candidate-generation step (U-NSGA-III), not the scoring step.'
+        failure_mode: 'Comparing different generation strategies under the same scoring AF found no effect.'
+        lesson: 'Closed negative — generation-step choice does not drive adaptation.'
+      - id: N59
+        type: dead_end
+        title: 'Batch-size ablation hypothesis'
+        provenance: user
+        source: 'llm_evolved_afs_comprehensive_log.md:L943-949'
+        hypothesis: 'Batch size (1/3/5/10) modulates the exploration-exploitation trade-off.'
+        failure_mode: 'HV trajectories across batch sizes showed no explanatory effect.'
+        lesson: 'Closed negative.'
+      - id: N60
+        type: dead_end
+        title: 'Noise-integration gate hypothesis'
+        provenance: user
+        source: 'llm_evolved_afs_comprehensive_log.md:L951-957'
+        hypothesis: 'Explicitly weighting candidates by posterior variance drives adaptation on noisy domains.'
+        failure_mode: 'AFs using posterior std vs not using it showed no adaptation effect as implemented.'
+        lesson: 'Closed negative as implemented; not conclusively ruled out for all possible implementations.'
+      - id: N61
+        type: dead_end
+        title: 'DA-COREG alone: cross-objective co-regionalized GP does not improve over per-objective GPs'
+        provenance: user
+        source: 'llm_evolved_afs_comprehensive_log.md:L965-969'
+        hypothesis: 'A domain-aware co-regionalisation (DA-COREG) GP could capture cross-objective correlations that independent per-objective GPs miss.'
+        failure_mode: 'Closed negative — no improvement over the standard per-objective GP approach in this pre-evolution pilot.'
+        lesson: 'This dead end was revisited much later and in more depth in the sdl_adaptive DA-COREG thread (see Root 6) with a real bug found and fixed, and still shelved as negative even after the fix.'
+      - id: N62
+        type: pivot
+        title: 'Narrow scope from "LLM rewrites the optimiser" to "LLM evolves the acquisition function"'
+        provenance: user
+        source: 'llm_evolved_afs_comprehensive_log.md:L977-979'
+        trigger: 'LLaMEA-BO (existing literature) already uses an LLM inside an evolutionary loop to generate complete BO algorithms (surrogate + acquisition + initial design jointly) as Python code.'
+        rationale: 'Undercuts the novelty of "LLM rewrites the optimiser" as a contribution; narrowing to LLM-evolved acquisition functions specifically (holding the surrogate/candidate-generation fixed) is a narrower but more defensible claim.'
+      - id: N63
+        type: decision
+        title: 'Reject the "long-horizon escape hatch" for stagnating evolution runs'
+        provenance: user
+        source: 'llm_evolved_afs_comprehensive_log.md:L981-983'
+        alternatives: ['Increase campaign budget beyond 40 experiments to give evolved AFs more room to show an advantage']
+        evidence: 'Real SDL campaigns are short-horizon by premise (40 experiments / 6 batches); an AF that only shows an advantage with 200 experiments is not useful for the target use case. The short-horizon constraint is treated as non-negotiable, not a parameter to relax when results are disappointing.'
+
+      # ------------------------------------------------------------------
+      # v3 → v7 continuation: sandbox delta-seed evolution on a purpose
+      # -built synthetic domain (later commits, same overarching question)
+      # ------------------------------------------------------------------
+      - id: N64
+        type: decision
+        title: 'Build a controlled "tunable" synthetic oracle_family to avoid both known failure modes'
+        provenance: ai-executed
+        timestamp: '2026-08-31'
+        source: 'commit:dca5252'
+        alternatives: ['Continue evolving on coatings (blocked by mu_sum dominance, N51)', 'Continue evolving on mAb (blocked by the noise floor, N52)', 'Adopt the UCI Concrete Slump dataset']
+        evidence: 'A ZDT1-family controlled domain, built specifically to avoid coatings'' mu_sum dominance and excipient/mAb''s ~50% CV noise floor.'
+        also_depends_on: [N51, N52]
+        children:
+          - id: N65
+            type: dead_end
+            title: 'UCI Concrete Slump dataset audited and parked'
+            provenance: ai-executed
+            timestamp: '2026-08-31'
+            source: 'commit:dca5252'
+            hypothesis: 'Concrete Slump (pulled from the EGBO paper''s own repo) is a viable real-world evolution substrate.'
+            failure_mode: 'Its Pareto front tops out at ~8.7% under every objective pair/direction tried — the same near-degenerate multi-objective shape that got the original 3-objective coatings oracle rejected.'
+            lesson: 'Audit mu/sigma dominance and Pareto-front degeneracy on any candidate real dataset before adopting it as an evolution substrate.'
+          - id: N66
+            type: dead_end
+            title: 'Tunable-oracle noise-determinism gap'
+            provenance: ai-executed
+            timestamp: '2026-08-31'
+            source: 'commit:1ff7fff'
+            hypothesis: 'A fixed noisy realization of the tunable oracle replays identically on every reconstruction.'
+            failure_mode: 'reconstruct_oracle silently applied a fresh noise draw on top of an already-noisy dumped Y_raw every time it was called, breaking replay determinism between training-set generation and campaign replay.'
+            lesson: 'Add an explicit from_fixed_realization constructor that accepts an already-fixed Y_raw directly, and require logs to carry the noiseless ground truth (oracle_Y_true) alongside the noisy realization.'
+          - id: N67
+            type: experiment
+            title: 'Noise-floor validation on the tunable domain'
+            provenance: ai-executed
+            timestamp: '2026-08-31'
+            source: 'commit:1fe0c42'
+            result: 'Using trust_only as reference AF: paired-margin std=6.61% across 8 seeds, driven almost entirely by one outlier seed (-19.6%); excluding it, std=1.89%. Investigated directly (no pipeline bug) — trust_only itself is fragile on this domain because it has no uncertainty term. Switching to a simple UCB-style reference AF: std=0.64% across all 8 seeds, no outliers — ~40x cleaner than mAb''s 25.57%, and for the first time in the project, smaller than the ~1% margin gaps evolution targets.'
+          - id: N68
+            type: dead_end
+            title: 'Cross-campaign CV bug: fresh-oracle-pool-per-campaign inflates variance'
+            provenance: ai-executed
+            timestamp: '2026-08-31'
+            source: 'commit:8480897'
+            hypothesis: 'Building a fresh random 256-point oracle pool per campaign gives genuinely diverse problem instances.'
+            failure_mode: 'Measured cross-campaign CV=23.3% (final_hv ranged 7.7-19.2 across 16 held-out campaigns), far above the validated 1.5-2.9% — because this domain''s Pareto-optimal region requires 5 of 6 dimensions simultaneously near zero, a sparse target that different random pools land meaningfully different distances from by chance.'
+            lesson: 'Build one shared oracle and reuse it across every campaign, varying only initial-point draws — matching the validated design pattern already used for the coatings real-data oracle. Re-measured CV after the fix: 1.2% (final_hv 10.65-11.02 across all 16 held-out campaigns).'
+            also_depends_on: [N67]
+          - id: N69
+            type: experiment
+            title: 'Mode-collapse fix run 1: rotate anti-repetition mechanism suggestions'
+            provenance: ai-executed
+            timestamp: '2026-08-31'
+            source: 'commit:6b0af82'
+            result: 'run1 (30 generations, tunable domain) showed 25/30 stagnant, every stagnation-triggered proposal a near-verbatim restatement of one suggested exemplar (GP-posterior resampling). Added MECHANISM_FAMILIES + classify_mechanism_families(), tracking per-streak attempt counts (reset on improvement) and rewriting the annealing prompt note to forbid already-worn-out families while leading with least-tried ones.'
+            children:
+              - id: N70
+                type: dead_end
+                title: 'Champion-rehash gap: family-rotation guard doesn''t stop rewording the champion'
+                provenance: ai-executed
+                timestamp: '2026-08-31'
+                source: 'commit:55e840a'
+                hypothesis: 'Rotating through the four suggested mechanism families (N69) is sufficient to prevent stagnation-driven repetition.'
+                failure_mode: 'run2 (30 more generations) showed the family-rotation guard working exactly as designed — genuine rotation, all four families tried and rejected — but the run still stagnated for 30 generations because once every family was "worn out," the model just reworded the CURRENT CHAMPION''s own idea, which is a moving target invisible to the four fixed family exemplars.'
+                lesson: 'Need a champion-similarity guard (word-overlap/Jaccard similarity vs best_so_far''s own docstring) in addition to family rotation.'
+                also_depends_on: [N69]
+                children:
+                  - id: N71
+                    type: dead_end
+                    title: 'Textual "don''t rehash the champion" ban is ignored'
+                    provenance: ai-executed
+                    timestamp: '2026-08-31'
+                    source: 'commit:b34690a'
+                    hypothesis: 'Adding a prose instruction forbidding champion-rehash to the prompt (after N70''s guard is added) will stop the behaviour.'
+                    failure_mode: 'The guard correctly detected the repetition (family_attempt_counts for champion_rehash climbed 0→11 over 14 generations) but the model kept producing near-identical rehashes (similarity 0.35-0.73) even calls after the ban was active — the champion''s own docstring/code, quoted verbatim in every prompt, is evidently a stronger pull than a negative instruction not to use it.'
+                    lesson: 'Detect the violation post-hoc and hard-redirect: discard a rehash-classified response once already banned this streak, and regenerate exactly once from a stripped-down prompt with NO parent code and NO best-so-far reference at all — removing the anchor structurally instead of asking the model to ignore it.'
+                    also_depends_on: [N70]
+                    children:
+                      - id: N72
+                        type: dead_end
+                        title: 'Generic-repeat gap: repetition of non-champion ideas invisible to both guards'
+                        provenance: ai-executed
+                        timestamp: '2026-08-31'
+                        source: 'commit:dc0e6ad'
+                        hypothesis: 'The champion-rehash guard (N71) plus family-rotation guard (N69) together cover all repetition failure modes.'
+                        failure_mode: 'v4 run1 stagnated 16+ straight generations on repeated ideas that were neither the champion nor one of the four fixed families: three cosmetic restatements of a UCB+novelty formula that never won, plus one byte-identical repeat — invisible to champion_rehash_similarity (only compares against best_so_far) and to classify_mechanism_families (keyword lists don''t cover this phrasing).'
+                        lesson: 'generic_repeat_similarity: compare each new stagnation-triggered child against a rolling window of ALL recent stagnation children''s docstrings, not just the champion''s, using the same validated word-overlap threshold.'
+                        also_depends_on: [N71]
+      - id: N73
+        type: experiment
+        title: 'v4: expose EGBO''s real qLogNEHVI acquisition value to evolved AFs'
+        provenance: user
+        timestamp: '2026-08-31'
+        source: 'commit:1e84491'
+        result: 'Investigated the actual EGBO code before assuming a port was straightforward: EGBO''s per-candidate score is botorch''s own qLogNEHVI MC-integral acquisition value (not GP mean/std), previously never exposed to score_pool; EGBO''s sequential-greedy novelty term (depends on what''s already picked earlier in the batch) structurally cannot be expressed as a one-shot per-candidate score list and was NOT fixed. Exposing the acquisition value itself was cheap (one extra batched acq_fn call). Verified: pure acq_value_norm alone reaches final_hv=10.92 on a held-out campaign, inside real EGBO-novelty''s own range (10.86-10.94) — far closer than any hand-rolled HV approximation reached across 128+ LLM calls in v3''s combined runs.'
+      - id: N74
+        type: dead_end
+        title: 'v3/v4 champions never generalize beyond their exact training distribution'
+        provenance: ai-executed
+        timestamp: '2026-09-05'
+        source: 'commit:3312234'
+        hypothesis: 'v3/v4 champions'' failure to generalize to mAb/coatings is a synthetic-vs-real noise-structure mismatch.'
+        failure_mode: 'A synthetic-to-synthetic check (v3''s champion vs DTLZ2, a domain it never trained on) showed the SAME failure — statistically indistinguishable from random scoring — ruling out "synthetic vs real noise" as the explanation. Champions are overfit to their exact training distribution, not merely to "syntheticness."'
+        lesson: 'Motivated v5''s multi-domain fitness (train against a combined score across domains, hold one out entirely for validation) as a direct fix rather than hoping generalization emerges post-hoc.'
+        children:
+          - id: N75
+            type: experiment
+            title: 'v5: multi-domain fitness'
+            provenance: ai-executed
+            timestamp: '2026-09-05'
+            source: 'commit:3312234'
+            result: 'evaluate_af_multi_domain trains against a combined score across tunable+coatings+mAb, with DTLZ2 held out entirely for validation, using sequential gating (cheapest/cleanest domain first) and gamma reset to 0 (the old adaptive-gamma formula was calibrated for single-domain margin scale).'
+            children:
+              - id: N76
+                type: dead_end
+                title: 'v5 fitness formula (mean - lambda*std) doesn''t track true generalization'
+                provenance: ai-executed
+                timestamp: '2026-09-05'
+                source: 'commit:d5eaf8d'
+                hypothesis: 'Penalising cross-domain std alongside the mean margin selects for genuinely consistent (generalizing) AFs.'
+                failure_mode: 'A power diagnostic against v5''s real run1+run2 history found only 1 of 8 "improving" fitness events across 300 generations was distinguishable from noise — mostly a signal problem, not just a formula problem. The std penalty also duplicates the gate''s harm-prevention job in the wrong direction (punishes upside variance among already-safe candidates) and conflates domain-intrinsic noise scale with genuine cross-domain inconsistency.'
+                lesson: 'Use a unit-free, per-domain z-scored fitness (mean of score/SE per domain) instead — verified against real v5 run2 gen81/gen114 data: the old formula picks gen114 (the actual, buggy outcome); the z-scored formula correctly flips to gen81.'
+                also_depends_on: [N75]
+      - id: N77
+        type: decision
+        title: 'v6: bundle noisy-synthetic substrate, delta-seed contract, and z-scored fitness'
+        provenance: user
+        timestamp: '2026-09-05'
+        source: 'commit:d5eaf8d; commit:9f5456a'
+        alternatives: ['Continue with noiseless synthetics (blocked by the floor rule, N56)', 'Continue with real mAb/coatings data (too low signal-to-noise at affordable campaign counts)']
+        evidence: 'Noisy-synthetic substrate (ZDT1@15%CV, DTLZ2-3obj@30%CV, ZDT3@50%CV, held-out DTLZ2-5obj@35%CV) sidesteps both known failure modes. Delta-seed contract: modifier(context) returns only a correction term, with the sandbox structurally adding context[pool][i][acq_value_norm] itself (not a convention) — motivated by every real v5 champion turning out to be acq_value_norm plus a small correction anyway (N73).'
+        also_depends_on: [N56, N73, N76]
+        children:
+          - id: N78
+            type: dead_end
+            title: 'v6 run1: classic overfitting signature despite the noisy-substrate + z-scored fixes'
+            provenance: ai-executed
+            timestamp: '2026-09-05'
+            source: 'commit:d5eaf8d'
+            hypothesis: 'Noisy-synthetic substrate plus z-scored fitness (N77) is sufficient to fix cross-domain generalization.'
+            failure_mode: 'Champion locked in at generation 10, flat for 40 generations. Held-out validation: positive only on the training domain it fit best (dtlz2_3obj, +1.75%), negative on the other two training domains AND the never-trained-on target (dtlz2_5obj, ci_lower -3.21%).'
+            lesson: 'Per the GP-generalization literature (interleaved/random fitness-case sampling, down-sampled lexicase selection): a STATIC training set scored the same way every generation is exactly the regime that breeds overfitting, regardless of how the fitness score itself is computed.'
+            children:
+              - id: N79
+                type: experiment
+                title: 'v7: per-generation resampling fix'
+                provenance: ai-executed
+                timestamp: '2026-09-05'
+                source: 'commit:e78b1d8'
+                result: 'resample_domain_configs_for_gen draws a fresh, deterministic K=3-per-domain subset every generation; the entire population is re-scored fresh each generation (not just new children) since v6''s elitist-persistent fitness storage becomes wrong once the training subsample itself moves. Held-out margin on the never-trained target (dtlz2_5obj) improved from ci_lower -3.21% (v6) to ci_lower -1.29% (v7) — statistically indistinguishable from baseline — but the champion still does not beat baseline outright, just no longer clearly loses.'
+                also_depends_on: [N78]
+              - id: N80
+                type: dead_end
+                title: 'population[0] at the final generation is not necessarily the best individual over the run'
+                provenance: ai-executed
+                timestamp: '2026-09-05'
+                source: 'commit:e78b1d8'
+                hypothesis: 'The top-ranked individual in the final generation''s population is the best AF the run found.'
+                failure_mode: 'Under per-generation resampling, real run1 fitness swung from ~-1,000,001 to +51 to +1.78 generation to generation purely from resampling noise — population[0] at the end is just whoever won that generation''s random draw.'
+                lesson: 'Re-score the final population against the FULL campaign pool before validation as a required step, not optional polish — in real run1, 11 of 12 final-population members failed this full-pool gate outright.'
+                also_depends_on: [N79]
+              - id: N81
+                type: pivot
+                title: 'Recommend against further generations of the same v6/v7 setup'
+                provenance: user
+                timestamp: '2026-09-05'
+                source: 'commit:e78b1d8'
+                trigger: 'Two full runs (v6, v7), with the measurement problem (N76) and the overfitting problem (N78) each diagnosed and fixed in turn, converge on the same ceiling: the champion no longer clearly loses on held-out data, but never beats baseline outright either.'
+                rationale: 'More generations of an already-converged setup is not the recommended next move; the finding is treated as a real ceiling of this design, not a not-yet-converged run.'
+                also_depends_on: [N79, N80]
+
+  # =====================================================================
+  # ROOT 5 — sdl_adaptive: adaptive campaign planner
+  # =====================================================================
+  - id: N83
+    type: question
+    title: 'Can an LLM make good strategy-level (meta) decisions in a simulated SDL campaign, not new optimisation math?'
+    provenance: user
+    timestamp: '2026-08-03'
+    source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L7-9'
+    children:
+      - id: N84
+        type: decision
+        title: 'Use an NN-based oracle instead of a GP oracle'
+        provenance: user
+        source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L14-15'
+        alternatives: ['A GP oracle fit directly to the real coatings/pareto datasets']
+        evidence: 'A GP oracle was found to extrapolate to 193x the empirical maximum on the coatings dataset (7D, only 91 points) — rejected as unreliable for ground-truth scoring.'
+      - id: N85
+        type: experiment
+        title: 'Original 9-condition x 5-dataset x 20-seed run'
+        provenance: user
+        source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L47-50'
+        result: 'Mean AUC 0.69-0.96 across conditions/datasets; approach_a (LLM tunes UCB β) scored highest on coatings (0.945). Conditioning on "bad starts" reshuffles rankings (e.g. fixed_random beats several LLM/mock conditions on pareto_20201218) — no approach dominates once initialisation luck is controlled for.'
+      - id: N86
+        type: experiment
+        title: 'results_oracle_gap: isolated LLM hyperparameter judgment calls'
+        provenance: user
+        source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L52-56'
+        result: 'AUC nearly identical across default/llm/oracle conditions per dataset/budget. A rerun with the larger qwen2.5:14b-instruct model showed ls_mode_err uniformly WORSE with the LLM than the naive default in every dataset (e.g. pareto 0.39→0.79) while absolute AUC barely moved. Net conclusion: isolated LLM hyperparameter judgment calls do not approach oracle-level tuning, and a larger model makes the lengthscale-mode judgment worse, not better.'
+      - id: N87
+        type: experiment
+        title: 'results_fcs_sweep: routing-start-step sweep'
+        provenance: user
+        source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L57-71'
+        result: 'EGBO scores highest full/conditioned AUC across all four fcs settings (5/10/15/20) on both pareto_20201218 (flat) and hartmann6 (structured), beating rule_router and approach_d in every row — no crossover fcs value found where routing-start-time changes the ranking.'
+      - id: N88
+        type: experiment
+        title: 'results_power2 (n=80): clearest EGBO win, approach_c_evo initially looks weakest'
+        provenance: user
+        source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L79-92'
+        result: 'egbo=0.805±0.116, novelty_egbo=0.791±0.131, approach_c≈0.71, approach_c_evo=0.708±0.158 (weakest LLM-adjacent condition sampled here), fixed baselines≈0.71. Giving the LLM-authored optimiser access to evolutionary/novelty machinery did not close the gap to hand-tuned EGBO in this sample.'
+      - id: N89
+        type: dead_end
+        title: 'EGBO silent-fallback bug in strategies.py'
+        provenance: ai-executed
+        source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L131-143'
+        hypothesis: 'When approach_d (the LLM router) selects "egbo"/"novelty_egbo", the real evolutionary-GP-BO implementation runs.'
+        failure_mode: 'egbo()/novelty_egbo()/egbo_discrete()/novelty_egbo_discrete() silently substituted random_search whenever torch/botorch/gpytorch/pymoo were not importable in the running interpreter, with only a one-time log warning and no entry in switch_logs.json''s failures list. Confirmed via readlink -f /proc/<PID>/exe that the historical run actually executed under the bare /usr/bin/python3.12, which lacks these dependencies. Per-dataset "egbo" request share silently confounded with random: coatings ~10%, pareto_20201218 ~50%, pareto_20201223 ~46%, pareto_20210104 ~45%, pareto_20210112 ~40% — up to ~50% of approach_d''s "egbo" decisions on Pareto datasets were confounded with random search pre-fix.'
+        lesson: 'Raise RuntimeError instead of silently falling back, so the existing per-step exception handler both falls back to random AND records the step in switch_logs.json.failures — make the same failure mode visible/counted instead of invisible.'
+        also_depends_on: [N88]
+        children:
+          - id: N90
+            type: experiment
+            title: 'Re-run approach_d post-fix (results_d_fixed)'
+            provenance: ai-executed
+            source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L143'
+            result: 'auc_best shifted mostly on the highest-bug-rate dataset: pareto_20210104 0.732→0.776; coatings 0.923→0.937; pareto_20201218/20201223 roughly flat; pareto_20210112 0.798→0.789 (slightly down). failure_count in metrics_summary.csv read 0 both before and after — a separate metric-plumbing gap, switch_logs.json.failures is the reliable signal instead.'
+      - id: N91
+        type: dead_end
+        title: 'Data-loss incident: uncommitted result directories deleted from the shared checkout'
+        provenance: user
+        source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L172-178'
+        hypothesis: 'Generated results_a/b/c/d_fixed/baselines/egbo and figures_combined/ would persist until intentionally committed.'
+        failure_mode: 'They were found deleted by a process not run by this session (plausibly a concurrent session sharing the same checkout) before being committed. git fsck found two dangling stash WIP commits, but plain git stash never captured these untracked directories. COMMIT_EDITMSG misleadingly suggested a commit had happened when it had not.'
+        lesson: 'git log/git show, not the presence of a COMMIT_EDITMSG file, are the only reliable way to confirm a commit actually landed; commit generated results immediately rather than letting them sit uncommitted in a shared checkout. Resolved 2026-08-11: recovery had already been done independently on an unmerged worktree branch (commits 2bcad66/ff47199/8b31679) roughly 10 hours before this incident was documented as still-open, and was later merged in.'
+      - id: N92
+        type: experiment
+        title: 'Full-campaign AUC interpretation (results_combined, 14 conditions x 5 datasets x 20 seeds)'
+        provenance: user
+        source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L152-166'
+        result: 'EGBO significantly beats standard baselines on 4/5 datasets; LLM approaches (A/B/C/D) are largely statistically indistinguishable from fixed baselines except vs. the weakest baseline (fixed_ucb_low, p<0.01 for all four). EGBO beats all four LLM approaches significantly, essentially everywhere compared. EGBO''s edge is front-loaded — already significant by step 40 of the campaign, not something accrued only late.'
+        also_depends_on: [N90]
+        children:
+          - id: N93
+            type: pivot
+            title: 'Motivated the move to the differently-designed llm_bo sibling project'
+            provenance: user
+            source: 'sdl_adaptive/COMPREHENSIVE_LOG.md:L214'
+            trigger: 'Hand-coded EGBO outperforms every LLM-driven approach (A/B/C/C-evo/D) and every fixed/rule-based baseline tested here, especially in the larger, more carefully controlled runs.'
+            rationale: 'Moved to the llm_bo project''s differently-designed mechanism (candidate-pool ranking with domain-knowledge priors), which found a more favourable result for LLM value-add via a different route than strategy-level routing.'
+      - id: N94
+        type: experiment
+        title: 'Qualitative code-log analysis: only 3 structurally distinct implementations across 18 approach_c/c_evo calls'
+        provenance: user
+        source: 'sdl_adaptive/approach_c_qualitative_analysis.md:L13-24,72-77'
+        result: 'Generation A (plain GP-UCB, 2/18 calls), Generation B (adds evolutionary/novelty machinery but re-runs a redundant second candidate pool, 12/18 calls, all structurally identical to each other), Generation C (collapses the two redundant blocks into one, 4/18 calls). 12 of 18 calls are exact duplicates; the LLM iterated only once further across 18 independent rewrite calls — near-total code stagnation. beta=2.0 hardcoded in all 18 versions with no decay schedule ever explored.'
+        children:
+          - id: N95
+            type: dead_end
+            title: 'Dead-acquisition-score bug: evolutionary candidates scored zero in 16/18 approach_c_evo logs'
+            provenance: ai-executed
+            source: 'sdl_adaptive/approach_c_qualitative_analysis.md:L26-36'
+            hypothesis: 'Evolutionary candidates merged into the scoring pool are ranked fairly alongside GP candidates.'
+            failure_mode: 'acq_scores = np.concatenate([gp_scores, np.zeros(72)]) — the LLM''s own comment ("dummy scores for evo candidates") shows it knew this was a stand-in, and it was never fixed across 16 subsequent identical or near-identical calls. novelty_select(merit_weight=0.7) then means evolutionary candidates can only ever be selected on the 0.3-weighted novelty term, structurally starved regardless of how promising they actually are.'
+            lesson: 'The LLM can and does ship silent, self-introduced regressions in its own generated code without catching them across repeated calls — a real, causal, and repeated failure mode, distinct from whether the overall approach is competitive.'
+            also_depends_on: [N88]
+            children:
+              - id: N96
+                type: experiment
+                title: 'Bug-fix proxy rerun confirms the causal mechanism'
+                provenance: ai-executed
+                source: 'sdl_adaptive/approach_c_qualitative_analysis.md:L40'
+                result: 'Patching only the one line (evo_cands score with the same mu+beta*sigma prediction as plain candidates, instead of hardcoded zero) and replaying deterministically across the identical 80-seed protocol: AUC rose from 0.708 to 0.793 (n=80, std 0.117) — closing ~88% of the gap to egbo (0.805), landing essentially level with novelty_egbo (0.791).'
+                also_depends_on: [N95]
+              - id: N97
+                type: pivot
+                title: 'Live rerun overturns the "approach_c_evo is the weakest LLM condition" narrative'
+                provenance: ai-executed
+                source: 'sdl_adaptive/approach_c_qualitative_analysis.md:L42-70'
+                trigger: 'The 0.708 figure that motivated the whole bug investigation came from results_power2: 80 seeds on a single dataset (pareto_20210112), not comparable to the 20-seed x 5-dataset protocol used for approach_a/b/c/d.'
+                rationale: 'A fair, matching-protocol live rerun (real qwen3-coder:30b calls, fresh code per seed, 20 seeds x 5 datasets) shows approach_c_evo is not, on average, the weakest LLM condition — it is the STRONGEST one (mean AUC 0.851, ahead of approach_a 0.842, approach_c 0.840, approach_b 0.833, approach_d 0.818), and on pareto_20201218 it edges out both EGBO baselines narrowly (0.851 vs egbo''s 0.850 and novelty_egbo''s 0.849). The dead-acquisition-score bug (N95) is real and repeated in the saved snapshots inspected, but the LLM does not reliably reproduce that exact bug across independent live generations — both findings are true and worth reporting together, not in tension.'
+                also_depends_on: [N88, N96]
+
+  # =====================================================================
+  # ROOT 6 — sdl_adaptive: DA-COREG and front-range-norm investigation thread
+  # =====================================================================
+  - id: N98
+    type: experiment
+    title: 'Gate 1/2/3 build: thread obj_correlation through the AF sandbox, DA-COREG training-step generator'
+    provenance: ai-executed
+    timestamp: '2026-08-11'
+    source: 'commit:8be8512'
+    result: 'Built the infrastructure needed to test whether a domain-aware co-regionalized GP (DA-COREG, the project''s own internal name for applying Bonilla/Chai/Williams-style multi-task GP modelling — see chapter2_citations.md §8) improves over independent per-objective GPs.'
+    also_depends_on: [N61]
+    children:
+      - id: N99
+        type: dead_end
+        title: 'DA-COREG per-task standardization bug caused variance collapse'
+        provenance: ai-executed
+        timestamp: '2026-08-11'
+        source: 'commit:ed0eed4; commit:694cc07'
+        hypothesis: 'The co-regionalized GP correctly shares statistical strength across the three objectives.'
+        failure_mode: 'A per-task standardization bug caused a variance-collapse pathology, discovered via posterior/campaign diagnostics added specifically to investigate the Gate 1/2/3 results.'
+        lesson: 'Multi-task GP implementations need explicit per-task (not global) standardization verified via posterior diagnostics, not assumed correct from a working single-task baseline.'
+        children:
+          - id: N100
+            type: dead_end
+            title: 'Post-fix Gate 2 re-run still negative — DA-COREG shelved on mAb'
+            provenance: ai-executed
+            timestamp: '2026-08-11'
+            source: 'commit:19b4edc'
+            hypothesis: 'Fixing the standardization bug (N99) will reveal a genuine DA-COREG benefit on mAb.'
+            failure_mode: 'Re-running Gate 2 after the fix still shows no benefit.'
+            lesson: 'DA-COREG shelved on mAb — the fix was necessary to trust the diagnostic but was not sufficient to produce a positive result.'
+            also_depends_on: [N99]
+      - id: N101
+        type: experiment
+        title: 'Gate 3: DTLZ2 objective_names bug found and fixed, clean closed-loop win reported'
+        provenance: ai-executed
+        timestamp: '2026-08-12'
+        source: 'commit:3badeab'
+        result: 'A separate objective_names threading bug on DTLZ2 was found and fixed, after which Gate 3 reports a clean closed-loop win on that domain.'
+      - id: N102
+        type: dead_end
+        title: 'mAb Gate 3 closed-loop negative confirmed with real seed-averaged power'
+        provenance: ai-executed
+        timestamp: '2026-08-12'
+        source: 'commit:ffd2ad2'
+        hypothesis: 'The DTLZ2 win (N101) might also hold on mAb once measured with adequate seed-averaged statistical power.'
+        failure_mode: 'The mAb Gate 3 result remains negative even under a properly powered seed-averaged test.'
+        lesson: 'DA-COREG''s benefit, where it exists at all, does not transfer from DTLZ2 to the real mAb formulation domain.'
+        also_depends_on: [N100, N101]
+      - id: N103
+        type: experiment
+        title: 'Section 22 design: DA-COREG + ParEGO + front-range-norm + hybrid marginals'
+        provenance: user
+        timestamp: '2026-08-07'
+        source: 'commit:f93bb37; commit:f0dd2aa'
+        result: 'Design discussion and execution plan for combining DA-COREG with ParEGO scalarisation, front-range normalisation, and hybrid marginals — laid the groundwork for the front-range-norm sub-thread below.'
+        children:
+          - id: N104
+            type: experiment
+            title: 'Section 22 step 1: front-range norm ruled out on DTLZ2'
+            provenance: ai-executed
+            timestamp: '2026-08-09'
+            source: 'commit:f66452b'
+            result: 'The front-range-normalised sigma modification (gen6_child0''s mechanism from the earlier AF-evolution work, N45) does not win on DTLZ2 when tested as a standalone confirmatory spec.'
+          - id: N105
+            type: experiment
+            title: 'Section 23: GP-UCB-schedule confirmatory robustness spec on coatings'
+            provenance: ai-executed
+            timestamp: '2026-08-07'
+            source: 'commit:92ed8d2; commit:e98db9a; commit:3af039d'
+            result: 'A locked-down confirmatory spec run with no tuned beta (removing the possibility that a previously-tuned hyperparameter was doing the work) confirms front-range norm does not win on coatings either.'
+            also_depends_on: [N104]
+            children:
+              - id: N106
+                type: dead_end
+                title: 'Section 23 sign-convention bug: "positive effect" initially meant gen6 was WORSE, not better'
+                provenance: ai-executed
+                timestamp: '2026-08-07'
+                source: 'commit:4afecab'
+                hypothesis: 'A positive measured effect size in the confirmatory spec means front-range norm (gen6) outperforms the baseline.'
+                failure_mode: 'The sign convention was inverted — a positive effect actually meant gen6 was WORSE, not better — silently flipping the interpretation of the result until caught.'
+                lesson: 'Explicitly audit and state sign conventions before reporting an effect direction, especially when re-purposing a metric across scripts.'
+              - id: N107
+                type: experiment
+                title: 'Growth-aware v2/v3 variant tested on coatings, closes the Section 23 thread'
+                provenance: ai-executed
+                timestamp: '2026-08-09'
+                source: 'commit:8d4efb4; commit:3af039d'
+                result: 'A growth-aware variant of the front-range mechanism was tested alongside the plain check and both logged; neither reverses the negative verdict — Section 23 closed.'
+                also_depends_on: [N106]
+          - id: N108
+            type: experiment
+            title: 'Frozen-denominator fix (pareto_front_range_init) tested — also negative, thread closed out'
+            provenance: ai-executed
+            timestamp: '2026-08-15'
+            source: 'commit:c3860d3; commit:1c7dfc6'
+            result: 'A candidate explanation — that the front-range denominator itself grows during the campaign and dilutes the normalisation''s intended effect — was tested by freezing it at its initial value (gen6_child0_frozen_denom condition). Also negative; the front-range-norm thread is closed out entirely across every domain tested.'
+            also_depends_on: [N105, N107]
+            children:
+              - id: N109
+                type: experiment
+                title: 'DTLZ2 generalization follow-up confirms front_range grows regardless of AF, on both domains'
+                provenance: ai-executed
+                timestamp: '2026-08-15'
+                source: 'commit:15b6e3e; commit:1dbd2b4'
+                result: 'track_front_range_dtlz2.py and the earlier track_front_range_coatings.py (commit:8db97d5) confirm the Pareto front_range metric grows over the campaign on both DTLZ2 and coatings regardless of which AF is used — front-range norm''s premise (a roughly-fixed denominator worth normalising against) does not hold on either domain, closing the mechanistic question the frozen-denominator fix (N108) was testing.'
+                also_depends_on: [N108]
+
+  # =====================================================================
+  # ROOT 7 — mo_bo_pipeline (separate repo): LLM pool-seeding investigation
+  # =====================================================================
+  - id: M01
+    type: question
+    title: 'Does LLM-informed pool seeding beat random/naive seeding for multi-objective BO under a strict small (~50-eval) budget?'
+    provenance: user
+    timestamp: '2026-09-05'
+    source: 'mo_bo_pipeline/README.md:L1-13'
+    children:
+      - id: M02
+        type: decision
+        title: 'Build a noisy synthetic skeleton first, before any real chemistry or LLM call'
+        provenance: user
+        source: 'mo_bo_pipeline/README.md:L14-35'
+        alternatives: ['Wire up real chemistry and the LLM immediately']
+        evidence: 'Two hard-earned lessons carried over directly from llm_af_evo (same session): the synthetic oracle must never be noiseless (a noiseless problem is already close to solved by a strong acquisition function, so "it works" proves nothing about the real noisy pipeline), and its ground truth must be an actually smooth function of category embeddings (a fixed random linear projection + ZDT1-style transform), not pure per-category noise, so the GP can genuinely learn structure.'
+        also_depends_on: [N56]
+      - id: M03
+        type: experiment
+        title: 'Synthetic skeleton validated end-to-end'
+        provenance: user
+        source: 'mo_bo_pipeline/FINDINGS.md:section 1'
+        result: 'Bad dimension/budget ratio (32D, budget 15): BO 1.18 vs random 1.22 — statistically indistinguishable, as expected (~5-10 points can''t inform a 32D kernel). Good ratio (18D, budget 50): BO 2.03 vs random 1.68 — BO clearly ahead. Validates the BoTorch/qLogNEHVI core loop, categorical embedding, and decision/feature-space assembly mechanics only, not anything about real chemistry.'
+      - id: M04
+        type: dead_end
+        title: 'LLM chemistry seeding vs. a self-authored synthetic oracle — abandoned for circularity'
+        provenance: user
+        source: 'mo_bo_pipeline/FINDINGS.md:section 2'
+        hypothesis: 'A hand-authored mAb-like excipient domain with reasoned Pareto-seed formulations can test whether "LLM chemistry seeding" beats naive Sobol seeding.'
+        failure_mode: 'llm_seeded_bo (1.78) < sobol_seeded_bo (2.34) < even sobol_seeded_random (1.84) — but since the oracle''s ground truth and the seeding heuristic were both authored by the same reasoning process, this can only demonstrate self-consistency, not real-world validity. Caught before over-interpreting: this is not "LLM chemistry seeding doesn''t help," it is "this test cannot tell us that."'
+        lesson: 'Any oracle whose ground truth and seeding heuristic are authored by the same reasoning process is circular by construction — abandon it in favour of independently-collected real data.'
+      - id: M05
+        type: experiment
+        title: 'Waibel et al. 2025 real mAb data (33 formulations) transcribed as a pool-based oracle'
+        provenance: user
+        source: 'mo_bo_pipeline/FINDINGS.md:section 3'
+        result: '33 real formulations transcribed from the paper''s own SI (pasted directly by the user after automated fetch attempts hit paywalls/bot-protection); objectives Tm/kD/RMAgi with real per-point SE from reported CIs.'
+        children:
+          - id: M06
+            type: experiment
+            title: 'Prior-belief check: the pre-Waibel arginine prior is WRONG for this molecule'
+            provenance: user
+            source: 'mo_bo_pipeline/FINDINGS.md:section 3a'
+            result: 'A clean, uncontaminated prior (mab_placeholder_domain''s belief that arginine is broadly beneficial, encoded with no knowledge of this dataset) checked against real Waibel correlations: Spearman(arginine_mM, objective) = -0.731 (Tm), -0.815 (kD), -0.713 (RMAgi) — all strongly negative, i.e. the opposite of the prior. Note: the paper''s own reported Fig S11 values (-0.31/-0.94/-0.94) are directionally consistent but not numerically matching; spot-checked against two landmark formulations and confirmed correct, so the discrepancy is left unresolved rather than glossed over as a transcription error.'
+          - id: M07
+            type: experiment
+            title: 'Waibel pool-based campaign replay'
+            provenance: user
+            source: 'mo_bo_pipeline/FINDINGS.md:section 3b'
+            result: 'our_bo and our_random both reveal a better early Pareto front than the real published sequence (round 1: published=47549, our_bo=65883, our_random=55545), with our_bo ahead of our_random. All three converge to the same final HV (74344) because the 33-point pool gets fully exhausted by round 4 for every strategy — explicitly flagged as a pool-exhaustion artifact, not a finding. n=1 per condition, one fixed real init set.'
+      - id: M08
+        type: experiment
+        title: 'AgNP real data validation (132 rows, original EGBO paper) — reproduces the paper''s own finding, but our_bo''s edge is confounded'
+        provenance: user
+        source: 'mo_bo_pipeline/FINDINGS.md:section 4'
+        result: 'Replaying real measured choices: published_algo1_qnehvi=0.0117, published_algo2_egbo=0.0134 (EGBO beats pure qNEHVI by +14%, the original paper''s own headline claim — reproduced independently, confirming transcription and math are sound). our_random (union pool)=0.0135, our_bo=0.0140 — but our_random, given the same strictly bigger union pool (120 vs 60 candidates each real algorithm had), already matches real EGBO, so most of our_bo''s extra lift is pool-size, not qLogNEHVI out-selecting EGBO''s evolutionary acquisition. Some genuine signal remains (our_bo ahead of our_random early: round 2, 0.0102 vs 0.0090).'
+      - id: M09
+        type: dead_end
+        title: 'ollama think:False silently ignored, causing a 2+ hour hang'
+        provenance: ai-executed
+        source: 'mo_bo_pipeline/FINDINGS.md:section 5'
+        hypothesis: 'Passing think: False inside ollama.chat()''s options dict disables qwen3:32b''s thinking mode.'
+        failure_mode: 'think is a top-level kwarg, not an options-dict key — silently does nothing. qwen3:32b (a reasoning model) stayed in thinking mode with only a 4096-token context window and hung for 2+ hours of runaway generation before being killed.'
+        lesson: 'Fix the think parameter placement, switch to a non-reasoning model (qwen2.5:14b-instruct) for the initial tests, and add a hard 180s per-attempt client timeout so a future hang fails fast instead of silently burning hours.'
+        children:
+          - id: M10
+            type: experiment
+            title: 'Real LLM pool seeding, Waibel single-seed'
+            provenance: user
+            source: 'mo_bo_pipeline/FINDINGS.md:section 5a'
+            result: 'Round-0 hypervolume: LLM-picked 13-point init 70,599 vs random 13-point init 67,051 (+5.3%). LLM-seeded init also reaches the pool''s HV ceiling one round sooner.'
+          - id: M11
+            type: experiment
+            title: 'Waibel 15-seed multiseed test'
+            provenance: user
+            source: 'mo_bo_pipeline/FINDINGS.md:section 5b'
+            result: 'llm_init round-0 HV=70,851±1,985 vs random_init=66,623±5,457 — +7.1% mean advantage. Three significance tests disagree: paired t-test p=0.020 (significant), Wilcoxon p=0.008 (significant), binomial sign test on win-rate alone p=0.118 (NOT significant) — a lopsided effect (a few large wins of +19-29%, several near-zero/slightly-negative seeds), not a uniform small edge. LLM picks show low cross-seed diversity (indices 0,3,7,27,28,30,32 recur in nearly every seed), meaning the effective independent sample size is smaller than 15.'
+            also_depends_on: [M10]
+          - id: M12
+            type: experiment
+            title: 'AgNP single-seed looks promising (+15.5%)'
+            provenance: user
+            source: 'mo_bo_pipeline/FINDINGS.md:section 5c'
+            result: 'Round-0 HV: LLM-picked 12-point init 0.0082 vs random 0.0071 (+15.5%, a bigger apparent edge than Waibel''s). A plausible-sounding narrative ("real early advantage washed out by round 15") was drafted from this single seed.'
+          - id: M13
+            type: dead_end
+            title: 'AgNP 15-seed test completely reverses the single-seed result'
+            provenance: ai-executed
+            source: 'mo_bo_pipeline/FINDINGS.md:section 5c'
+            hypothesis: 'The single-seed +15.5% AgNP advantage (M12) reflects a real, if fading, LLM benefit.'
+            failure_mode: 'At 15 seeds: llm_init round-0 HV=0.00603±0.00175 vs random=0.00801±0.00165 — a SIGNIFICANT NEGATIVE effect (-23.3%; paired t-test p=0.0022, Wilcoxon p=0.0026), LLM beat random in only 3/15 seeds. Cause: index 20 appears in the LLM''s selection in 15/15 seeds and indices 97/131/79 in 13/15 — the LLM''s reasoning collapses to nearly the same fixed picks regardless of seed, and here that confident fixed pick is a genuinely bad region of the space. The single-seed run (M12) missed this because seed 42 happened to land in the one favourable tail of a distribution centred well below zero.'
+            lesson: 'This is the clearest illustration in the whole project of why n=1 anecdotes are dangerous — the single-seed AgNP number was not just unproven, it actively pointed the wrong direction.'
+            also_depends_on: [M12]
+          - id: M14
+            type: dead_end
+            title: 'List-position artifact discovered: both the Waibel positive and AgNP negative effects are the same confound, retracted'
+            provenance: ai-executed
+            source: 'mo_bo_pipeline/FINDINGS.md:section 5d; "Overall verdict" section'
+            hypothesis: 'The LLM''s enumerated-list index picks in M11/M13 reflect genuine content/chemistry reasoning.'
+            failure_mode: 'A blank-vs-domain-knowledge ablation (unshuffled) found 14/15 AgNP seeds pick byte-identical indices whether given real chemistry text or a blank prompt — the domain text does essentially nothing. A shuffled-presentation-order control then showed shown_positions clustering tightly around 0.6-0.7 regardless of which real candidates land there — a textbook list-boundary/recency artifact. Under shuffling, AgNP''s -23.3% harm disappears into noise (mean -4.8%, LLM wins 8/15, chance level) and Waibel''s +7.1% "significant" advantage also disappears (mean -2.3%, t-test p=0.51, Wilcoxon p=0.49).'
+            lesson: 'Both of the original "real" effects — Waibel positive and AgNP negative — were artifacts of presenting a long candidate list in a fixed order, not the LLM applying domain knowledge; retracted as evidence about LLM domain reasoning. Always shuffle candidate-list presentation order (and report shown_positions) before trusting any LLM list-pick claim. Described in FINDINGS.md as arguably the single most important methodological finding of the whole project, precisely because it is a null reached by actually checking rather than stopping at a flattering number.'
+            also_depends_on: [M11, M13]
+      - id: M15
+        type: experiment
+        title: 'Corrected re-test with shuffling default: domain-knowledge vs blank vs random, both datasets'
+        provenance: user
+        source: 'mo_bo_pipeline/FINDINGS.md:section 5e'
+        result: 'All four conditions are a clean null (n=15 each): Waibel/mAb-knowledge -2.3% (t p=0.509, W p=0.489, 5/15 wins); Waibel/blank -6.5% (p=0.233/0.389, 6/15); AgNP/colloidal-knowledge -4.8% (p=0.634/0.720, 8/15); AgNP/blank -2.1% (p=0.835/0.934, 8/15). Domain knowledge and a blank prompt are indistinguishable from each other AND from random on both real datasets — the properly-controlled version of the project''s founding question, with an honest null answer at this sample size and model.'
+        also_depends_on: [M14]
+      - id: M16
+        type: experiment
+        title: 'Reasoning-model (think=True) retest — still no effect, catches a second real bug'
+        provenance: user
+        source: 'mo_bo_pipeline/FINDINGS.md:section 5f'
+        result: 'qwen3:14b with think=True, num_ctx=8192, shuffling on. First 8-seed batch: 5-8/8 seeds per dataset burned the entire num_predict=2048 budget on the reasoning trace before reaching the JSON answer, silently falling back to the non-LLM diversity heuristic — that batch was discarded as measuring the fallback, not the model. Fixed by raising num_predict to 6144 for think=True (now the default). Clean rerun (0/15 and 1/15 fallback): Waibel think=True -11.0% (t p=0.067, borderline trend toward WORSE, not the hoped-for improvement); AgNP think=True +10.7% (p=0.305, noisy, not remotely significant). Model choice (reasoning vs non-reasoning) does not resolve the null from M15.'
+        also_depends_on: [M15]
+      - id: M17
+        type: decision
+        title: 'Task-format redesign: propose-and-snap instead of index-selection from an enumerated list'
+        provenance: user
+        source: 'mo_bo_pipeline/FINDINGS.md:section 5g'
+        alternatives: ['Keep the index-selection format and try yet another model', 'Conclude the null result is final without testing task format']
+        evidence: 'Index-selection structurally cannot rule out a residual list-position effect even when shuffled, since the LLM still only ever reasons over positions in a list. llm_pool_propose.py has the LLM propose real feature values from scratch (same design as llm_af_evo''s llm_warmstart.py), snapped afterward — ordinary numpy nearest-neighbour outside the LLM call — to the nearest real pool point, structurally unable to leak a list-order signal.'
+        also_depends_on: [M15, M16, N27]
+        children:
+          - id: M18
+            type: experiment
+            title: 'Propose-and-snap on Waibel: significant NEGATIVE effect, not yet root-caused'
+            provenance: user
+            source: 'mo_bo_pipeline/FINDINGS.md:section 5g'
+            result: 'Waibel/domain(mab): n=15, -16.0% (t p=0.027, Wilcoxon p=0.030, 4/15 wins). Waibel/blank: n=15, -23.9% (t p=0.001, Wilcoxon p=0.001, 2/15 wins). AgNP/domain: n=15, -6.4% (p=0.181/0.229, 6/15, not significant); extended to n=60 later (see M21). AgNP/blank: n=15, +1.1% (p=0.698/0.934, 8/15). Waibel is significant in BOTH conditions and in the direction of the LLM doing worse than random — present with or without domain-knowledge text, so it is not "wrong domain knowledge" driving it. This is the first result in the whole section that survives its own methodology (the format change specifically designed to remove the list artifact), and it is a negative one, still unexplained at this point.'
+            also_depends_on: [M17]
+            children:
+              - id: M19
+                type: experiment
+                title: 'Root-cause investigation of the Waibel/AgNP split: mechanisms 1-3'
+                provenance: user
+                source: 'mo_bo_pipeline/FINDINGS.md:section 5g, follow-up points 1-3'
+                result: '(1) Centroid proximity — wrong direction and true on BOTH datasets equally (LLM points farther from centroid than random, Waibel 3.15 vs 2.39 p<1e-4, AgNP 2.48-2.49 vs 2.08 p<1e-4) — ruled out as the differentiator. (2) Per-objective extremeness — LLM sets reach significantly fewer per-objective extremes than random on BOTH datasets (Waibel p=0.0003-0.008, AgNP p=0.001-0.002, AgNP''s effect if anything larger) — a real, consistent selection bias, but again moves the same way on both datasets so does not explain why only Waibel''s HV effect is significant. (3) Baseline sampling noise — the actual differentiator candidate: random-baseline round-0 HV coefficient of variation is Waibel CV=0.082 vs AgNP CV=0.207 (~2.5x noisier), consistent with — not yet full proof of — why the same underlying selection bias clears significance on Waibel but is swallowed by AgNP''s noisier baseline.'
+                also_depends_on: [M18]
+                children:
+                  - id: M20
+                    type: dead_end
+                    title: 'Coverage-ratio hypothesis for the split falsified by direct ablation'
+                    provenance: ai-executed
+                    source: 'mo_bo_pipeline/FINDINGS.md:section 5g, follow-up point 6'
+                    hypothesis: 'AgNP''s null is a real signal masked by its lower fractional pool-coverage (12/132≈9%) relative to Waibel''s (13/33≈39%), so matching AgNP''s coverage ratio on Waibel''s own real selections should wash out Waibel''s significant effect.'
+                    failure_mode: 'Part 1 confirmed coverage ratio is a real, transferable noise lever (sweeping n_init on Waibel''s own pool from 13→3 raises CV from 0.094 to 0.386, and at matched n=3 coverage Waibel is actually NOISIER than AgNP''s 0.309). But Part 2 — resampling random size-k subsets of the real, already-collected llm/random indices at AgNP-matched coverage (k=3), repeated 300 trials — found the effect does NOT wash out: still significant in 283/300 trials (blank) and 151/300 (domain), if anything STRONGER at lower coverage, the opposite of dilution.'
+                    lesson: 'The coverage-ratio mechanism is real but insufficient alone to explain the split — something dataset-specific (most likely which particular points are HV-critical on each dataset''s Pareto geometry) distinguishes Waibel from AgNP, not a sample-size/noise-floor difference. Flagged as the next thread if worth fully closing, not yet tested further.'
+                    also_depends_on: [M19]
+                  - id: M21
+                    type: experiment
+                    title: 'Direct test of the AgNP-underpowered hypothesis at n=60 — falsified'
+                    provenance: user
+                    source: 'mo_bo_pipeline/FINDINGS.md:section 5g, follow-up point 5'
+                    result: 'A power calculation from the original 15-seed AgNP-domain read (d≈0.36, -6.4%) suggested ~60 seeds should reveal a real effect if the original read was an underpowered detection of it. 45 more AgNP-domain seeds run: the NEW 45 alone came back POSITIVE (+7.3%, 24/45 wins) — the opposite sign — and the full pooled 60-seed sample is a clean null (mean +3.9%, paired t-test p=0.43, wins 30/60). Conclusion: the original 15-seed -6.4% read was itself mostly noise, not a real effect sitting below detection threshold; extrapolating a required sample size from it was circular. AgNP''s null is a genuine null, not underpowered detection of Waibel''s bias.'
+                    also_depends_on: [M19]
+      - id: M22
+        type: decision
+        title: 'Overall verdict on LLM pool seeding: two task formats tried, both properly controlled — one still-unexplained negative result stands'
+        provenance: user
+        source: 'mo_bo_pipeline/FINDINGS.md: "Overall verdict on LLM pool seeding" and "Standing caveats" sections'
+        alternatives: ['Conclude "LLM pool seeding doesn''t work" as a general claim', 'Report only the retracted list-based positive result and stop there']
+        evidence: 'Index-selection format (M10-M16, list-position artifact found and fixed in M14): no effect, positive or negative, on either real dataset once controlled. Propose-and-snap format (M17-M21), which structurally avoids the list artifact by construction: no effect on AgNP, but a significant NEGATIVE effect on Waibel present in both domain and blank conditions — the LLM''s proposals, once snapped to the real pool, initialize worse than random, and this is NOT root-caused (mechanism-2''s per-objective-extremeness bias is measurable on both datasets but the coverage-ratio explanation for why only Waibel clears significance was directly falsified, M20). As of this writing: no positive LLM-seeding result has survived scrutiny anywhere in either real dataset/task-format combination tested, and exactly one negative one has, on one dataset, in one format, not yet explained.'
+        also_depends_on: [M18, M20, M21]
+        claims_touched: ['mo_bo_pipeline LLM pool-seeding thesis question']
+
+  # =====================================================================
+  # ROOT 8 — Repo reorganisation & thesis Chapter 2 citation verification
+  # =====================================================================
+  - id: N110
+    type: decision
+    title: 'Chart a wayfinder map and decision tickets for llm_af_evo/ thesis reorganization'
+    provenance: user
+    timestamp: '2026-08-01'
+    source: 'commit:af7a142'
+    alternatives: ['Leave the flat, ad hoc directory layout in place for the thesis writeup']
+    evidence: 'Four decision tickets (directory structure, script classification, data retention, docs consolidation) charted before executing any file moves.'
+    children:
+      - id: N111
+        type: experiment
+        title: 'Execute the llm_af_evo/ reorganization per the resolved wayfinder map'
+        provenance: ai-executed
+        timestamp: '2026-08-01'
+        source: 'commit:0be8700'
+        result: 'Moved all 50 scripts, ~65MB of run data, and 5 findings docs into shared/, v1_pre_v2/{src,experiments}, v2/{src,experiments}, data/, docs/, with a docs/README.md index. Also fixed an omission in an earlier ticket (diagnostic_true_oracle_hv.py was classified but missing from the file list — 50 files total, not 49). Explicitly deferred: script internals (sys.path assumptions, relative imports) were not yet updated for the new nested paths.'
+        children:
+          - id: N112
+            type: dead_end
+            title: 'sys.path bootstraps broken after the reorganization, missed on first pass'
+            provenance: ai-executed
+            timestamp: '2026-08-01'
+            source: 'commit:ef71607; commit:a7c946e'
+            hypothesis: 'An automated sys.path pattern-match fix pass correctly updates every script''s import path for the new nested directory layout.'
+            failure_mode: 'Five scripts were missed by the automated pattern match and needed a separate follow-up fix.'
+            lesson: 'A structural directory move''s import-path fix needs verification per-script (e.g. actually running each script), not just one automated pattern-matched pass.'
+            also_depends_on: [N111]
+      - id: N113
+        type: experiment
+        title: 'Chapter 2 citation verification pass (WebSearch/WebFetch against primary sources)'
+        provenance: user
+        timestamp: '2026-08-09'
+        source: 'research/chapter2_citations.md:L1-4'
+        result: 'Verified FunSearch, FunBO, LLaMEA-BO, Waibel et al. 2025, Aqeeli/Leelawat/Shorthouse 2026, U-NSGA-III, González et al. 2016 (local penalization), and AlphaEvolve against primary sources (arXiv, Crossref, PMC) rather than trusting search-engine summaries alone.'
+        children:
+          - id: N114
+            type: dead_end
+            title: '"ADA benchmark" citation not found under this name'
+            provenance: ai-executed
+            source: 'research/chapter2_citations.md:section 4'
+            hypothesis: 'A named "ADA benchmark" paper for adaptive acquisition-function selection exists and can be cited directly.'
+            failure_mode: 'Extensive search found no paper by this exact name; the closest genuine match (Ngo et al. 2026, LMABO, arXiv:2602.07904) never uses the string "ADA"; a checked candidate (github.com/berlinguette/ada, "Project Ada") is an unrelated self-driving-lab data repository, not a strategy-selection benchmark.'
+            lesson: 'Do not cite an unverifiable benchmark name in the thesis — either cite the correctly-identified paper (Ngo et al. 2026) or drop the reference.'
+            claims_touched: ['thesis chapter 2 literature review']
+          - id: N115
+            type: dead_end
+            title: 'NOSTRA mis-grouped as an LLM-in-the-loop BO method'
+            provenance: ai-executed
+            source: 'research/chapter2_citations.md:section 1d'
+            hypothesis: 'NOSTRA belongs alongside FunSearch/FunBO/LLaMEA-BO as an example of LLM-in-the-loop BO.'
+            failure_mode: 'NOSTRA (Ghasemzadeh & van Beek, arXiv:2508.16476) is a classical/statistical multi-objective BO framework for sparse noisy data using trust regions — it does not involve LLMs at all.'
+            lesson: 'Verify each citation''s actual mechanism, not just its topical proximity, before grouping it under a thematic heading.'
+            claims_touched: ['thesis chapter 2 literature review']
+          - id: N116
+            type: dead_end
+            title: '"DA-COREG" mistaken for an externally citable method name'
+            provenance: ai-executed
+            source: 'research/chapter2_citations.md:section 8'
+            hypothesis: 'DA-COREG is a named technique from the literature that can be cited by that name.'
+            failure_mode: '"DA-COREG" does not appear anywhere in the literature — it is this project''s own internal shorthand (coined in llm_evolved_afs_comprehensive_log.md) for applying standard multi-task/co-regionalized GP modelling (Bonilla, Chai & Williams, NeurIPS 2007) to the excipient setting.'
+            lesson: 'Cite the underlying technique''s real primary reference, and describe the project''s own coinage explicitly as internal shorthand, not as an external literature term.'
+            claims_touched: ['thesis chapter 2 literature review', 'DA-COREG thread (Root 6)']
+          - id: N117
+            type: dead_end
+            title: 'Waibel et al. endpoints mischaracterized as "aggregation/oxidation"'
+            provenance: ai-executed
+            source: 'research/chapter2_citations.md:section 2'
+            hypothesis: 'Waibel et al. (2025)''s three optimized endpoints are aggregation and oxidation assays.'
+            failure_mode: 'The actual paper''s endpoints are melting temperature (Tm), diffusion interaction parameter (kD), and retained monomer fraction after agitation stress (RM_Agi) — not a direct oxidation measure at all; "aggregation" is only indirectly captured via RM_Agi.'
+            lesson: 'Verify endpoint descriptions against the primary source''s own text, not a paraphrased task brief — the project''s oracle code (TM_RANGE/KD_RANGE/VISC_RANGE, tm_noise=0.013, kd_noise=0.096) is itself correctly anchored to Tm/kD/viscosity-type endpoints, so only the thesis prose needed correcting.'
+            claims_touched: ['thesis chapter 2 literature review']

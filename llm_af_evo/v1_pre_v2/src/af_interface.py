@@ -108,18 +108,23 @@ def select_batch(scores, batch_size: int) -> list:
     return list(np.argsort(scores)[-k:][::-1])
 
 
-def count_loc(code: str) -> int:
+def count_loc(code: str, af_function_name: str = AF_FUNCTION_NAME) -> int:
     """
     Non-blank, non-comment-only line count — the complexity-penalty term.
     Uses ast to strip the docstring (if any) before counting, so a program
     can't game the penalty by moving logic into a giant docstring, but
     inline comments on code lines still count (matching the Harris group's
     LOC-as-parsimony-proxy, not a stricter static-complexity metric).
+
+    af_function_name: defaults to AF_FUNCTION_NAME ("score_pool") — every
+    v1-v5 caller gets identical behaviour to before this parameter existed.
+    v6's delta-seed contract passes "modifier" instead (see sandbox.py's
+    af_function_name plumbing).
     """
     try:
         tree = ast.parse(code)
         func = next((n for n in tree.body if isinstance(n, ast.FunctionDef)
-                     and n.name == AF_FUNCTION_NAME), None)
+                     and n.name == af_function_name), None)
         if func is None:
             return len(code.strip().splitlines())
         start = func.body[0].lineno
@@ -141,7 +146,7 @@ def count_loc(code: str) -> int:
     return n
 
 
-def has_return_statement(code: str) -> bool:
+def has_return_statement(code: str, af_function_name: str = AF_FUNCTION_NAME) -> bool:
     """
     True iff score_pool's body contains at least one `return` anywhere
     (top level or nested in a loop/if/etc.) — a cheap pre-sandbox check for
@@ -152,19 +157,22 @@ def has_return_statement(code: str) -> bool:
     job) — this only catches the specific "ran out of budget before
     writing any return at all" case cheaply, before ever spawning a
     subprocess.
+
+    af_function_name: see count_loc's docstring — same default/override
+    pattern, same v6 use (checks for "modifier" instead of "score_pool").
     """
     try:
         tree = ast.parse(code)
     except SyntaxError:
         return False
     func = next((n for n in tree.body if isinstance(n, ast.FunctionDef)
-                 and n.name == AF_FUNCTION_NAME), None)
+                 and n.name == af_function_name), None)
     if func is None:
         return False
     return any(isinstance(n, ast.Return) for n in ast.walk(func))
 
 
-def extract_af_docstring(code: str) -> str:
+def extract_af_docstring(code: str, af_function_name: str = AF_FUNCTION_NAME) -> str:
     """
     First line of score_pool's docstring, or "" if there is none/it's
     empty/the code doesn't parse. Shared by sandbox.py (docstring-presence
@@ -173,13 +181,17 @@ def extract_af_docstring(code: str) -> str:
     line is ever surfaced — a docstring may continue past it (existing
     seed AFs do), but everything past line 1 is prose for a human reader,
     not part of the enforced contract.
+
+    af_function_name: see count_loc's docstring — same default/override
+    pattern, same v6 use (extracts "modifier"'s docstring instead of
+    "score_pool"'s).
     """
     try:
         tree = ast.parse(code)
     except SyntaxError:
         return ""
     func = next((n for n in tree.body if isinstance(n, ast.FunctionDef)
-                 and n.name == AF_FUNCTION_NAME), None)
+                 and n.name == af_function_name), None)
     if func is None:
         return ""
     doc = ast.get_docstring(func)
