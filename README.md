@@ -1,9 +1,32 @@
-# LS-NA-EGBO: LLM-Seeded Novelty-Aware EGBO
+# Thesis: LLM-Augmented Bayesian Optimization for Self-Driving Labs
+
+This repo holds three related sub-projects investigating where and how large
+language models can improve Bayesian optimization (BO) campaigns in
+self-driving-lab-style settings — multi-objective biologic formulation
+(excipient screening), coatings/tunable-synthetic domains, and simulated SDL
+strategy control — plus the supporting research trace and citation records.
+Each sub-project lives in its own directory with its own README; this file
+covers the root-level one (LS-NA-EGBO) directly and points to the rest.
+
+## Directory guide
+
+| Directory | What it is |
+|---|---|
+| *(root, this file)* | **LS-NA-EGBO** — LLM-seeded, novelty-aware EGBO for multi-objective excipient formulation. The original thesis codebase; stays at the root because `llm_af_evo/` and other directories import its modules (`excipient_oracle_mo.py`, `excipient_campaign_mo.py`, etc.) directly. |
+| [`llm_af_evo/`](llm_af_evo/) | **LLM-evolved acquisition functions** — evolving `score_pool` batch-scoring code via an LLM-driven genetic-programming loop, across 7 versions (v1_pre_v2 → v7) of fitness design, domain substrate, and anti-mode-collapse fixes. Start at [`llm_af_evo` versions' READMEs](llm_af_evo/v7/README.md) (v7 is the latest); `llm_af_evo/shared/` holds cross-version infrastructure. |
+| [`sdl_adaptive/`](sdl_adaptive/) | **Adaptive strategy selection** — a separate simulation benchmark asking not "which optimizer" but "which optimizer *right now*," with an LLM controller choosing/tuning/writing the optimization strategy mid-campaign at three levels of autonomy. Has its own README with full repo structure. |
+| [`ara/trace/`](ara/trace/) | **Agent-Native Research Artifact** — `exploration_tree.yaml`, a reconstructed graph of the actual branching research process (decisions, dead ends, pivots) behind this thesis and the related `mo_bo_pipeline` repo, each node cited to a specific file/line or commit. |
+| [`research/`](research/) | Citation verification (`chapter2_citations.md`) and a thesis addendum note tied to `.scratch/`-generated diagnostics. |
+| `results/` | Raw/summary CSVs from the LS-NA-EGBO benchmark runs below (`benchmark_phase1/2/3`, `benchmark_sensitivity`). |
+| `llm_bo/` | An earlier iteration of the excipient benchmark code (pre-dates the root-level LS-NA-EGBO files) — no README; kept for its own result logs, superseded by the root-level scripts. |
+| `PLAN.md`, `dissertation_guidelines.md`, `project_comprehensive_log*.md`, `llm_evolved_afs_comprehensive_log.md` | Top-level design/planning and running research-log documents for the whole thesis. |
+
+## LS-NA-EGBO (this directory)
 
 Code for benchmarking LLM-augmented optimization against EGBO for multi-objective
 biologic formulation optimization (max Tm, max kD, min viscosity).
 
-## Quick Start
+### Quick Start
 
 ```bash
 # Install dependencies
@@ -42,42 +65,42 @@ python run_sensitivity.py --mock_llm --n_seeds 15 --budget 30 \
 python generate_all_figures.py
 ```
 
-## File Structure
+### File Structure
 
-### Foundation (existing code, preserved)
+#### Foundation (existing code, preserved)
 - `excipient_oracle.py` — Excipient catalogue, dose-response curves, 16D encoding
 - `excipient_oracle_mo.py` — Multi-objective oracle (Tm, kD, viscosity)
 - `excipient_campaign_mo.py` — Campaign runner + baseline strategies (random, EGBO, EGBO-real, existing LLM)
 
-### New strategies
+#### New strategies
 - `novelty_selection.py` — Aqeeli et al. novelty-aware batch selection (default w_acq=0.9, w_nov=0.1; 0.3 is the Aqeeli et al. default, found too aggressive at budget=30 in the original sweep — see PLAN.md for caveats on that finding after the prompt rewrite)
 - `llm_warmstart.py` — LLM warm-start with 3-layer prompt + mock mode + Kennard-Stone diversity. Acquisition scoring in the EGBO stage (`strategy_ls_na_egbo.py`) is vectorised (single batched call, not a per-candidate loop).
 - `strategy_ls_na_egbo.py` — Recommended: LLM warm-start + novelty-aware EGBO
 - `strategy_llm_candidate_gen.py` — LLM-as-candidate-generator: LLM generates candidates every batch, merged into EGBO's acquisition loop. NOTE: originally labeled "LABO" but does not implement the actual LABO paper's multi-fidelity gating mechanism — see the file's docstring for details.
 
-### Runners
+#### Runners
 - `run_benchmark_resumable.py` — Main runner (Phases 1 & 2), checkpointed
 - `run_sensitivity.py` — Novelty weight sweep + isolated warm-start condition
 - `generate_all_figures.py` — 6 figure types
 
-### Phase 3 (coatings generalisability)
+#### Phase 3 (coatings generalisability)
 - `synthetic_coatings_oracle.py` — 4D continuous coatings oracle
 - `run_phase3.py` — Phase 3 benchmark runner
 
-### Legacy
+#### Legacy
 - `run_benchmark.py` — Original runner (superseded by _resumable)
 - `generate_figures.py` — Original figure generator (superseded by generate_all_figures)
 - `excipient_adapter.py` — Adapter for existing code
 - `posthoc_llm_comparison.py` — LLM-BO vs EGBO on Ada coatings
 
-## Key Findings (mock LLM, provisional)
+### Key Findings (mock LLM, provisional)
 
 1. **w_nov=0.1 is the sweet spot** (not 0.3 from Aqeeli et al.) — 0.3 is too aggressive at budget=30
 2. **Mock LLM warm-start helps sample efficiency** (saves 2-6 experiments to 70% HV) but **hurts final HV** (-2.5% to -12.8%) because it narrows the initial design space
 3. **mo_egbo_real (qLogNEHVI + U-NSGA-III, no novelty) is the strongest baseline** at budget=30
 4. **Real 72B LLM runs are the decisive test** — mock LLM is not a valid proxy
 
-## Architecture
+### Architecture
 
 ```
 Stage 1: LLM Warm-Start (once, before experiments)
@@ -92,7 +115,7 @@ Stage 2: Novelty-Aware EGBO (autonomous)
   → Batch size = 5
 ```
 
-## Conditions Benchmarked
+### Conditions Benchmarked
 
 | Condition | Init | Acquisition | Purpose |
 |-----------|------|-------------|---------|
